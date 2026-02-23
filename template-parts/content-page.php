@@ -11,7 +11,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 	<header class="entry-header">
-		<?php the_title( '<h1 class="entry-title">', '</h1>' ); ?>
+		<?php
+		// 프론트 페이지는 히어로에 이미 H1이 있으므로 페이지 제목은 H2로 (SEO: 페이지당 H1 하나)
+		if ( is_front_page() ) {
+			the_title( '<h2 class="entry-title">', '</h2>' );
+		} else {
+			the_title( '<h1 class="entry-title">', '</h1>' );
+		}
+		?>
 	</header>
 	<?php if ( has_post_thumbnail() ) : ?>
 		<figure class="post-thumbnail">

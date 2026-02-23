@@ -58,6 +58,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<span class="footer-contact-row">
 						<span class="footer-contact-item"><strong><?php esc_html_e( '전화번호', 'della-theme' ); ?></strong> <a href="tel:15223394">1522-3394</a></span>
 						<span class="footer-contact-item"><strong><?php esc_html_e( '팩스', 'della-theme' ); ?></strong> 02-523-7260</span>
+						<span class="footer-contact-item"><strong><?php esc_html_e( '사업자등록번호', 'della-theme' ); ?></strong> 128-88-01756</span>
 					</span>
 				</p>
 			</div>

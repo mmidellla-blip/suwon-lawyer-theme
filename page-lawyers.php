@@ -15,12 +15,11 @@ $upload_dir  = wp_upload_dir();
 $img_base    = $upload_dir['baseurl'] . '/2026/02';
 $img_dir     = $upload_dir['basedir'] . '/2026/02';
 
-// 상세 프로필: /lawyers/{slug}/ 로 들어온 경우
+// 상세 프로필: /lawyers/{slug}/ 로 들어온 경우 — 잘못된 slug는 404 처리
 if ( $lawyer_slug ) {
 	$lawyer = della_theme_get_lawyer_by_slug( $lawyer_slug );
 	if ( ! $lawyer ) {
-		wp_safe_redirect( della_theme_lawyers_page_url(), 302 );
-		exit;
+		della_theme_trigger_404();
 	}
 	get_header();
 	?>

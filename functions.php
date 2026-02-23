@@ -114,7 +114,21 @@ function della_theme_lawyer_query_vars( $vars ) {
 add_filter( 'query_vars', 'della_theme_lawyer_query_vars' );
 
 /**
- * 테마 전환 시 rewrite flush (lawyers/{slug} 반영)
+ * sitemap.xml rewrite — 검색엔진용 XML 사이트맵
+ */
+function della_theme_sitemap_rewrite_rules() {
+	add_rewrite_rule( 'sitemap\.xml$', 'index.php?della_sitemap=1', 'top' );
+}
+add_action( 'init', 'della_theme_sitemap_rewrite_rules', 5 );
+
+function della_theme_sitemap_query_vars( $vars ) {
+	$vars[] = 'della_sitemap';
+	return $vars;
+}
+add_filter( 'query_vars', 'della_theme_sitemap_query_vars' );
+
+/**
+ * 테마 전환 시 rewrite flush (lawyers/{slug}, sitemap.xml 반영)
  */
 function della_theme_flush_rewrite_on_switch() {
 	della_theme_ensure_lawyers_page();
@@ -343,37 +357,123 @@ function della_theme_is_success_cases_page() {
 	return is_singular( 'page' ) && get_page_template_slug() === 'page-success-cases.php';
 }
 
+/** SEO: page title 30–65 chars, meta description 120–320 chars */
+if ( ! defined( 'DELLA_THEME_TITLE_MAX' ) ) {
+	define( 'DELLA_THEME_TITLE_MAX', 65 );
+}
+if ( ! defined( 'DELLA_THEME_DESC_MIN' ) ) {
+	define( 'DELLA_THEME_DESC_MIN', 120 );
+}
+if ( ! defined( 'DELLA_THEME_DESC_MAX' ) ) {
+	define( 'DELLA_THEME_DESC_MAX', 320 );
+}
+
 /**
- * SEO: Front page / 성범죄 전문 변호사 / 성범죄 대응정보 / 성범죄 성공사례 페이지 document title
+ * SEO: Trim page title to 30–65 characters.
+ */
+function della_theme_trim_document_title( $title ) {
+	if ( ! is_string( $title ) || $title === '' ) {
+		return $title;
+	}
+	$max = defined( 'DELLA_THEME_TITLE_MAX' ) ? DELLA_THEME_TITLE_MAX : 65;
+	if ( function_exists( 'mb_strlen' ) && function_exists( 'mb_substr' ) ) {
+		if ( mb_strlen( $title ) > $max ) {
+			return mb_substr( $title, 0, $max - 1 ) . '…';
+		}
+		return $title;
+	}
+	if ( strlen( $title ) > $max ) {
+		return substr( $title, 0, $max - 1 ) . '…';
+	}
+	return $title;
+}
+
+/**
+ * SEO: Trim meta description to 120–320 characters (cap at max).
+ */
+function della_theme_trim_meta_description( $description ) {
+	if ( ! is_string( $description ) || $description === '' ) {
+		return $description;
+	}
+	$max = defined( 'DELLA_THEME_DESC_MAX' ) ? DELLA_THEME_DESC_MAX : 320;
+	if ( function_exists( 'mb_strlen' ) && function_exists( 'mb_substr' ) ) {
+		if ( mb_strlen( $description ) > $max ) {
+			return mb_substr( $description, 0, $max - 3 ) . '…';
+		}
+		return $description;
+	}
+	if ( strlen( $description ) > $max ) {
+		return substr( $description, 0, $max - 3 ) . '…';
+	}
+	return $description;
+}
+
+/**
+ * SEO: Ensure meta description is at least 120 chars when possible (append firm name once if short).
+ */
+function della_theme_ensure_description_length( $description, $law_firm_name = '' ) {
+	if ( ! is_string( $description ) || $description === '' ) {
+		return $description;
+	}
+	$min = defined( 'DELLA_THEME_DESC_MIN' ) ? DELLA_THEME_DESC_MIN : 120;
+	$max = defined( 'DELLA_THEME_DESC_MAX' ) ? DELLA_THEME_DESC_MAX : 320;
+	$len = function_exists( 'mb_strlen' ) ? mb_strlen( $description ) : strlen( $description );
+	if ( $len >= $min || $len >= $max ) {
+		return $description;
+	}
+	if ( $law_firm_name !== '' && strpos( $description, $law_firm_name ) === false ) {
+		$suffix = ' | ' . $law_firm_name;
+		$candidate = $description . $suffix;
+		$clen = function_exists( 'mb_strlen' ) ? mb_strlen( $candidate ) : strlen( $candidate );
+		if ( $clen <= $max ) {
+			return $candidate;
+		}
+	}
+	return $description;
+}
+
+/**
+ * SEO: 문서당 하나의 <title>, 페이지별 고유·정확한 제목 (30–65자, 네이버 검색로봇 대응)
  */
 function della_theme_document_title_parts( $parts ) {
+	$site = get_bloginfo( 'name' );
+	if ( is_404() ) {
+		$parts['title'] = della_theme_trim_document_title( __( '페이지를 찾을 수 없습니다', 'della-theme' ) . ' | ' . $site );
+		unset( $parts['tagline'], $parts['site'], $parts['page'] );
+		return $parts;
+	}
 	if ( is_front_page() ) {
-		$parts['title'] = __( '수원성범죄변호사', 'della-theme' ) . ' · ' . __( '수원성범죄전문변호사', 'della-theme' ) . ' | ' . get_bloginfo( 'name' );
-		if ( isset( $parts['tagline'] ) ) {
-			unset( $parts['tagline'] );
-		}
+		$parts['title'] = della_theme_trim_document_title(
+			__( '수원성범죄변호사', 'della-theme' ) . ' · ' . __( '수원성범죄전문변호사', 'della-theme' ) . ' | ' . $site
+		);
+		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
 	}
 	if ( della_theme_is_lawyers_page() ) {
-		$parts['title'] = __( '성범죄 전문 변호사', 'della-theme' ) . ' | ' . get_bloginfo( 'name' );
-		if ( isset( $parts['tagline'] ) ) {
-			unset( $parts['tagline'] );
-		}
+		$parts['title'] = della_theme_trim_document_title( __( '성범죄 전문 변호사', 'della-theme' ) . ' | ' . $site );
+		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
 	}
 	if ( della_theme_is_response_board_page() ) {
-		$parts['title'] = __( '성범죄 대응정보', 'della-theme' ) . ' | ' . get_bloginfo( 'name' );
-		if ( isset( $parts['tagline'] ) ) {
-			unset( $parts['tagline'] );
-		}
+		$parts['title'] = della_theme_trim_document_title( __( '성범죄 대응정보', 'della-theme' ) . ' | ' . $site );
+		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
 	}
 	if ( della_theme_is_success_cases_page() ) {
-		$parts['title'] = __( '성범죄 성공사례', 'della-theme' ) . ' | ' . get_bloginfo( 'name' );
-		if ( isset( $parts['tagline'] ) ) {
-			unset( $parts['tagline'] );
-		}
+		$parts['title'] = della_theme_trim_document_title( __( '성범죄 성공사례', 'della-theme' ) . ' | ' . $site );
+		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
+	}
+	if ( is_singular() ) {
+		$post = get_queried_object();
+		if ( $post instanceof WP_Post ) {
+			$parts['title'] = della_theme_trim_document_title( get_the_title( $post ) . ' | ' . $site );
+			unset( $parts['tagline'], $parts['site'], $parts['page'] );
+		}
+	}
+	// Catch-all: ensure any title part is within 30–65 chars
+	if ( ! empty( $parts['title'] ) && is_string( $parts['title'] ) ) {
+		$parts['title'] = della_theme_trim_document_title( $parts['title'] );
 	}
 	return $parts;
 }
@@ -381,19 +481,29 @@ add_filter( 'document_title_parts', 'della_theme_document_title_parts', 10, 1 );
 
 /**
  * SEO: meta keywords (네이버·다음 등 국내 검색엔진 대응)
- * 키워드 우선순위: 1순위·2순위·블루오션
+ * 메인 키워드 + 보조 키워드(죄종별·결과/상황·브랜딩)
  */
 function della_theme_seo_meta_keywords() {
 	$keywords = array(
 		__( '수원성범죄변호사', 'della-theme' ),
 		__( '수원성범죄전문변호사', 'della-theme' ),
-		__( '성범죄피해자변호사', 'della-theme' ),
-		__( '성범죄전문변호사', 'della-theme' ),
-		__( '성범죄변호사', 'della-theme' ),
-		__( '형사전문변호사', 'della-theme' ),
-		__( '형사변호사', 'della-theme' ),
+		__( '수원강제추행변호사', 'della-theme' ),
 		__( '수원성추행변호사', 'della-theme' ),
-		__( '성범죄일부노출', 'della-theme' ),
+		__( '수원형사전문변호사', 'della-theme' ),
+		__( '수원강제추행', 'della-theme' ),
+		__( '수원강간변호사', 'della-theme' ),
+		__( '수원성범죄일부노출', 'della-theme' ),
+		__( '수원카촬변호사', 'della-theme' ),
+		__( '수원친족간성범죄', 'della-theme' ),
+		__( '수원강제추행기소유예', 'della-theme' ),
+		__( '수원강제추행죄', 'della-theme' ),
+		__( '수원성범죄전문로펌', 'della-theme' ),
+		__( '수원성범죄전문법무법인', 'della-theme' ),
+		__( '수원형사변호사', 'della-theme' ),
+		__( '수원성범죄전문', 'della-theme' ),
+		__( '성범죄피해자변호사', 'della-theme' ),
+		__( '형사전문변호사', 'della-theme' ),
+		__( '법무법인 동주', 'della-theme' ),
 		get_bloginfo( 'name' ),
 	);
 	if ( della_theme_is_response_board_page() ) {
@@ -401,16 +511,12 @@ function della_theme_seo_meta_keywords() {
 			__( '성범죄 대응정보', 'della-theme' ),
 			__( '성범죄 법조문', 'della-theme' ),
 			__( '성범죄 판례', 'della-theme' ),
-			__( '강간 강제추행 대응', 'della-theme' ),
-			__( '불법촬영 군성범죄', 'della-theme' ),
 		), $keywords );
 	}
 	if ( della_theme_is_success_cases_page() ) {
 		$keywords = array_merge( array(
 			__( '성범죄 성공사례', 'della-theme' ),
-			__( '성범죄 판례', 'della-theme' ),
 			__( '강간 강제추행 성공사례', 'della-theme' ),
-			__( '군성범죄 불법촬영 성공사례', 'della-theme' ),
 		), $keywords );
 	}
 	echo '<meta name="keywords" content="' . esc_attr( implode( ', ', $keywords ) ) . '" />' . "\n";
@@ -418,21 +524,22 @@ function della_theme_seo_meta_keywords() {
 add_action( 'wp_head', 'della_theme_seo_meta_keywords', 1 );
 
 /**
- * SEO: Front page default meta description (키워드 포함, 155자 내외)
+ * SEO: Front page default meta description (키워드 포함, 120–320자)
  */
 function della_theme_front_page_description() {
 	if ( ! is_front_page() ) {
 		return null;
 	}
 	$custom = get_bloginfo( 'description' );
+	$firm   = __( '법무법인 동주', 'della-theme' );
 	if ( $custom && strlen( $custom ) >= 20 ) {
 		$kw = __( '수원성범죄전문변호사', 'della-theme' );
 		if ( strpos( $custom, $kw ) === false ) {
-			return $kw . ' — ' . $custom;
+			return $kw . ' — ' . $custom . ( strpos( $custom, $firm ) === false ? ' | ' . $firm : '' );
 		}
-		return $custom;
+		return $custom . ( strpos( $custom, $firm ) === false ? ' | ' . $firm : '' );
 	}
-	return __( '수원성범죄변호사, 수원성범죄전문변호사 ', 'della-theme' ) . get_bloginfo( 'name' ) . __( ' 수원 성범죄연구센터. 성범죄피해자변호사·형사전문변호사 상담. 수원 광교 신속 상담.', 'della-theme' );
+	return __( '수원성범죄변호사, 수원성범죄전문변호사 ', 'della-theme' ) . __( '법무법인 동주', 'della-theme' ) . __( ' 수원 성범죄연구센터. 성범죄피해자변호사·형사전문변호사 상담. 수원 광교 신속 상담.', 'della-theme' );
 }
 
 /**
@@ -537,7 +644,8 @@ function della_theme_custom_logo_alt( $html, $logo_id = 0 ) {
 	if ( empty( $site_name ) ) {
 		return $html;
 	}
-	$alt = 'alt="' . esc_attr( $site_name ) . '"';
+	$alt_text = $site_name . ' ' . __( '로고', 'della-theme' );
+	$alt      = 'alt="' . esc_attr( $alt_text ) . '"';
 	if ( preg_match( '/<img[^>]+>/', $html, $m ) ) {
 		if ( strpos( $m[0], 'alt=' ) !== false ) {
 			$html = preg_replace( '/alt="[^"]*"/', $alt, $html );
@@ -1124,18 +1232,244 @@ function della_theme_directions_copy_script() {
 add_action( 'wp_footer', 'della_theme_directions_copy_script', 22 );
 
 /**
- * Add canonical URL
+ * SEO: HTTP 상태 코드 — 오류·페이지 이동 시 적절한 상태 코드 지정
+ * 404 시 404 명시 및 검색로봇 캐시 방지
+ */
+function della_theme_seo_http_status() {
+	if ( is_404() ) {
+		status_header( 404 );
+		nocache_headers();
+	}
+}
+add_action( 'template_redirect', 'della_theme_seo_http_status', 1 );
+
+/**
+ * 잘못된 파라미터/존재하지 않는 리소스 시 404 처리 (상태 코드 + 테마 404 템플릿)
+ * 변호사 슬러그 없음, 잘못된 경로 등에서 호출.
+ */
+function della_theme_trigger_404() {
+	global $wp_query;
+	$wp_query->set_404();
+	status_header( 404 );
+	nocache_headers();
+	$template = get_query_template( '404' );
+	if ( $template ) {
+		include $template;
+	} else {
+		// 폴백: 최소 404 본문
+		if ( ! headers_sent() ) {
+			header( 'HTTP/1.1 404 Not Found' );
+		}
+		echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' . esc_html__( '페이지를 찾을 수 없습니다', 'della-theme' ) . '</title></head><body><h1>' . esc_html__( '페이지를 찾을 수 없습니다', 'della-theme' ) . '</h1><p><a href="' . esc_url( home_url( '/' ) ) . '">' . esc_html__( '홈으로', 'della-theme' ) . '</a></p></body></html>';
+	}
+	exit;
+}
+
+/**
+ * 관리자/로그인 경로 제외 — 사이트맵에 넣지 않을 URL 패턴
+ */
+function della_theme_sitemap_is_excluded_url( $url ) {
+	$path = wp_parse_url( $url, PHP_URL_PATH );
+	if ( ! is_string( $path ) ) {
+		return true;
+	}
+	$path_lower = strtolower( $path );
+	$exclude    = array( '/wp-admin', '/wp-login', '/admin', '/login', '/xmlrpc.php' );
+	foreach ( $exclude as $seg ) {
+		if ( strpos( $path_lower, $seg ) !== false ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * XML 사이트맵 출력 — priority, changefreq, lastmod(ISO 8601) 적용
+ * Google Search Console / Naver Search Advisor 대응
+ */
+function della_theme_sitemap_xml() {
+	if ( (int) get_query_var( 'della_sitemap' ) !== 1 ) {
+		return;
+	}
+	$base = trailingslashit( home_url( '/' ) );
+	$entries = array();
+
+	// 홈 (우선순위 최상)
+	$entries[] = array(
+		'loc'        => $base,
+		'lastmod'    => gmdate( 'Y-m-d\TH:i:s\Z', time() ),
+		'changefreq' => 'weekly',
+		'priority'   => '1.0',
+	);
+
+	// 고정 페이지: 성범죄 전문 변호사, 대응정보, 성공사례, 사이트맵, 면책공고, 개인정보처리방침
+	$main_pages = array(
+		array( 'url' => della_theme_lawyers_page_url(), 'priority' => '0.9', 'changefreq' => 'monthly' ),
+		array( 'url' => della_theme_response_board_page_url(), 'priority' => '0.9', 'changefreq' => 'weekly' ),
+		array( 'url' => function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/성범죄-성공사례/' ), 'priority' => '0.9', 'changefreq' => 'weekly' ),
+		array( 'url' => home_url( '/sitemap/' ), 'priority' => '0.5', 'changefreq' => 'monthly' ),
+		array( 'url' => home_url( '/면책공고/' ), 'priority' => '0.4', 'changefreq' => 'yearly' ),
+		array( 'url' => home_url( '/개인정보처리방침/' ), 'priority' => '0.4', 'changefreq' => 'yearly' ),
+	);
+	foreach ( $main_pages as $p ) {
+		$url = is_string( $p['url'] ) ? $p['url'] : '';
+		if ( $url !== '' && ! della_theme_sitemap_is_excluded_url( $url ) ) {
+			$entries[] = array(
+				'loc'        => $url,
+				'lastmod'    => gmdate( 'Y-m-d\TH:i:s\Z', time() ),
+				'changefreq' => $p['changefreq'],
+				'priority'   => $p['priority'],
+			);
+		}
+	}
+
+	// 변호사 상세 URL
+	$lawyers = della_theme_get_lawyers();
+	$lawyers_base = untrailingslashit( della_theme_lawyers_page_url() );
+	foreach ( $lawyers as $l ) {
+		$slug = isset( $l['slug'] ) ? $l['slug'] : '';
+		if ( $slug === '' ) {
+			continue;
+		}
+		$url = $lawyers_base . '/' . sanitize_file_name( $slug ) . '/';
+		if ( ! della_theme_sitemap_is_excluded_url( $url ) ) {
+			$entries[] = array(
+				'loc'        => $url,
+				'lastmod'    => gmdate( 'Y-m-d\TH:i:s\Z', time() ),
+				'changefreq' => 'monthly',
+				'priority'   => '0.7',
+			);
+		}
+	}
+
+	// 발행된 포스트 (성공사례·대응정보 등)
+	$posts = get_posts( array(
+		'post_type'      => 'post',
+		'post_status'    => 'publish',
+		'posts_per_page' => 5000,
+		'orderby'        => 'modified',
+		'order'          => 'DESC',
+		'no_found_rows'  => true,
+	) );
+	foreach ( $posts as $post ) {
+		$url = get_permalink( $post );
+		if ( $url !== '' && ! della_theme_sitemap_is_excluded_url( $url ) ) {
+			$modified = get_post_modified_time( 'U', true, $post );
+			$entries[] = array(
+				'loc'        => $url,
+				'lastmod'    => $modified ? gmdate( 'Y-m-d\TH:i:s\Z', $modified ) : gmdate( 'Y-m-d\TH:i:s\Z', time() ),
+				'changefreq' => 'monthly',
+				'priority'   => '0.6',
+			);
+		}
+	}
+
+	// 발행된 일반 페이지 (템플릿 페이지·한글 슬러그 페이지 제외하지 않고 포함, 중복만 제거)
+	$seen = array_flip( array_column( $entries, 'loc' ) );
+	$pages = get_posts( array(
+		'post_type'      => 'page',
+		'post_status'    => 'publish',
+		'posts_per_page' => 5000,
+		'orderby'        => 'menu_order title',
+		'order'          => 'ASC',
+		'no_found_rows'  => true,
+	) );
+	foreach ( $pages as $page ) {
+		$url = get_permalink( $page );
+		if ( $url === '' || della_theme_sitemap_is_excluded_url( $url ) || isset( $seen[ $url ] ) ) {
+			continue;
+		}
+		$modified = get_post_modified_time( 'U', true, $page );
+		$entries[] = array(
+			'loc'        => $url,
+			'lastmod'    => $modified ? gmdate( 'Y-m-d\TH:i:s\Z', $modified ) : gmdate( 'Y-m-d\TH:i:s\Z', time() ),
+			'changefreq' => 'monthly',
+			'priority'   => '0.6',
+		);
+		$seen[ $url ] = 1;
+	}
+
+	header( 'Content-Type: application/xml; charset=UTF-8' );
+	header( 'X-Robots-Tag: noindex', true );
+	echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+	echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+	foreach ( $entries as $e ) {
+		echo '  <url>' . "\n";
+		echo '    <loc>' . esc_url( $e['loc'] ) . '</loc>' . "\n";
+		if ( ! empty( $e['lastmod'] ) ) {
+			echo '    <lastmod>' . esc_html( $e['lastmod'] ) . '</lastmod>' . "\n";
+		}
+		if ( ! empty( $e['changefreq'] ) ) {
+			echo '    <changefreq>' . esc_html( $e['changefreq'] ) . '</changefreq>' . "\n";
+		}
+		if ( isset( $e['priority'] ) && $e['priority'] !== '' ) {
+			echo '    <priority>' . esc_html( $e['priority'] ) . '</priority>' . "\n";
+		}
+		echo '  </url>' . "\n";
+	}
+	echo '</urlset>';
+	exit;
+}
+add_action( 'template_redirect', 'della_theme_sitemap_xml', 0 );
+
+/**
+ * robots.txt에 sitemap.xml URL 추가 (Google / Naver 검색엔진 발견용)
+ */
+function della_theme_robots_txt_sitemap( $output, $public ) {
+	if ( $public ) {
+		$output .= "\nSitemap: " . esc_url( home_url( '/sitemap.xml' ) ) . "\n";
+	}
+	return $output;
+}
+add_filter( 'robots_txt', 'della_theme_robots_txt_sitemap', 10, 2 );
+
+/**
+ * SEO: Canonical URL — 중복 콘텐츠 방지, 네이버 검색로봇이 정규 URL 인식
  */
 function della_theme_canonical() {
 	if ( is_singular() ) {
 		echo '<link rel="canonical" href="' . esc_url( get_permalink() ) . '" />' . "\n";
-	} elseif ( is_home() && get_option( 'show_on_front' ) === 'posts' ) {
+	} elseif ( is_front_page() || ( is_home() && get_option( 'show_on_front' ) === 'posts' ) ) {
 		echo '<link rel="canonical" href="' . esc_url( home_url( '/' ) ) . '" />' . "\n";
 	} elseif ( is_archive() ) {
 		echo '<link rel="canonical" href="' . esc_url( get_pagenum_link( 1, false ) ) . '" />' . "\n";
 	}
 }
 add_action( 'wp_head', 'della_theme_canonical', 1 );
+
+/**
+ * SEO: Robots meta — 404·검색결과·내용 없는 아카이브 noindex로 불용 문서/중복 색인 방지
+ */
+function della_theme_seo_robots_meta() {
+	global $wp_query;
+	if ( is_404() ) {
+		echo '<meta name="robots" content="noindex,nofollow" />' . "\n";
+		return;
+	}
+	if ( is_search() ) {
+		echo '<meta name="robots" content="noindex,follow" />' . "\n";
+		return;
+	}
+	// 아카이브인데 글이 0건인 경우(내용 없음) — thin content 색인 방지
+	if ( is_archive() && isset( $wp_query->found_posts ) && (int) $wp_query->found_posts === 0 ) {
+		echo '<meta name="robots" content="noindex,follow" />' . "\n";
+	}
+}
+add_action( 'wp_head', 'della_theme_seo_robots_meta', 0 );
+
+/**
+ * SEO: 404 전용 meta description — 로봇이 페이지 성격 파악용 (noindex여도 설명 제공)
+ */
+function della_theme_404_meta_description() {
+	if ( ! is_404() ) {
+		return;
+	}
+	$desc = __( '페이지를 찾을 수 없습니다. 요청하신 주소가 잘못되었거나 변경되었을 수 있습니다. ', 'della-theme' )
+		. __( '법무법인 동주', 'della-theme' )
+		. __( ' 수원 성범죄 전문 변호사 사이트 홈 또는 사이트맵으로 이동해 주세요.', 'della-theme' );
+	echo '<meta name="description" content="' . esc_attr( wp_strip_all_tags( $desc ) ) . '" />' . "\n";
+}
+add_action( 'wp_head', 'della_theme_404_meta_description', 1 );
 
 /**
  * Preload hero background image on front page (LCP, mobile Core Web Vitals)
@@ -1161,23 +1495,28 @@ function della_theme_og_twitter_meta() {
 		return;
 	}
 
-	$title       = wp_get_document_title();
-	$description = '';
-	$url         = is_singular() ? get_permalink() : home_url( '/' );
+	$law_firm_name = __( '법무법인 동주', 'della-theme' );
+	$title         = wp_get_document_title();
+	$description   = '';
+	$url           = is_singular() ? get_permalink() : home_url( '/' );
 	if ( ! $url || ! is_string( $url ) ) {
 		$url = home_url( '/' );
 	}
-	$image       = '';
-	$type        = is_singular() ? 'article' : 'website';
+	$image = '';
+	$type  = is_singular() ? 'article' : 'website';
 
 	if ( empty( $title ) ) {
-		$title = get_bloginfo( 'name' ) . ( get_bloginfo( 'description' ) ? ' - ' . get_bloginfo( 'description' ) : '' );
+		$title = della_theme_trim_document_title(
+			get_bloginfo( 'name' ) . ( get_bloginfo( 'description' ) ? ' - ' . get_bloginfo( 'description' ) : '' )
+		);
+	} else {
+		$title = della_theme_trim_document_title( $title );
 	}
 
 	if ( is_front_page() ) {
 		$description = della_theme_front_page_description();
 	} elseif ( della_theme_is_lawyers_page() ) {
-		$description = get_bloginfo( 'name' ) . ' ' . __( '수원 성범죄 전문 변호사 팀 6인 소개. 강간·강제추행·불법촬영·디지털성범죄 등 성범죄 사건 초기 대응부터 재판까지 전문 변호사가 함께합니다.', 'della-theme' );
+		$description = $law_firm_name . ' ' . __( '수원 성범죄 전문 변호사 팀 6인 소개. 강간·강제추행·불법촬영·디지털성범죄 등 성범죄 사건 초기 대응부터 재판까지 전문 변호사가 함께합니다.', 'della-theme' );
 		$lawyers = della_theme_get_lawyers();
 		$upload_dir = wp_upload_dir();
 		$img_base = $upload_dir['baseurl'] . '/2026/02';
@@ -1186,27 +1525,28 @@ function della_theme_og_twitter_meta() {
 		}
 	} elseif ( della_theme_is_response_board_page() ) {
 		$description = __( '성범죄 대응정보: 강간·강제추행·군성범죄·불법촬영·성매매·직장내 성희롱 등 법조문, 판례, FAQ, 수사·재판 단계별 대응 가이드. 수원 성범죄 전문 변호사.', 'della-theme' );
-		$description = wp_strip_all_tags( $description );
-		if ( function_exists( 'mb_strlen' ) && mb_strlen( $description ) > 155 ) {
-			$description = mb_substr( $description, 0, 152 ) . '…';
-		} elseif ( strlen( $description ) > 155 ) {
-			$description = substr( $description, 0, 152 ) . '…';
-		}
+		$description = wp_strip_all_tags( $description ) . ' | ' . $law_firm_name;
+		$description = della_theme_trim_meta_description( $description );
 		$type = 'website';
 	} elseif ( della_theme_is_success_cases_page() ) {
 		$description = __( '성범죄 성공사례: 강간·강제추행·군성범죄·불법촬영·성매매·직장내 성희롱 등 수원 성범죄 전문 변호사 성공 사례 모음.', 'della-theme' );
-		$description = wp_strip_all_tags( $description );
-		if ( function_exists( 'mb_strlen' ) && mb_strlen( $description ) > 155 ) {
-			$description = mb_substr( $description, 0, 152 ) . '…';
-		} elseif ( strlen( $description ) > 155 ) {
-			$description = substr( $description, 0, 152 ) . '…';
-		}
+		$description = wp_strip_all_tags( $description ) . ' | ' . $law_firm_name;
+		$description = della_theme_trim_meta_description( $description );
 		$type = 'website';
 	} elseif ( is_singular() ) {
 		$post = get_queried_object();
 		if ( $post instanceof WP_Post ) {
-			$description = has_excerpt( $post ) ? get_the_excerpt( $post ) : wp_trim_words( get_the_content( null, false, $post ), 30 );
+			$max_pre = defined( 'DELLA_THEME_DESC_MAX' ) ? DELLA_THEME_DESC_MAX - 20 : 300;
+			$description = has_excerpt( $post ) ? get_the_excerpt( $post ) : wp_trim_words( get_the_content( null, false, $post ), 50 );
 			$description = wp_strip_all_tags( $description );
+			$description = preg_replace( '/\s+/', ' ', trim( $description ) );
+			if ( function_exists( 'mb_strlen' ) && mb_strlen( $description ) > $max_pre ) {
+				$description = mb_substr( $description, 0, $max_pre - 3 ) . '…';
+			} elseif ( strlen( $description ) > $max_pre ) {
+				$description = substr( $description, 0, $max_pre - 3 ) . '…';
+			}
+			$description = $description . ' | ' . $law_firm_name;
+			$description = della_theme_trim_meta_description( $description );
 			if ( has_post_thumbnail( $post ) ) {
 				$image = get_the_post_thumbnail_url( $post, 'large' );
 			}
@@ -1214,14 +1554,25 @@ function della_theme_og_twitter_meta() {
 	}
 
 	if ( empty( $description ) ) {
-		$description = get_bloginfo( 'description' );
+		if ( is_singular() ) {
+			$post = get_queried_object();
+			if ( $post instanceof WP_Post ) {
+				$description = get_the_title( $post ) . ' - ' . $law_firm_name . ' ' . __( '수원 성범죄 전문 변호사.', 'della-theme' );
+			} else {
+				$description = get_bloginfo( 'description' );
+			}
+		} else {
+			$description = get_bloginfo( 'description' );
+		}
 	}
 	if ( empty( $image ) ) {
 		$image = get_site_icon_url( 512 );
 	}
 
 	$description = is_string( $description ) ? wp_strip_all_tags( $description ) : '';
-	$description = preg_replace( '/\s+/', ' ', $description );
+	$description = preg_replace( '/\s+/', ' ', trim( $description ) );
+	$description = della_theme_trim_meta_description( $description );
+	$description = della_theme_ensure_description_length( $description, $law_firm_name );
 	if ( $description ) {
 		echo '<meta name="description" content="' . esc_attr( $description ) . '" />' . "\n";
 	}
@@ -1233,7 +1584,7 @@ function della_theme_og_twitter_meta() {
 	<?php if ( $image ) : ?>
 	<meta property="og:image" content="<?php echo esc_url( $image ); ?>" />
 	<?php endif; ?>
-	<meta property="og:site_name" content="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" />
+	<meta property="og:site_name" content="<?php echo esc_attr( $law_firm_name ); ?>" />
 	<meta property="og:locale" content="<?php echo esc_attr( get_bloginfo( 'language' ) ); ?>" />
 	<meta name="twitter:card" content="<?php echo $image ? 'summary_large_image' : 'summary'; ?>" />
 	<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>" />
@@ -1579,6 +1930,91 @@ function della_theme_get_breadcrumb_items() {
 }
 
 /**
+ * 콘텐츠 img 태그에서 첨부 ID 추출 (class wp-image-N 또는 src로 검색)
+ *
+ * @param string $img_tag <img ...> 태그 전체
+ * @return int 0 when not found
+ */
+function della_theme_content_image_attachment_id( $img_tag ) {
+	if ( preg_match( '/\bwp-image-(\d+)\b/i', $img_tag, $m ) ) {
+		return (int) $m[1];
+	}
+	if ( preg_match( '/\ssrc\s*=\s*(["\'])([^\1]+)\1/i', $img_tag, $m ) && ! empty( $m[2] ) ) {
+		$id = attachment_url_to_postid( $m[2] );
+		return $id ? $id : 0;
+	}
+	return 0;
+}
+
+/**
+ * SEO: 콘텐츠 이미지 alt/title — 미디어에서 새로 추가·수정한 값 적용 후, 누락분만 보강
+ * 글쓰기/업데이트 시 미디어 라이브러리 alt·title이 노출되도록 함.
+ */
+function della_theme_content_images_alt_title( $content ) {
+	if ( ! is_string( $content ) || $content === '' || ! is_singular() ) {
+		return $content;
+	}
+	$post = get_post();
+	if ( ! $post instanceof WP_Post ) {
+		return $content;
+	}
+	$page_title = get_the_title( $post );
+	$context    = __( '수원 성범죄 전문 변호사', 'della-theme' ) . ' ' . __( '법무법인 동주', 'della-theme' );
+	$fallback_alt = ( $page_title !== '' ? $page_title . ' - ' : '' ) . $context . ' ' . __( '관련 이미지', 'della-theme' );
+	$fallback_alt = trim( $fallback_alt );
+
+	$content = preg_replace_callback(
+		'/<img\s([^>]*)>/i',
+		function ( $m ) use ( $fallback_alt ) {
+			$img_tag = $m[0];
+			$attr_id = della_theme_content_image_attachment_id( $img_tag );
+			$alt_from_media   = '';
+			$title_from_media = '';
+			if ( $attr_id > 0 ) {
+				$alt_from_media   = get_post_meta( $attr_id, '_wp_attachment_image_alt', true );
+				$title_from_media = get_the_title( $attr_id );
+				if ( is_string( $alt_from_media ) ) {
+					$alt_from_media = trim( $alt_from_media );
+				} else {
+					$alt_from_media = '';
+				}
+				if ( is_string( $title_from_media ) ) {
+					$title_from_media = trim( $title_from_media );
+				} else {
+					$title_from_media = '';
+				}
+			}
+			$current_alt = '';
+			$current_title = '';
+			if ( preg_match( '/\salt\s*=\s*(["\'])([^\1]*)\1/i', $img_tag, $alt_m ) ) {
+				$current_alt = trim( $alt_m[2] );
+			}
+			if ( preg_match( '/\stitle\s*=\s*(["\'])([^\1]*)\1/i', $img_tag, $tit_m ) ) {
+				$current_title = trim( $tit_m[2] );
+			}
+			// 미디어에서 새로 넣은 alt/title 우선 (글 업데이트 시 반영), 없으면 현재 태그값, 마지막으로 fallback
+			$use_alt   = $attr_id > 0 && $alt_from_media !== '' ? $alt_from_media : ( $current_alt !== '' ? $current_alt : $fallback_alt );
+			$use_title = $attr_id > 0 && $title_from_media !== '' ? $title_from_media : ( $current_title !== '' ? $current_title : '' );
+			$out = $img_tag;
+			$out = preg_replace( '/\salt\s*=\s*["\'][^"\']*["\']/i', ' alt="' . esc_attr( $use_alt ) . '"', $out, 1 );
+			if ( ! preg_match( '/\salt\s*=/i', $out ) ) {
+				$out = preg_replace( '/<img\s/', '<img alt="' . esc_attr( $use_alt ) . '" ', $out, 1 );
+			}
+			if ( $use_title !== '' ) {
+				$out = preg_replace( '/\stitle\s*=\s*["\'][^"\']*["\']/i', ' title="' . esc_attr( $use_title ) . '"', $out, 1 );
+				if ( ! preg_match( '/\stitle\s*=/i', $out ) ) {
+					$out = preg_replace( '/<img\s/', '<img title="' . esc_attr( $use_title ) . '" ', $out, 1 );
+				}
+			}
+			return $out;
+		},
+		$content
+	);
+	return $content;
+}
+add_filter( 'the_content', 'della_theme_content_images_alt_title', 8 );
+
+/**
  * Add loading="lazy" to content images
  */
 function della_theme_lazy_load_images( $content ) {
@@ -1587,7 +2023,65 @@ function della_theme_lazy_load_images( $content ) {
 	}
 	return preg_replace( '/<img(?=\s)/', '<img loading="lazy"', $content );
 }
-add_filter( 'the_content', 'della_theme_lazy_load_images' );
+add_filter( 'the_content', 'della_theme_lazy_load_images', 10 );
+
+/**
+ * SEO: 대표 이미지(썸네일) alt/title — 미디어에서 설정한 값 우선, 없으면 글 제목 기반
+ */
+function della_theme_post_thumbnail_alt_title( $html, $post_id, $thumbnail_id ) {
+	if ( ! is_string( $html ) || $html === '' ) {
+		return $html;
+	}
+	$current_alt = '';
+	$current_title = '';
+	if ( preg_match( '/\salt\s*=\s*(["\'])([^\1]*)\1/i', $html, $alt_m ) ) {
+		$current_alt = trim( $alt_m[2] );
+	}
+	if ( preg_match( '/\stitle\s*=\s*(["\'])([^\1]*)\1/i', $html, $tit_m ) ) {
+		$current_title = trim( $tit_m[2] );
+	}
+	$alt_from_media   = '';
+	$title_from_media = '';
+	if ( $thumbnail_id ) {
+		$alt_from_media   = get_post_meta( $thumbnail_id, '_wp_attachment_image_alt', true );
+		$title_from_media = get_the_title( $thumbnail_id );
+		if ( is_string( $alt_from_media ) ) {
+			$alt_from_media = trim( $alt_from_media );
+		} else {
+			$alt_from_media = '';
+		}
+		if ( is_string( $title_from_media ) ) {
+			$title_from_media = trim( $title_from_media );
+		} else {
+			$title_from_media = '';
+		}
+	}
+	// 미디어에서 새로 넣은 alt/title 우선 적용 (글 업데이트 시 반영)
+	$use_alt   = $alt_from_media !== '' ? $alt_from_media : ( $current_alt !== '' ? $current_alt : '' );
+	if ( $use_alt === '' ) {
+		$fallback = $post_id ? get_the_title( $post_id ) : '';
+		if ( $fallback === '' && $thumbnail_id ) {
+			$fallback = get_the_title( $thumbnail_id );
+		}
+		if ( $fallback === '' ) {
+			$fallback = get_bloginfo( 'name' );
+		}
+		$use_alt = $fallback . ' ' . __( '대표 이미지', 'della-theme' );
+	}
+	$use_title = $title_from_media !== '' ? $title_from_media : $current_title;
+	$html = preg_replace( '/\salt\s*=\s*["\'][^"\']*["\']/i', ' alt="' . esc_attr( $use_alt ) . '"', $html, 1 );
+	if ( ! preg_match( '/\salt\s*=/i', $html ) ) {
+		$html = preg_replace( '/<img\s/', '<img alt="' . esc_attr( $use_alt ) . '" ', $html, 1 );
+	}
+	if ( $use_title !== '' ) {
+		$html = preg_replace( '/\stitle\s*=\s*["\'][^"\']*["\']/i', ' title="' . esc_attr( $use_title ) . '"', $html, 1 );
+		if ( ! preg_match( '/\stitle\s*=/i', $html ) ) {
+			$html = preg_replace( '/<img\s/', '<img title="' . esc_attr( $use_title ) . '" ', $html, 1 );
+		}
+	}
+	return $html;
+}
+add_filter( 'post_thumbnail_html', 'della_theme_post_thumbnail_alt_title', 10, 3 );
 
 /**
  * Register widget areas
@@ -1638,3 +2132,74 @@ function della_theme_comment_callback( $comment, $args, $depth ) {
 		</article>
 	<?php
 }
+
+/**
+ * SEO: 주기적 크롤·색인 모니터링 안내 (관리자 대시보드)
+ * 불용 문서 증가 방지를 위해 네이버 서치어드바이저·Google Search Console 점검 권장
+ */
+function della_theme_seo_monitoring_notice() {
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $screen || $screen->id !== 'dashboard' ) {
+		return;
+	}
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	$dismissed = get_option( 'della_seo_monitoring_dismissed', 0 );
+	if ( $dismissed && ( time() - (int) $dismissed ) < ( 30 * DAY_IN_SECONDS ) ) {
+		return;
+	}
+	?>
+	<div class="notice notice-info is-dismissible della-seo-monitoring-notice" data-nonce="<?php echo esc_attr( wp_create_nonce( 'della_seo_dismiss' ) ); ?>">
+		<p><strong><?php esc_html_e( 'SEO 점검', 'della-theme' ); ?></strong> &mdash;
+			<?php esc_html_e( '불용 문서가 늘지 않도록 크롤·색인 상태를 주기적으로 확인하세요.', 'della-theme' ); ?>
+			<a href="https://searchadvisor.naver.com/" target="_blank" rel="noopener noreferrer"><?php esc_html_e( '네이버 서치어드바이저', 'della-theme' ); ?></a>,
+			<a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Google Search Console', 'della-theme' ); ?></a>.
+		</p>
+	</div>
+	<?php
+}
+add_action( 'admin_notices', 'della_theme_seo_monitoring_notice' );
+
+/**
+ * SEO 모니터링 안내 닫기 시 30일간 미표시 (AJAX)
+ */
+function della_theme_seo_monitoring_dismiss() {
+	check_ajax_referer( 'della_seo_dismiss', 'nonce' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error();
+	}
+	update_option( 'della_seo_monitoring_dismissed', time() );
+	wp_send_json_success();
+}
+add_action( 'wp_ajax_della_seo_monitoring_dismiss', 'della_theme_seo_monitoring_dismiss' );
+
+/**
+ * 대시보드에서 SEO 안내 닫기 버튼 클릭 시 AJAX로 저장
+ */
+function della_theme_seo_monitoring_dismiss_script() {
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $screen || $screen->id !== 'dashboard' ) {
+		return;
+	}
+	?>
+	<script>
+	(function(){
+		var el = document.querySelector('.della-seo-monitoring-notice');
+		if (!el) return;
+		var btn = el.querySelector('.notice-dismiss');
+		if (!btn) return;
+		btn.addEventListener('click', function(){
+			var n = el.getAttribute('data-nonce');
+			if (n) {
+				var r = new XMLHttpRequest();
+				r.open('POST', '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>');
+				r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+				r.send('action=della_seo_monitoring_dismiss&nonce=' + encodeURIComponent(n));
+			}
+		});
+	})();
+	</script>
+	<?php
+}
+add_action( 'admin_footer', 'della_theme_seo_monitoring_dismiss_script' );
