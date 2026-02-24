@@ -128,6 +128,11 @@ function della_theme_sitemap_query_vars( $vars ) {
 add_filter( 'query_vars', 'della_theme_sitemap_query_vars' );
 
 /**
+ * WordPress 코어 사이트맵 비활성화 — /sitemap.xml을 테마 전용으로 사용 (wp-sitemap 리다이렉트 방지)
+ */
+add_filter( 'wp_sitemaps_enabled', '__return_false' );
+
+/**
  * 테마 전환 시 rewrite flush (lawyers/{slug}, sitemap.xml 반영)
  */
 function della_theme_flush_rewrite_on_switch() {
@@ -309,6 +314,120 @@ function della_theme_redirect_success_cases_korean_url() {
 	}
 }
 add_action( 'template_redirect', 'della_theme_redirect_success_cases_korean_url' );
+
+/**
+ * HTML 사이트맵 페이지 자동 생성 (푸터 /sitemap/ 링크용)
+ */
+function della_theme_ensure_sitemap_page() {
+	if ( get_option( 'della_sitemap_page_created' ) ) {
+		return;
+	}
+	$slug = 'sitemap';
+	$existing = get_page_by_path( $slug );
+	if ( $existing ) {
+		update_option( 'della_sitemap_page_created', 1 );
+		return;
+	}
+	$by_template = get_pages( array(
+		'meta_key'   => '_wp_page_template',
+		'meta_value' => 'page-sitemap.php',
+		'number'     => 1,
+	) );
+	if ( ! empty( $by_template ) ) {
+		update_option( 'della_sitemap_page_created', 1 );
+		return;
+	}
+	$page_id = wp_insert_post( array(
+		'post_title'   => __( '사이트맵', 'della-theme' ),
+		'post_name'    => $slug,
+		'post_status'  => 'publish',
+		'post_type'    => 'page',
+		'post_author'  => 1,
+		'post_content' => '',
+	) );
+	if ( $page_id && ! is_wp_error( $page_id ) ) {
+		update_post_meta( $page_id, '_wp_page_template', 'page-sitemap.php' );
+		update_option( 'della_sitemap_page_created', 1 );
+	}
+}
+add_action( 'after_switch_theme', 'della_theme_ensure_sitemap_page' );
+add_action( 'init', 'della_theme_ensure_sitemap_page', 0 );
+
+/**
+ * 면책공고 페이지 자동 생성 (footer 링크용)
+ */
+function della_theme_ensure_disclaimer_page() {
+	if ( get_option( 'della_disclaimer_page_created' ) ) {
+		return;
+	}
+	$slug = '면책공고';
+	$existing = get_page_by_path( $slug );
+	if ( $existing ) {
+		update_option( 'della_disclaimer_page_created', 1 );
+		return;
+	}
+	$by_template = get_pages( array(
+		'meta_key'   => '_wp_page_template',
+		'meta_value' => 'page-disclaimer.php',
+		'number'     => 1,
+	) );
+	if ( ! empty( $by_template ) ) {
+		update_option( 'della_disclaimer_page_created', 1 );
+		return;
+	}
+	$page_id = wp_insert_post( array(
+		'post_title'   => __( '면책공고', 'della-theme' ),
+		'post_name'    => $slug,
+		'post_status'  => 'publish',
+		'post_type'    => 'page',
+		'post_author'  => 1,
+		'post_content' => '',
+	) );
+	if ( $page_id && ! is_wp_error( $page_id ) ) {
+		update_post_meta( $page_id, '_wp_page_template', 'page-disclaimer.php' );
+		update_option( 'della_disclaimer_page_created', 1 );
+	}
+}
+add_action( 'after_switch_theme', 'della_theme_ensure_disclaimer_page' );
+add_action( 'init', 'della_theme_ensure_disclaimer_page', 0 );
+
+/**
+ * 개인정보처리방침 페이지 자동 생성 (footer 링크용)
+ */
+function della_theme_ensure_privacy_policy_page() {
+	if ( get_option( 'della_privacy_policy_page_created' ) ) {
+		return;
+	}
+	$slug = '개인정보처리방침';
+	$existing = get_page_by_path( $slug );
+	if ( $existing ) {
+		update_option( 'della_privacy_policy_page_created', 1 );
+		return;
+	}
+	$by_template = get_pages( array(
+		'meta_key'   => '_wp_page_template',
+		'meta_value' => 'page-privacy-policy.php',
+		'number'     => 1,
+	) );
+	if ( ! empty( $by_template ) ) {
+		update_option( 'della_privacy_policy_page_created', 1 );
+		return;
+	}
+	$page_id = wp_insert_post( array(
+		'post_title'   => __( '개인정보처리방침', 'della-theme' ),
+		'post_name'    => $slug,
+		'post_status'  => 'publish',
+		'post_type'    => 'page',
+		'post_author'  => 1,
+		'post_content' => '',
+	) );
+	if ( $page_id && ! is_wp_error( $page_id ) ) {
+		update_post_meta( $page_id, '_wp_page_template', 'page-privacy-policy.php' );
+		update_option( 'della_privacy_policy_page_created', 1 );
+	}
+}
+add_action( 'after_switch_theme', 'della_theme_ensure_privacy_policy_page' );
+add_action( 'init', 'della_theme_ensure_privacy_policy_page', 0 );
 
 /**
  * body 클래스: 프론트(맨 위)에서 헤더 투명 적용용 / 변호사 페이지
@@ -710,12 +829,12 @@ function della_theme_lawyer_image_url( $image_filename, $base_url, $base_dir ) {
 
 /**
  * 변호사 프로필 이미지 srcset (고해상도 2x 지원)
- * uploads/2026/02/ 에 파일명@2x.확장자 있으면 2x로 사용
+ * @2x 있으면 1x/2x 분리, 없으면 동일 URL을 1x·2x로 지정해 레티나에서 원본으로 선명 표시
  *
  * @param string $image_filename 예: dongju-kim-yunseo-lawyer.png
  * @param string $base_url       예: uploads baseurl + /2026/02
  * @param string $base_dir       예: uploads basedir + /2026/02
- * @return string srcset 속성값 또는 빈 문자열
+ * @return string srcset 속성값 (항상 반환하여 화질 개선)
  */
 function della_theme_lawyer_image_srcset( $image_filename, $base_url, $base_dir ) {
 	$path_info = pathinfo( $image_filename );
@@ -723,12 +842,13 @@ function della_theme_lawyer_image_srcset( $image_filename, $base_url, $base_dir 
 	$ext       = isset( $path_info['extension'] ) ? $path_info['extension'] : 'png';
 	$file_2x   = $name . '@2x.' . $ext;
 	$path_2x   = trailingslashit( $base_dir ) . $file_2x;
+	$url_1x    = trailingslashit( $base_url ) . $image_filename;
 	if ( ! empty( $name ) && file_exists( $path_2x ) ) {
-		$url_1x = trailingslashit( $base_url ) . $image_filename;
 		$url_2x = trailingslashit( $base_url ) . $file_2x;
 		return esc_url( $url_1x ) . ' 1x, ' . esc_url( $url_2x ) . ' 2x';
 	}
-	return '';
+	// @2x 없을 때: 동일 URL을 2x로도 지정 → 고해상도 화면에서 원본을 다운스케일해 선명하게 표시
+	return esc_url( $url_1x ) . ' 1x, ' . esc_url( $url_1x ) . ' 2x';
 }
 
 /**
@@ -1286,9 +1406,15 @@ function della_theme_sitemap_is_excluded_url( $url ) {
 /**
  * XML 사이트맵 출력 — priority, changefreq, lastmod(ISO 8601) 적용
  * Google Search Console / Naver Search Advisor 대응
+ * REQUEST_URI로 /sitemap.xml 직접 감지하여 코어 wp-sitemap 리다이렉트보다 먼저 처리
  */
 function della_theme_sitemap_xml() {
-	if ( (int) get_query_var( 'della_sitemap' ) !== 1 ) {
+	$is_sitemap_request = ( (int) get_query_var( 'della_sitemap' ) === 1 );
+	if ( ! $is_sitemap_request ) {
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$is_sitemap_request = ( strpos( $request_uri, 'sitemap.xml' ) !== false );
+	}
+	if ( ! $is_sitemap_request ) {
 		return;
 	}
 	$base = trailingslashit( home_url( '/' ) );
@@ -1424,15 +1550,31 @@ function della_theme_robots_txt_sitemap( $output, $public ) {
 add_filter( 'robots_txt', 'della_theme_robots_txt_sitemap', 10, 2 );
 
 /**
- * SEO: Canonical URL — 중복 콘텐츠 방지, 네이버 검색로봇이 정규 URL 인식
+ * SEO: Canonical URL — 현재 URL 기준 정규 URL 1개만 출력 (중복 방지)
+ * singular, 홈, 아카이브, 검색, 페이지네이션 등 전 타입 대응
  */
 function della_theme_canonical() {
-	if ( is_singular() ) {
-		echo '<link rel="canonical" href="' . esc_url( get_permalink() ) . '" />' . "\n";
-	} elseif ( is_front_page() || ( is_home() && get_option( 'show_on_front' ) === 'posts' ) ) {
-		echo '<link rel="canonical" href="' . esc_url( home_url( '/' ) ) . '" />' . "\n";
-	} elseif ( is_archive() ) {
-		echo '<link rel="canonical" href="' . esc_url( get_pagenum_link( 1, false ) ) . '" />' . "\n";
+	if ( is_404() ) {
+		return;
+	}
+	// 메인(홈)은 항상 사이트 루트 URL — 고정 페이지 슬러그(/테스트야-몰카/ 등)가 canonical에 나오지 않게
+	if ( is_front_page() || ( is_home() && get_option( 'show_on_front' ) === 'posts' ) ) {
+		$canonical = home_url( '/' );
+	} elseif ( function_exists( 'della_theme_is_lawyers_page' ) && della_theme_is_lawyers_page() && get_query_var( 'lawyer_slug' ) ) {
+		// 성범죄 전문 변호사 상세: /lawyers/{slug}/ 정규 URL
+		$canonical = function_exists( 'della_theme_lawyer_profile_url' ) ? della_theme_lawyer_profile_url( get_query_var( 'lawyer_slug' ) ) : '';
+	} else {
+		$canonical = function_exists( 'wp_get_canonical_url' ) ? wp_get_canonical_url() : null;
+		if ( empty( $canonical ) ) {
+			if ( is_singular() ) {
+				$canonical = get_permalink();
+			} elseif ( is_archive() || is_search() ) {
+				$canonical = get_pagenum_link( 1, false );
+			}
+		}
+	}
+	if ( ! empty( $canonical ) ) {
+		echo '<link rel="canonical" href="' . esc_url( $canonical ) . '" />' . "\n";
 	}
 }
 add_action( 'wp_head', 'della_theme_canonical', 1 );
