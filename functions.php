@@ -793,8 +793,8 @@ function della_theme_scripts() {
 	$theme_uri = get_stylesheet_directory_uri();
 	$asset_ver = della_theme_asset_version();
 
-	// Google Fonts (필터로 비활성화 시 요청 수 절감, 비차단 로드는 style_loader_tag에서 처리)
-	if ( apply_filters( 'della_theme_load_google_fonts', true ) ) {
+	// Google Fonts (기본 비활성화 — 요청 수 절감. 폰트 사용 시 add_filter( 'della_theme_load_google_fonts', '__return_true' );)
+	if ( apply_filters( 'della_theme_load_google_fonts', false ) ) {
 		wp_enqueue_style(
 			'della-google-fonts',
 			'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@400;600;700&display=swap',
@@ -910,6 +910,13 @@ function della_theme_remove_unused_wp_assets() {
 	foreach ( $seo_frontend_styles as $handle ) {
 		wp_dequeue_style( $handle );
 	}
+
+	// 로그인 시 상단 admin bar·dashicons 스타일 제거 (프론트 로딩 경량화). 부작용: 로그인 사용자 admin bar 스타일 없음.
+	// 필요 시 아래 두 줄 제거하거나 della_theme_remove_admin_bar_styles 필터로 false 반환하여 복원.
+	if ( apply_filters( 'della_theme_remove_admin_bar_styles', true ) ) {
+		wp_dequeue_style( 'admin-bar' );
+		wp_dequeue_style( 'dashicons' );
+	}
 }
 add_action( 'wp_enqueue_scripts', 'della_theme_remove_unused_wp_assets', 100 );
 
@@ -921,7 +928,18 @@ function della_theme_remove_seo_preview_styles_by_src( $href, $handle ) {
 	if ( is_admin() ) {
 		return $href;
 	}
-	$remove_patterns = array( 'FacebookPreview', 'TwitterPreview', 'SocialPreview' );
+	$remove_patterns = array(
+		'FacebookPreview',
+		'TwitterPreview',
+		'SocialPreview',
+		'GoogleSearchPreview',
+		'seo-preview',
+		'ProBadge',
+		'Tabs',
+		'Button.',
+		'Index.',
+		'app.',
+	);
 	foreach ( $remove_patterns as $pattern ) {
 		if ( $href && strpos( $href, $pattern ) !== false ) {
 			return false;
