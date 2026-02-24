@@ -46,6 +46,18 @@ function della_theme_asset_version() {
 }
 
 /**
+ * 프론트엔드에서 관리자 바(워드프레스 정보·사이트명·SEO 메뉴 등) 비표시
+ * 로그인해도 상단 흰색 메뉴바가 나오지 않음. 관리 화면에서는 그대로 표시.
+ */
+function della_theme_hide_admin_bar_on_front( $show ) {
+	if ( is_admin() ) {
+		return $show;
+	}
+	return false;
+}
+add_filter( 'show_admin_bar', 'della_theme_hide_admin_bar_on_front', 10, 1 );
+
+/**
  * Theme setup
  */
 function della_theme_setup() {
@@ -939,6 +951,7 @@ function della_theme_remove_seo_preview_styles_by_src( $href, $handle ) {
 		'Button.',
 		'Index.',
 		'app.',
+		'admin-bar',  // 관리자 바 스타일(admin-bar.d9a8e9bb.css 등) 프론트 미로드
 	);
 	foreach ( $remove_patterns as $pattern ) {
 		if ( $href && strpos( $href, $pattern ) !== false ) {
