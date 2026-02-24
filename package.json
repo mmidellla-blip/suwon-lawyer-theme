@@ -1,0 +1,12 @@
+{
+  "name": "della-theme",
+  "description": "Della Theme - PurgeCSS and build",
+  "private": true,
+  "scripts": {
+    "purgecss": "purgecss --config purgecss.config.cjs",
+    "build:css": "npm run purgecss && php build-css.php"
+  },
+  "devDependencies": {
+    "purgecss": "^5.0.0"
+  }
+}

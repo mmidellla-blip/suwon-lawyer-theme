@@ -1,21 +1,31 @@
-name: Deploy Theme to Hostinger
+# CSS 빌드 (PurgeCSS + 미니파이). 배포 단계는 환경에 맞게 추가.
+name: Build / Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [main, master]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: FTP Deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: /public_html/wp-content/themes/della-theme/
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: .
+
+      - name: Build CSS
+        run: npm run build:css
+        working-directory: .
+
+      # 배포: FTP/SSH 등은 여기에 step 추가
+      # - name: Deploy to server
+      #   run: ...

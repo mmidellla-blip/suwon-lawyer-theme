@@ -17,6 +17,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<meta name="theme-color" content="#ffffff">
 	<meta name="format-detection" content="telephone=yes">
 	<link rel="profile" href="https://gmpg.org/xfn/11">
+	<?php
+	// LCP 요청 탐색 최우선: 히어로 이미지 preload + 업로드 origin preconnect (프론트만)
+	if ( is_front_page() ) {
+		$della_ud = wp_upload_dir();
+		if ( ! empty( $della_ud['baseurl'] ) ) {
+			$hero_url = $della_ud['baseurl'] . '/2026/02/dongju-law-hero-banner.webp';
+			echo '<link rel="preload" href="' . esc_url( $hero_url ) . '" as="image" fetchpriority="high">' . "\n";
+			$parsed = parse_url( $della_ud['baseurl'] );
+			if ( ! empty( $parsed['scheme'] ) && ! empty( $parsed['host'] ) ) {
+				echo '<link rel="preconnect" href="' . esc_attr( $parsed['scheme'] . '://' . $parsed['host'] ) . '">' . "\n";
+			}
+		}
+	}
+	?>
 	<?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>

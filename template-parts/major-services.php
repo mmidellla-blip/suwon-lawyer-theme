@@ -49,19 +49,35 @@ $stages = array(
 		<div class="major-services-stages" role="list" aria-label="<?php esc_attr_e( '주요 서비스 단계 목록', 'della-theme' ); ?>">
 			<?php foreach ( $stages as $stage ) : ?>
 				<article class="major-services-stage major-services-stage--<?php echo esc_attr( $stage['order'] ); ?>" role="listitem">
-					<div class="major-services-stage-content">
-						<h3 class="major-services-stage-title"><?php echo esc_html( $stage['title'] ); ?></h3>
-						<p class="major-services-stage-text"><?php echo esc_html( $stage['content'] ); ?></p>
-					</div>
-					<div class="major-services-stage-media">
-						<?php if ( ! empty( $stage['image'] ) ) : ?>
-							<img src="<?php echo esc_url( $uploads . $stage['image'] ); ?>" alt="<?php echo esc_attr( $stage['image_alt'] ); ?>" class="major-services-stage-img" loading="lazy" width="600" height="400">
-						<?php else : ?>
-							<div class="major-services-stage-placeholder" aria-hidden="true">
-								<span><?php echo esc_html( $stage['title'] ); ?></span>
-							</div>
-						<?php endif; ?>
-					</div>
+					<?php if ( $stage['order'] === 'image-first' ) : ?>
+						<div class="major-services-stage-media">
+							<?php if ( ! empty( $stage['image'] ) ) : ?>
+								<img src="<?php echo esc_url( $uploads . $stage['image'] ); ?>" alt="<?php echo esc_attr( $stage['image_alt'] ); ?>" class="major-services-stage-img" loading="lazy" width="600" height="400">
+							<?php else : ?>
+								<div class="major-services-stage-placeholder" aria-hidden="true">
+									<span><?php echo esc_html( $stage['title'] ); ?></span>
+								</div>
+							<?php endif; ?>
+						</div>
+						<div class="major-services-stage-content">
+							<h3 class="major-services-stage-title"><?php echo esc_html( $stage['title'] ); ?></h3>
+							<p class="major-services-stage-text"><?php echo esc_html( $stage['content'] ); ?></p>
+						</div>
+					<?php else : ?>
+						<div class="major-services-stage-content">
+							<h3 class="major-services-stage-title"><?php echo esc_html( $stage['title'] ); ?></h3>
+							<p class="major-services-stage-text"><?php echo esc_html( $stage['content'] ); ?></p>
+						</div>
+						<div class="major-services-stage-media">
+							<?php if ( ! empty( $stage['image'] ) ) : ?>
+								<img src="<?php echo esc_url( $uploads . $stage['image'] ); ?>" alt="<?php echo esc_attr( $stage['image_alt'] ); ?>" class="major-services-stage-img" loading="lazy" width="600" height="400">
+							<?php else : ?>
+								<div class="major-services-stage-placeholder" aria-hidden="true">
+									<span><?php echo esc_html( $stage['title'] ); ?></span>
+								</div>
+							<?php endif; ?>
+						</div>
+					<?php endif; ?>
 				</article>
 			<?php endforeach; ?>
 		</div>

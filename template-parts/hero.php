@@ -54,7 +54,8 @@ $hero_home_url = apply_filters( 'della_hero_home_url', $hero_home_url );
 				$lawyer_img_src = della_theme_lawyer_image_url( $lawyer['image'], $hero_base, $hero_dir );
 				$lawyer_srcset  = della_theme_lawyer_image_srcset( $lawyer['image'], $hero_base, $hero_dir );
 				$lawyer_alt     = $lawyer['name'] . ' ' . $lawyer['title'] . ' 프로필 사진';
-				$is_first_two   = $lawyer_idx < 2;
+				$is_above_fold  = $lawyer_idx < 2;
+				$is_lcp_candidate = ( $lawyer_idx === 0 );
 				?>
 				<article class="hero-lawyer-card" itemscope itemtype="https://schema.org/Person">
 					<div class="hero-lawyer-image-wrap">
@@ -64,10 +65,10 @@ $hero_home_url = apply_filters( 'della_hero_home_url', $hero_home_url );
 							alt="<?php echo esc_attr( $lawyer_alt ); ?>"
 							width="400"
 							height="533"
-							loading="<?php echo $is_first_two ? 'eager' : 'lazy'; ?>"
+							loading="<?php echo $is_above_fold ? 'eager' : 'lazy'; ?>"
 							decoding="async"
 							class="hero-lawyer-image"
-							<?php echo $is_first_two ? ' fetchpriority="high"' : ''; ?>
+							<?php echo $is_lcp_candidate ? ' fetchpriority="high"' : ''; ?>
 						/>
 					</div>
 					<h2 class="hero-lawyer-name">

@@ -1,0 +1,36 @@
+/* Della Theme – page: sitemap */
+/* Sitemap page (디자인 유지) */
+.page-sitemap .sitemap-desc {
+  margin: 0 0 var(--space-3);
+  font-size: 0.9375rem;
+  color: var(--della-color-muted);
+  line-height: 1.6;
+}
+.page-sitemap .sitemap-content {
+  margin-top: var(--space-3);
+}
+.page-sitemap .sitemap-section {
+  margin-bottom: var(--space-4);
+}
+.page-sitemap .sitemap-section-title {
+  margin: 0 0 var(--space-2);
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-family: var(--della-font-serif-kr);
+  color: var(--della-color-text);
+}
+.page-sitemap .sitemap-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.page-sitemap .sitemap-list li {
+  margin-bottom: 0.5rem;
+}
+.page-sitemap .sitemap-list a {
+  color: var(--della-color-link);
+  text-decoration: none;
+}
+.page-sitemap .sitemap-list a:hover {
+  text-decoration: underline;
+}
