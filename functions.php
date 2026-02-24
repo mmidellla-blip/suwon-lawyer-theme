@@ -883,6 +883,7 @@ add_filter( 'script_loader_tag', 'della_theme_script_defer', 10, 3 );
 
 /**
  * 불필요한 WordPress 기본 스크립트/스타일 제거 (프론트 전용, 로딩 경량화)
+ * SEO 플러그인(Yoast, Rank Math 등)의 프론트엔드 미리보기 스타일(FacebookPreview.css 등) 제거
  */
 function della_theme_remove_unused_wp_assets() {
 	if ( is_admin() ) {
@@ -895,8 +896,65 @@ function della_theme_remove_unused_wp_assets() {
 	wp_dequeue_style( 'wp-block-library-theme-inline' );
 	// WP 5.9+ 클래식 호환용 전역 스타일 — 테마 자체 CSS로 대체
 	wp_dequeue_style( 'global-styles' );
+
+	// SEO 플러그인 프론트엔드용 미리보기/소셜 스타일 제거 (관리자·편집 화면용이 프론트에 불필요하게 로드되는 경우)
+	$seo_frontend_styles = array(
+		'wpseo-block-editor',           // Yoast SEO 블록 에디터/소셜 미리보기
+		'yoast-seo-block-editor',        // Yoast (다른 버전)
+		'yoast-social-preview',         // Yoast 소셜 미리보기
+		'rank-math-block-editor',       // Rank Math 블록 에디터
+		'rank-math-frontend',            // Rank Math 프론트 (미리보기용)
+		'aioseo-block-editor',          // All in One SEO
+		'aioseo-social-preview',        // All in One SEO 소셜 미리보기
+	);
+	foreach ( $seo_frontend_styles as $handle ) {
+		wp_dequeue_style( $handle );
+	}
 }
 add_action( 'wp_enqueue_scripts', 'della_theme_remove_unused_wp_assets', 100 );
+
+/**
+ * SEO 플러그인 스타일 중 URL에 FacebookPreview 등 포함된 항목 프론트엔드에서 제거
+ * (핸들을 모를 때 style_loader_src로 제거)
+ */
+function della_theme_remove_seo_preview_styles_by_src( $href, $handle ) {
+	if ( is_admin() ) {
+		return $href;
+	}
+	$remove_patterns = array( 'FacebookPreview', 'TwitterPreview', 'SocialPreview' );
+	foreach ( $remove_patterns as $pattern ) {
+		if ( $href && strpos( $href, $pattern ) !== false ) {
+			return false;
+		}
+	}
+	return $href;
+}
+add_filter( 'style_loader_src', 'della_theme_remove_seo_preview_styles_by_src', 10, 2 );
+
+/**
+ * (디버그) 프론트엔드에 로드된 모든 스타일 핸들·URL 출력 — FacebookPreview.css 등 정확한 핸들 확인용
+ * 사용법: 아래 주석을 해제하고 프론트 페이지 새로고침 후 HTML 소스 또는 페이지 하단에 출력된 목록에서
+ * "FacebookPreview"가 포함된 src를 찾아 해당 handle을 위 $seo_frontend_styles 배열에 추가.
+ * 확인 후 반드시 주석 다시 처리할 것.
+ */
+/*
+add_action( 'wp_print_styles', function() {
+	if ( is_admin() || ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	global $wp_styles;
+	if ( ! isset( $wp_styles->queue ) ) {
+		return;
+	}
+	echo "\n<!-- Enqueued styles (handle => src): ";
+	foreach ( $wp_styles->queue as $handle ) {
+		if ( isset( $wp_styles->registered[ $handle ]->src ) ) {
+			echo $handle . ' => ' . $wp_styles->registered[ $handle ]->src . ' | ';
+		}
+	}
+	echo " -->\n";
+}, 999 );
+*/
 
 /**
  * jQuery 제거 — 테마는 바닐라 JS만 사용. 플러그인에서 jQuery 필요 시 이 블록 제거.
@@ -1699,11 +1757,12 @@ add_action( 'wp_head', 'della_theme_404_meta_description', 1 );
 
 /**
  * Open Graph and Twitter Card meta tags
- * SEO 플러그인(Yoast, Rank Math 등)이 OG를 출력하면 테마 OG는 생략하여 중복 제거
+ * SEO 플러그인에서 이미 출력하므로 테마는 출력하지 않음 (og:site_name, og:url, og:title, twitter:title 중복 제거).
+ * 플러그인 미사용 시 테마에서 출력하려면: add_filter( 'della_theme_disable_og_twitter_meta', '__return_false' );
  */
 function della_theme_og_twitter_meta() {
-	// 다른 플러그인이 OG/Twitter 메타를 처리하면 테마는 출력하지 않음 (중복 방지)
-	if ( apply_filters( 'della_theme_disable_og_twitter_meta', false ) ) {
+	// 기본값 true: 테마 OG/Twitter 미출력 → 플러그인만 사용 (중복 제거)
+	if ( apply_filters( 'della_theme_disable_og_twitter_meta', true ) ) {
 		return;
 	}
 	if ( defined( 'WPSEO_VERSION' ) || class_exists( 'RankMath', false ) || class_exists( 'All_in_One_SEO_Pack', false ) ) {
@@ -2242,6 +2301,23 @@ function della_theme_lazy_load_images( $content ) {
 	return preg_replace( '/<img(?=\s)/', '<img loading="lazy"', $content );
 }
 add_filter( 'the_content', 'della_theme_lazy_load_images', 10 );
+
+/**
+ * 프론트 페이지 본문 내 H1 → H2 (메인 H1은 히어로만 유지, SEO 중복 방지)
+ * 블록 에디터 등에서 본문에 넣은 제목 1을 제목 2로 바꿈.
+ */
+function della_theme_front_page_content_h1_to_h2( $content ) {
+	if ( ! is_front_page() || ! in_the_loop() || ! is_main_query() ) {
+		return $content;
+	}
+	if ( ! is_string( $content ) || $content === '' ) {
+		return $content;
+	}
+	$content = preg_replace( '/<h1(\s[^>]*)?>/i', '<h2$1>', $content );
+	$content = str_ireplace( '</h1>', '</h2>', $content );
+	return $content;
+}
+add_filter( 'the_content', 'della_theme_front_page_content_h1_to_h2', 15 );
 
 /**
  * SEO: 대표 이미지(썸네일) alt/title — 미디어에서 설정한 값 우선, 없으면 글 제목 기반
