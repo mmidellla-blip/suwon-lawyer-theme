@@ -803,6 +803,7 @@ add_filter( 'get_custom_logo', 'della_theme_custom_logo_alt', 10, 2 );
 
 /**
  * Enqueue scripts and styles (minimal for fast loading)
+ * 메인 CSS는 폰트와 무관하게 즉시 로드 → FCP 개선. 폰트는 비차단 로드.
  */
 function della_theme_scripts() {
 	wp_enqueue_style(
@@ -814,7 +815,7 @@ function della_theme_scripts() {
 	wp_enqueue_style(
 		'della-theme-style',
 		get_stylesheet_uri(),
-		array( 'della-google-fonts' ),
+		array(),
 		della_theme_asset_version( 'style.css' )
 	);
 
@@ -832,6 +833,26 @@ function della_theme_scripts() {
 add_action( 'wp_enqueue_scripts', 'della_theme_scripts' );
 
 /**
+ * Google Fonts 비차단 로드 — 렌더 블로킹 제거로 FCP/LCP 개선 (디자인 동일)
+ */
+function della_theme_fonts_async_tag( $html, $handle, $href ) {
+	if ( $handle !== 'della-google-fonts' ) {
+		return $html;
+	}
+	return '<link rel="stylesheet" id="' . esc_attr( $handle ) . '-css" href="' . esc_url( $href ) . '" media="print" onload="this.media=\'all\'" />' . "\n<noscript>" . $html . '</noscript>';
+}
+add_filter( 'style_loader_tag', 'della_theme_fonts_async_tag', 10, 3 );
+
+/**
+ * 폰트 도메인 preconnect — 폰트 요청 지연 감소
+ */
+function della_theme_preconnect_fonts() {
+	echo '<link rel="preconnect" href="https://fonts.googleapis.com" />' . "\n";
+	echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' . "\n";
+}
+add_action( 'wp_head', 'della_theme_preconnect_fonts', -1 );
+
+/**
  * 변호사 프로필 이미지 — 고해상도 우선 URL (화질 개선)
  * @2x 파일이 있으면 해당 URL 반환 → 브라우저가 다운스케일하여 선명하게 표시
  *
@@ -841,13 +862,19 @@ add_action( 'wp_enqueue_scripts', 'della_theme_scripts' );
  * @return string 이미지 URL
  */
 function della_theme_lawyer_image_url( $image_filename, $base_url, $base_dir ) {
+	static $exists_cache = array();
 	$path_info = pathinfo( $image_filename );
 	$name      = isset( $path_info['filename'] ) ? $path_info['filename'] : '';
 	$ext       = isset( $path_info['extension'] ) ? $path_info['extension'] : 'png';
 	$file_2x   = $name . '@2x.' . $ext;
 	$path_2x   = trailingslashit( $base_dir ) . $file_2x;
-	if ( ! empty( $name ) && file_exists( $path_2x ) ) {
-		return trailingslashit( $base_url ) . $file_2x;
+	if ( ! empty( $name ) ) {
+		if ( ! isset( $exists_cache[ $path_2x ] ) ) {
+			$exists_cache[ $path_2x ] = file_exists( $path_2x );
+		}
+		if ( $exists_cache[ $path_2x ] ) {
+			return trailingslashit( $base_url ) . $file_2x;
+		}
 	}
 	return trailingslashit( $base_url ) . $image_filename;
 }
@@ -862,15 +889,21 @@ function della_theme_lawyer_image_url( $image_filename, $base_url, $base_dir ) {
  * @return string srcset 속성값 (항상 반환하여 화질 개선)
  */
 function della_theme_lawyer_image_srcset( $image_filename, $base_url, $base_dir ) {
+	static $exists_cache = array();
 	$path_info = pathinfo( $image_filename );
 	$name      = isset( $path_info['filename'] ) ? $path_info['filename'] : '';
 	$ext       = isset( $path_info['extension'] ) ? $path_info['extension'] : 'png';
 	$file_2x   = $name . '@2x.' . $ext;
 	$path_2x   = trailingslashit( $base_dir ) . $file_2x;
 	$url_1x    = trailingslashit( $base_url ) . $image_filename;
-	if ( ! empty( $name ) && file_exists( $path_2x ) ) {
-		$url_2x = trailingslashit( $base_url ) . $file_2x;
-		return esc_url( $url_1x ) . ' 1x, ' . esc_url( $url_2x ) . ' 2x';
+	if ( ! empty( $name ) ) {
+		if ( ! isset( $exists_cache[ $path_2x ] ) ) {
+			$exists_cache[ $path_2x ] = file_exists( $path_2x );
+		}
+		if ( $exists_cache[ $path_2x ] ) {
+			$url_2x = trailingslashit( $base_url ) . $file_2x;
+			return esc_url( $url_1x ) . ' 1x, ' . esc_url( $url_2x ) . ' 2x';
+		}
 	}
 	// @2x 없을 때: 동일 URL을 2x로도 지정 → 고해상도 화면에서 원본을 다운스케일해 선명하게 표시
 	return esc_url( $url_1x ) . ' 1x, ' . esc_url( $url_1x ) . ' 2x';
@@ -878,20 +911,26 @@ function della_theme_lawyer_image_srcset( $image_filename, $base_url, $base_dir 
 
 /**
  * 성범죄 전문 변호사 페이지 URL (GNB·사이트맵 등)
- * 템플릿 적용된 페이지가 있으면 해당 주소, 없으면 고정 슬러그 반환
+ * 템플릿 적용된 페이지가 있으면 해당 주소, 없으면 고정 슬러그 반환 (요청당 1회 쿼리)
  *
  * @return string
  */
 function della_theme_lawyers_page_url() {
+	static $cached_url = null;
+	if ( $cached_url !== null ) {
+		return $cached_url;
+	}
 	$pages = get_pages( array(
 		'meta_key'   => '_wp_page_template',
 		'meta_value' => 'page-lawyers.php',
 		'number'     => 1,
 	) );
 	if ( ! empty( $pages ) ) {
-		return get_permalink( $pages[0] );
+		$cached_url = get_permalink( $pages[0] );
+	} else {
+		$cached_url = home_url( '/lawyers/' );
 	}
-	return home_url( '/lawyers/' );
+	return $cached_url;
 }
 
 /**
@@ -1652,7 +1691,7 @@ function della_theme_hero_preload() {
 		return;
 	}
 	$hero_url = $upload_dir['baseurl'] . '/2026/02/dongju-law-hero-banner.webp';
-	echo '<link rel="preload" href="' . esc_url( $hero_url ) . '" as="image" />' . "\n";
+	echo '<link rel="preload" href="' . esc_url( $hero_url ) . '" as="image" fetchpriority="high" />' . "\n";
 }
 add_action( 'wp_head', 'della_theme_hero_preload', 0 );
 
