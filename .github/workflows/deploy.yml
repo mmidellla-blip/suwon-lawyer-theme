@@ -34,6 +34,7 @@ jobs:
           exclude: |
             **/node_modules/**
             **/.git/**
+            **/assets/css/src/**
             **/build-css.php
             **/split-css.php
             **/purgecss.config.cjs

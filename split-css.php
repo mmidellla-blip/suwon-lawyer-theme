@@ -5,10 +5,13 @@
  * Run from theme dir: php split-css.php
  */
 $theme_dir = __DIR__;
-$path = $theme_dir . '/assets/css/style.css';
+$path = $theme_dir . '/assets/css/src/style.css';
+if ( ! is_readable( $path ) ) {
+	$path = $theme_dir . '/assets/css/style.css';
+}
 $full = file_get_contents( $path );
 if ( $full === false ) {
-	fwrite( STDERR, "Failed to read assets/css/style.css\n" );
+	fwrite( STDERR, "Failed to read style.css (tried src/ and assets/css/)\n" );
 	exit( 1 );
 }
 
@@ -48,7 +51,10 @@ $page_sitemap_ranges = [
 	[ 4431, 4465 ], // .page-sitemap only
 ];
 
-$out_dir = $theme_dir . '/assets/css';
+$out_dir = $theme_dir . '/assets/css/src';
+if ( ! is_dir( $out_dir ) ) {
+	mkdir( $out_dir, 0755, true );
+}
 $common_content = "/* Della Theme – common styles */\n" . slice_lines( $lines, $common_ranges );
 $lawyers_content = "/* Della Theme – page: lawyers / lawyer profile */\n" . slice_lines( $lines, $page_lawyers_ranges );
 $board_content   = "/* Della Theme – page: response board, success cases */\n" . slice_lines( $lines, $page_board_ranges );

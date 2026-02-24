@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "purgecss": "purgecss --config purgecss.config.cjs",
-    "build:css": "npm run purgecss && php build-css.php"
+    "build:css": "npm run purgecss && php build-css.php",
+    "watch:css": "php build-css.php"
   },
   "devDependencies": {
     "purgecss": "^5.0.0"

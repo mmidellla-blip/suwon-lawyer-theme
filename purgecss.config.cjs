@@ -6,8 +6,8 @@ module.exports = {
   content: [
     './**/*.php',
   ],
-  css: ['./assets/css/style.css'],
-  output: './assets/css/style.css',
+  css: ['./assets/css/src/style.css'],
+  output: './assets/css/src/style.css',
   variables: true,
   keyframes: true,
   safelist: {

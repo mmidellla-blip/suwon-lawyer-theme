@@ -785,20 +785,22 @@ function della_theme_scripts() {
 		null
 	);
 
-	// CSS — common 항상 로드, 페이지별는 조건부
-	$common_min = $theme_dir . '/assets/css/common.min.css';
-	$common_css = $theme_dir . '/assets/css/common.css';
+	// CSS — dist 폴더에서 로드 (common 항상, 페이지별 조건부)
+	$css_dist = $theme_uri . '/assets/css/dist';
+	$css_dist_path = $theme_dir . '/assets/css/dist';
+	$common_min = $css_dist_path . '/common.min.css';
+	$common_css = $css_dist_path . '/common.css';
 	if ( file_exists( $common_min ) ) {
 		wp_enqueue_style(
 			'della-theme-style',
-			$theme_uri . '/assets/css/common.min.css',
+			$css_dist . '/common.min.css',
 			array(),
 			filemtime( $common_min )
 		);
 	} else {
 		wp_enqueue_style(
 			'della-theme-style',
-			$theme_uri . '/assets/css/common.css',
+			$css_dist . '/common.css',
 			array(),
 			file_exists( $common_css ) ? (string) filemtime( $common_css ) : DELLA_THEME_VERSION
 		);
@@ -818,16 +820,16 @@ function della_theme_scripts() {
 		$page_styles[] = array( 'page-sitemap', 'della-theme-page-sitemap' );
 	}
 	foreach ( $page_styles as list( $file, $handle ) ) {
-		$min = $theme_dir . '/assets/css/' . $file . '.min.css';
-		$full = $theme_dir . '/assets/css/' . $file . '.css';
+		$min = $css_dist_path . '/' . $file . '.min.css';
+		$full = $css_dist_path . '/' . $file . '.css';
 		if ( file_exists( $min ) ) {
-			wp_enqueue_style( $handle, $theme_uri . '/assets/css/' . $file . '.min.css', array( 'della-theme-style' ), filemtime( $min ) );
+			wp_enqueue_style( $handle, $css_dist . '/' . $file . '.min.css', array( 'della-theme-style' ), filemtime( $min ) );
 		} elseif ( file_exists( $full ) ) {
-			wp_enqueue_style( $handle, $theme_uri . '/assets/css/' . $file . '.css', array( 'della-theme-style' ), filemtime( $full ) );
+			wp_enqueue_style( $handle, $css_dist . '/' . $file . '.css', array( 'della-theme-style' ), filemtime( $full ) );
 		}
 	}
 
-	// JS — main.min.js 우선, footer 로드 (defer는 script_loader_tag에서 추가)
+	// JS — assets/js (dist는 선택 사항)
 	$min_js = $theme_dir . '/assets/js/main.min.js';
 	$full_js = $theme_dir . '/assets/js/main.js';
 	if ( file_exists( $min_js ) ) {
@@ -921,15 +923,23 @@ add_action( 'wp_head', 'della_theme_inline_critical_css', 0 );
  * 메인·페이지별 스타일시트 비동기 로드 (미니파이 사용 시) — 렌더 블로킹 제거
  */
 function della_theme_async_full_css_tag( $html, $handle, $href ) {
-	$async_handles = array( 'della-theme-style', 'della-theme-front', 'della-theme-page-lawyers', 'della-theme-page-board', 'della-theme-page-sitemap' );
-	if ( ! in_array( $handle, $async_handles, true ) ) {
-		return $html;
-	}
-	$theme_dir = get_stylesheet_directory();
-	if ( $handle === 'della-theme-style' && ! file_exists( $theme_dir . '/assets/css/common.min.css' ) ) {
-		return $html;
-	}
-	return '<link rel="stylesheet" id="' . esc_attr( $handle ) . '-css" href="' . esc_url( $href ) . '" media="print" onload="this.media=\'all\'" />' . "\n<noscript>" . $html . '</noscript>';
+    // common(메뉴 포함)은 동기 로드 — FOUC 방지
+    if ( $handle === 'della-theme-style' ) {
+        return $html;
+    }
+
+    // 페이지별 CSS만 비동기 로드
+    $async_handles = array(
+        'della-theme-front',
+        'della-theme-page-lawyers',
+        'della-theme-page-board',
+        'della-theme-page-sitemap'
+    );
+    if ( ! in_array( $handle, $async_handles, true ) ) {
+        return $html;
+    }
+    $theme_dir = get_stylesheet_directory();
+    return '<link rel="stylesheet" id="' . esc_attr( $handle ) . '-css" href="' . esc_url( $href ) . '" media="print" onload="this.media=\'all\'" />' . "\n<noscript>" . $html . '</noscript>';
 }
 add_filter( 'style_loader_tag', 'della_theme_async_full_css_tag', 10, 3 );
 
