@@ -114,12 +114,12 @@ function della_theme_lawyer_query_vars( $vars ) {
 add_filter( 'query_vars', 'della_theme_lawyer_query_vars' );
 
 /**
- * sitemap.xml rewrite — 검색엔진용 XML 사이트맵
+ * sitemap.xml rewrite — 검색엔진용 XML 사이트맵 (wp-sitemap보다 우선하도록 늦게 등록)
  */
 function della_theme_sitemap_rewrite_rules() {
-	add_rewrite_rule( 'sitemap\.xml$', 'index.php?della_sitemap=1', 'top' );
+	add_rewrite_rule( '^sitemap\.xml$', 'index.php?della_sitemap=1', 'top' );
 }
-add_action( 'init', 'della_theme_sitemap_rewrite_rules', 5 );
+add_action( 'init', 'della_theme_sitemap_rewrite_rules', 99 );
 
 function della_theme_sitemap_query_vars( $vars ) {
 	$vars[] = 'della_sitemap';
@@ -128,9 +128,34 @@ function della_theme_sitemap_query_vars( $vars ) {
 add_filter( 'query_vars', 'della_theme_sitemap_query_vars' );
 
 /**
+ * /sitemap.xml(루트) 요청만 테마 사이트맵으로 확정 — All in One SEO 대신 테마가 응답
+ * post-sitemap.xml, page-sitemap.xml 등은 그대로 플러그인 사용
+ */
+function della_theme_sitemap_takeover_request( $query_vars ) {
+	$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+	if ( $uri !== '' && preg_match( '#/sitemap\.xml(\?|$)#', $uri ) ) {
+		$query_vars['della_sitemap'] = 1;
+	}
+	return $query_vars;
+}
+add_filter( 'request', 'della_theme_sitemap_takeover_request', 1 );
+
+/**
  * WordPress 코어 사이트맵 비활성화 — /sitemap.xml을 테마 전용으로 사용 (wp-sitemap 리다이렉트 방지)
  */
 add_filter( 'wp_sitemaps_enabled', '__return_false' );
+
+/**
+ * /sitemap.xml 요청 시 redirect_canonical이 wp-sitemap.xml로 리다이렉트하지 않도록 차단
+ */
+function della_theme_no_redirect_sitemap_xml( $redirect_url, $requested_url ) {
+	$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+	if ( $uri !== '' && preg_match( '#/sitemap\.xml(\?|$)#', $uri ) ) {
+		return false;
+	}
+	return $redirect_url;
+}
+add_filter( 'redirect_canonical', 'della_theme_no_redirect_sitemap_xml', 1, 2 );
 
 /**
  * 테마 전환 시 rewrite flush (lawyers/{slug}, sitemap.xml 반영)
@@ -1412,7 +1437,7 @@ function della_theme_sitemap_xml() {
 	$is_sitemap_request = ( (int) get_query_var( 'della_sitemap' ) === 1 );
 	if ( ! $is_sitemap_request ) {
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-		$is_sitemap_request = ( strpos( $request_uri, 'sitemap.xml' ) !== false );
+		$is_sitemap_request = ( $request_uri !== '' && preg_match( '#/sitemap\.xml(\?|$)#', $request_uri ) );
 	}
 	if ( ! $is_sitemap_request ) {
 		return;
@@ -1515,9 +1540,11 @@ function della_theme_sitemap_xml() {
 		$seen[ $url ] = 1;
 	}
 
+	$xsl_url = get_template_directory_uri() . '/sitemap.xsl';
 	header( 'Content-Type: application/xml; charset=UTF-8' );
 	header( 'X-Robots-Tag: noindex', true );
 	echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+	echo '<?xml-stylesheet type="text/xsl" href="' . esc_url( $xsl_url ) . '"?>' . "\n";
 	echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 	foreach ( $entries as $e ) {
 		echo '  <url>' . "\n";
@@ -1536,7 +1563,7 @@ function della_theme_sitemap_xml() {
 	echo '</urlset>';
 	exit;
 }
-add_action( 'template_redirect', 'della_theme_sitemap_xml', 0 );
+add_action( 'template_redirect', 'della_theme_sitemap_xml', -9999 );
 
 /**
  * robots.txt에 sitemap.xml URL 추가 (Google / Naver 검색엔진 발견용)
