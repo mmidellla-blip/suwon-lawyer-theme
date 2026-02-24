@@ -1,4 +1,3 @@
-# CSS 빌드 (PurgeCSS + 미니파이). 배포 단계는 환경에 맞게 추가.
 name: Build / Deploy
 
 on:
@@ -6,7 +5,7 @@ on:
     branches: [main, master]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,12 +19,23 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        working-directory: .
 
       - name: Build CSS
         run: npm run build:css
-        working-directory: .
 
-      # 배포: FTP/SSH 등은 여기에 step 추가
-      # - name: Deploy to server
-      #   run: ...
+      - name: FTP Deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: /public_html/wp-content/themes/della-theme/
+          exclude: |
+            **/node_modules/**
+            **/.git/**
+            **/build-css.php
+            **/split-css.php
+            **/purgecss.config.cjs
+            **/package.json
+            **/package-lock.json
