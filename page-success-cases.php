@@ -91,7 +91,7 @@ get_header();
 	<div class="response-board-top">
 		<div class="response-board-top-inner">
 			<header class="response-board-header">
-				<h1 class="response-board-title"><?php esc_html_e( '성범죄 성공사례', 'della-theme' ); ?></h1>
+				<h1 class="response-board-title"><?php esc_html_e( '성범죄 성공사례', 'della-theme' ); ?></h2>
 				<p class="response-board-desc"><?php esc_html_e( '성범죄 성공사례에 대해서 한줄 요약 설명', 'della-theme' ); ?></p>
 			</header>
 

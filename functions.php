@@ -13,21 +13,36 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'DELLA_THEME_VERSION', '1.0.1' );
 
 /**
- * CSS/JS 캐시 무효화용 버전 (실서버 배포 시 바로 반영)
- * 파일 수정시간(filemtime) 기반 — 배포 시 쿼리스트링이 바뀌어 캐시 미사용
+ * CSS/JS 캐시 무효화용 공통 버전 (한 번에 전체 갱신)
+ * dist/common.min.css, dist/critical.min.css, main.js(또는 main.min.js) 중
+ * 가장 최근 수정 시각을 사용. 배포·빌드 시 쿼리스트링이 바뀌어 캐시 미사용.
+ * 필터로 오버라이드 가능 (예: 배포 파이프라인에서 고정 버전 주입).
  *
- * @param string $relative_path 테마 내 상대 경로. 예: 'assets/css/style.css'
  * @return string
  */
-function della_theme_asset_version( $relative_path = 'style.css' ) {
-	$file = get_stylesheet_directory() . '/' . ltrim( $relative_path, '/' );
-	if ( file_exists( $file ) ) {
-		$mtime = filemtime( $file );
-		if ( $mtime ) {
-			return (string) $mtime;
+function della_theme_asset_version() {
+	$version = apply_filters( 'della_theme_asset_version', null );
+	if ( is_string( $version ) && $version !== '' ) {
+		return $version;
+	}
+	$theme_dir = get_stylesheet_directory();
+	$files = array(
+		$theme_dir . '/assets/css/dist/common.min.css',
+		$theme_dir . '/assets/css/dist/common.css',
+		$theme_dir . '/assets/css/dist/critical.min.css',
+		$theme_dir . '/assets/js/main.min.js',
+		$theme_dir . '/assets/js/main.js',
+	);
+	$max = 0;
+	foreach ( $files as $path ) {
+		if ( file_exists( $path ) ) {
+			$m = filemtime( $path );
+			if ( $m > $max ) {
+				$max = $m;
+			}
 		}
 	}
-	return DELLA_THEME_VERSION;
+	return $max > 0 ? (string) $max : DELLA_THEME_VERSION;
 }
 
 /**
@@ -776,16 +791,19 @@ add_filter( 'get_custom_logo', 'della_theme_custom_logo_alt', 10, 2 );
 function della_theme_scripts() {
 	$theme_dir = get_stylesheet_directory();
 	$theme_uri = get_stylesheet_directory_uri();
+	$asset_ver = della_theme_asset_version();
 
-	// Google Fonts (비차단 로드는 style_loader_tag 필터에서 처리)
-	wp_enqueue_style(
-		'della-google-fonts',
-		'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@400;600;700&display=swap',
-		array(),
-		null
-	);
+	// Google Fonts (필터로 비활성화 시 요청 수 절감, 비차단 로드는 style_loader_tag에서 처리)
+	if ( apply_filters( 'della_theme_load_google_fonts', true ) ) {
+		wp_enqueue_style(
+			'della-google-fonts',
+			'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@400;600;700&display=swap',
+			array(),
+			null
+		);
+	}
 
-	// CSS — dist 폴더에서 로드 (common 항상, 페이지별 조건부)
+	// CSS — dist 폴더에서 로드, 공통 버전으로 캐시 무효화
 	$css_dist = $theme_uri . '/assets/css/dist';
 	$css_dist_path = $theme_dir . '/assets/css/dist';
 	$common_min = $css_dist_path . '/common.min.css';
@@ -795,14 +813,14 @@ function della_theme_scripts() {
 			'della-theme-style',
 			$css_dist . '/common.min.css',
 			array(),
-			filemtime( $common_min )
+			$asset_ver
 		);
 	} else {
 		wp_enqueue_style(
 			'della-theme-style',
 			$css_dist . '/common.css',
 			array(),
-			file_exists( $common_css ) ? (string) filemtime( $common_css ) : DELLA_THEME_VERSION
+			$asset_ver
 		);
 	}
 
@@ -823,13 +841,13 @@ function della_theme_scripts() {
 		$min = $css_dist_path . '/' . $file . '.min.css';
 		$full = $css_dist_path . '/' . $file . '.css';
 		if ( file_exists( $min ) ) {
-			wp_enqueue_style( $handle, $css_dist . '/' . $file . '.min.css', array( 'della-theme-style' ), filemtime( $min ) );
+			wp_enqueue_style( $handle, $css_dist . '/' . $file . '.min.css', array( 'della-theme-style' ), $asset_ver );
 		} elseif ( file_exists( $full ) ) {
-			wp_enqueue_style( $handle, $css_dist . '/' . $file . '.css', array( 'della-theme-style' ), filemtime( $full ) );
+			wp_enqueue_style( $handle, $css_dist . '/' . $file . '.css', array( 'della-theme-style' ), $asset_ver );
 		}
 	}
 
-	// JS — assets/js (dist는 선택 사항)
+	// JS — 공통 버전으로 캐시 무효화
 	$min_js = $theme_dir . '/assets/js/main.min.js';
 	$full_js = $theme_dir . '/assets/js/main.js';
 	if ( file_exists( $min_js ) ) {
@@ -837,7 +855,7 @@ function della_theme_scripts() {
 			'della-main',
 			$theme_uri . '/assets/js/main.min.js',
 			array(),
-			filemtime( $min_js ),
+			$asset_ver,
 			true
 		);
 	} elseif ( file_exists( $full_js ) ) {
@@ -845,7 +863,7 @@ function della_theme_scripts() {
 			'della-main',
 			$theme_uri . '/assets/js/main.js',
 			array(),
-			filemtime( $full_js ),
+			$asset_ver,
 			true
 		);
 	}
@@ -897,12 +915,15 @@ add_action( 'wp_enqueue_scripts', 'della_theme_remove_jquery', 100 );
  * 내용은 transient로 캐시하여 매 요청마다 디스크에서 32KB 읽기를 방지함.
  */
 function della_theme_inline_critical_css() {
-	$critical_file = get_stylesheet_directory() . '/assets/css/critical.min.css';
+	$theme_dir = get_stylesheet_directory();
+	$critical_file = $theme_dir . '/assets/css/dist/critical.min.css';
+	if ( ! file_exists( $critical_file ) ) {
+		$critical_file = $theme_dir . '/assets/css/critical.min.css';
+	}
 	if ( ! file_exists( $critical_file ) ) {
 		return;
 	}
-	$mtime = filemtime( $critical_file );
-	$cache_key = 'della_critical_css_' . $mtime;
+	$cache_key = 'della_critical_css_' . della_theme_asset_version();
 	$css = get_transient( $cache_key );
 	if ( $css === false ) {
 		$css = file_get_contents( $critical_file );
@@ -956,8 +977,12 @@ add_filter( 'style_loader_tag', 'della_theme_fonts_async_tag', 10, 3 );
 
 /**
  * 폰트 도메인 preconnect — 폰트 요청 지연 감소
+ * Google Fonts 미사용 시(필터로 비활성화) preconnect 생략하여 요청 수 절감
  */
 function della_theme_preconnect_fonts() {
+	if ( ! apply_filters( 'della_theme_load_google_fonts', true ) ) {
+		return;
+	}
 	echo '<link rel="preconnect" href="https://fonts.googleapis.com" />' . "\n";
 	echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' . "\n";
 }
@@ -1674,8 +1699,16 @@ add_action( 'wp_head', 'della_theme_404_meta_description', 1 );
 
 /**
  * Open Graph and Twitter Card meta tags
+ * SEO 플러그인(Yoast, Rank Math 등)이 OG를 출력하면 테마 OG는 생략하여 중복 제거
  */
 function della_theme_og_twitter_meta() {
+	// 다른 플러그인이 OG/Twitter 메타를 처리하면 테마는 출력하지 않음 (중복 방지)
+	if ( apply_filters( 'della_theme_disable_og_twitter_meta', false ) ) {
+		return;
+	}
+	if ( defined( 'WPSEO_VERSION' ) || class_exists( 'RankMath', false ) || class_exists( 'All_in_One_SEO_Pack', false ) ) {
+		return;
+	}
 	if ( ! is_singular() && ! is_front_page() ) {
 		return;
 	}

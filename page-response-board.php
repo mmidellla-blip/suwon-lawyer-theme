@@ -96,7 +96,7 @@ get_header();
 	<div class="response-board-top">
 		<div class="response-board-top-inner">
 			<header class="response-board-header">
-				<h1 class="response-board-title"><?php esc_html_e( '성범죄 대응정보', 'della-theme' ); ?></h1>
+				<h1 class="response-board-title"><?php esc_html_e( '성범죄 대응정보', 'della-theme' ); ?></h2>
 				<p class="response-board-desc"><?php esc_html_e( '강간·강제추행·군성범죄·불법촬영·성매매·직장내 성희롱 등 법조문, 판례, FAQ, 수사·재판 단계별 대응 가이드.', 'della-theme' ); ?></p>
 			</header>
 
