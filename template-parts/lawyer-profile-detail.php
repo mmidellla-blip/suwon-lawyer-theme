@@ -18,6 +18,7 @@ if ( empty( $lawyer ) ) {
 $specialties = isset( $lawyer['specialties'] ) && is_array( $lawyer['specialties'] ) ? $lawyer['specialties'] : array();
 $education   = isset( $lawyer['education'] ) && is_array( $lawyer['education'] ) ? $lawyer['education'] : array();
 $career      = isset( $lawyer['items'] ) && is_array( $lawyer['items'] ) ? $lawyer['items'] : array();
+$media       = isset( $lawyer['media'] ) && is_array( $lawyer['media'] ) ? $lawyer['media'] : array();
 $has_quote   = ! empty( $lawyer['quote'] );
 $info_tabs   = array( __( '형사법', 'della-theme' ), __( '학교폭력', 'della-theme' ), __( '교육청 법률자문', 'della-theme' ), __( '경찰서 법률지원', 'della-theme' ) );
 ?>
@@ -29,7 +30,9 @@ $info_tabs   = array( __( '형사법', 'della-theme' ), __( '학교폭력', 'del
 				<li><a href="#lawyer-info" class="lawyer-profile-detail-nav-link"><?php esc_html_e( '변호사 정보', 'della-theme' ); ?></a></li>
 				<li><a href="#lawyer-education" class="lawyer-profile-detail-nav-link"><?php esc_html_e( '학력', 'della-theme' ); ?></a></li>
 				<li><a href="#lawyer-career" class="lawyer-profile-detail-nav-link"><?php esc_html_e( '경력', 'della-theme' ); ?></a></li>
+				<?php if ( ! empty( $media ) ) : ?>
 				<li><a href="#lawyer-media" class="lawyer-profile-detail-nav-link"><?php esc_html_e( '언론 및 강연', 'della-theme' ); ?></a></li>
+				<?php endif; ?>
 			</ul>
 		</nav>
 
@@ -103,10 +106,16 @@ $info_tabs   = array( __( '형사법', 'della-theme' ), __( '학교폭력', 'del
 				</div>
 			<?php endif; ?>
 
+			<?php if ( ! empty( $media ) ) : ?>
 			<div id="lawyer-media" class="lawyer-profile-detail-block">
 				<h3 class="lawyer-profile-detail-heading"><?php esc_html_e( '언론 및 강연', 'della-theme' ); ?></h3>
-				<p class="lawyer-profile-detail-empty"><?php esc_html_e( '등록된 내용이 없습니다.', 'della-theme' ); ?></p>
+				<ul class="lawyer-profile-detail-list">
+					<?php foreach ( $media as $item ) : ?>
+						<li><?php echo esc_html( $item ); ?></li>
+					<?php endforeach; ?>
+				</ul>
 			</div>
+			<?php endif; ?>
 		</div>
 	</div>
 </section>

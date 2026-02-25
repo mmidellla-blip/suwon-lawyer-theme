@@ -43,7 +43,7 @@ if ( ! $query || ! $query->have_posts() ) {
 	) );
 }
 
-$response_info_bg = content_url( 'uploads/2026/02/response-info-bg.png' );
+$response_info_bg = content_url( 'uploads/2026/02/response-info-bg.webp' );
 
 // Schema.org ItemList + BlogPosting용 데이터 수집 (SEO)
 $list_items_schema = array();

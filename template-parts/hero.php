@@ -46,7 +46,7 @@ $hero_home_url = apply_filters( 'della_hero_home_url', $hero_home_url );
 	<div class="hero-overlay" aria-hidden="true"></div>
 	<div class="hero-inner">
 		<p class="hero-subtitle">하나보다 여섯이 우월하기에, 우리는 함께 대응합니다.</p>
-		<h1 id="hero-title" class="hero-title">'같은' 사건에 자신있는<br><span class="hero-title-line2">'다른' 변호사들이 모여 만드는 시너지</span></h1>
+		<h1 id="hero-title" class="hero-title">'같은' 사건에 자신있는 <br class="hero-br-pc"><span class="hero-title-line2">'다른' <br class="hero-br-mo">변호사들이 모여 만드는 시너지</span></h1>
 		<p id="hero-intro" class="hero-seo-intro"><?php echo esc_html( get_bloginfo( 'name' ) ); ?> 수원 성범죄 전문 변호사 팀이 강간·강제추행·불법촬영·디지털성범죄 등 성범죄 사건 초기 대응부터 재판까지 함께합니다.</p>
 		<div class="hero-lawyers" role="region" aria-label="변호사 프로필 (<?php echo count( $lawyers ); ?>명)" tabindex="0">
 			<?php foreach ( $lawyers as $lawyer_idx => $lawyer ) : ?>
@@ -76,8 +76,9 @@ $hero_home_url = apply_filters( 'della_hero_home_url', $hero_home_url );
 						<span class="hero-lawyer-title" itemprop="jobTitle"><?php echo esc_html( $lawyer['title'] ); ?></span>
 					</h2>
 					<?php if ( ! empty( $lawyer['items'] ) ) : ?>
+						<?php $hero_items = array_slice( $lawyer['items'], 0, 3 ); ?>
 						<ul class="hero-lawyer-list" itemprop="description" aria-label="<?php echo esc_attr( $lawyer['name'] . ' 변호사 경력' ); ?>">
-							<?php foreach ( $lawyer['items'] as $item ) : ?>
+							<?php foreach ( $hero_items as $item ) : ?>
 								<li><?php echo esc_html( $item ); ?></li>
 							<?php endforeach; ?>
 						</ul>

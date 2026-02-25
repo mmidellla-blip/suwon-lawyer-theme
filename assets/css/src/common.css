@@ -993,10 +993,6 @@ body.header-scrolled .menu-toggle:focus {
     gap: 20px;
     justify-content: center;
   }
-
-  .hero-lawyer-image-wrap {
-    max-width: 320px;
-  }
 }
 
 /* Breadcrumb */

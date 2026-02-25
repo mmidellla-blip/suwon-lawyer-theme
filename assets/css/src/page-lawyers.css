@@ -66,6 +66,8 @@
   background: #fff;
   border: 1px solid #eee;
   border-radius: 8px;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
   overflow: hidden;
   transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
@@ -80,6 +82,7 @@
   aspect-ratio: 3 / 4;
   overflow: hidden;
   background: #e8e4dc;
+  border-top-right-radius: 20px;
 }
 
 .lawyer-list-card-image {
@@ -94,6 +97,7 @@
 
 .lawyer-list-card-body {
   padding: 1rem 1rem 1.25rem;
+  border-bottom-right-radius: 20px;
 }
 
 .lawyer-list-card-name {
@@ -143,9 +147,11 @@
   margin-bottom: 0;
 }
 
-/* 카드 전체 클릭 시 상세 프로필로 */
+/* 카드 전체 클릭 시 상세 프로필로 (overflow로 카드 radius에 맞게 클립) */
 .lawyer-list-card-link {
   display: block;
+  overflow: hidden;
+  border-radius: inherit;
   text-decoration: none;
   color: inherit;
   -webkit-tap-highlight-color: transparent;
@@ -696,4 +702,4 @@ body.lawyer-profile-page.header-at-top .main-navigation a:hover {
   text-decoration: underline;
   color: #c9c18a;
 }
-
+

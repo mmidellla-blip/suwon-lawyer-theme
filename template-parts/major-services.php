@@ -14,21 +14,21 @@ $stages = array(
 	array(
 		'title'     => '경찰 단계',
 		'content'   => '혐의가 인정되지 않는 상황이라면 경찰단계에서 사건이 마무리될 수 있도록 조력한 뒤 \'불송치\', 즉 무혐의 결정을 이끌어내기 위해 조력하고 있습니다.',
-		'image'     => 'dongju-police-stage.png',
+		'image'     => 'dongju-police-stage.webp',
 		'image_alt' => '경찰 단계',
 		'order'     => 'text-first',
 	),
 	array(
 		'title'     => '검찰 단계',
 		'content'   => '혐의가 인정되지만 각종 양형사유를 분석하여 기소유예 선처를 이끌어 내도록 하는 전략을 세웁니다. 혐의가 인정되지 않는다면 검찰단계에서 무혐의 처분이 나오도록 조력하고 있습니다.',
-		'image'     => 'dongju-prosecution-stage.png',
+		'image'     => 'dongju-prosecution-stage.webp',
 		'image_alt' => '검찰 단계',
 		'order'     => 'image-first',
 	),
 	array(
 		'title'     => '재판 단계',
 		'content'   => '중대한 사안이라도 실험이 나오지 않도록 정황을 분석하여 전략을 세운 뒤 집행유예 처분 혹은 양형사유를 찾아 유리한 판결을 이끌어 내기 위해 조력하고 있습니다.',
-		'image'     => 'dongju-court-trial.png',
+		'image'     => 'dongju-court-trial.webp',
 		'image_alt' => '재판 단계',
 		'order'     => 'text-first',
 	),
@@ -43,7 +43,7 @@ $stages = array(
 		</p>
 
 		<div class="major-services-diagram">
-			<img src="<?php echo esc_url( $uploads . 'dongju-legal-consultation.png' ); ?>" alt="<?php esc_attr_e( '분야별 전문가 팀 구성', 'della-theme' ); ?>" class="major-services-diagram-img" width="600" height="400" loading="lazy">
+			<img src="<?php echo esc_url( $uploads . 'dongju-legal-consultation.webp' ); ?>" alt="<?php esc_attr_e( '분야별 전문가 팀 구성', 'della-theme' ); ?>" class="major-services-diagram-img" width="600" height="400" loading="lazy">
 		</div>
 
 		<div class="major-services-stages" role="list" aria-label="<?php esc_attr_e( '주요 서비스 단계 목록', 'della-theme' ); ?>">

@@ -13,7 +13,7 @@ $uploads_2026_02 = content_url( 'uploads/2026/02/' );
 $cards          = array(
 	array(
 		'num'   => '01',
-		'image' => '24-7-client-consultation.png',
+		'image' => '24-7-client-consultation.webp',
 		'title' => '모든 의뢰인을 위한 24/7 상담가능',
 		'body'  => '',
 		'bullets' => array(
@@ -23,7 +23,7 @@ $cards          = array(
 	),
 	array(
 		'num'   => '02',
-		'image' => 'first-level-specialist-consultation.png',
+		'image' => 'first-level-specialist-consultation.webp',
 		'title' => '1차 전문 상담진 상담',
 		'body'  => '',
 		'bullets' => array(
@@ -35,7 +35,7 @@ $cards          = array(
 	),
 	array(
 		'num'   => '03',
-		'image' => 'chief-partner-lawyer-consultatio.png',
+		'image' => 'chief-partner-lawyer-consultatio.webp',
 		'title' => '대표변호사 · 파트너변호사가 직접 상담',
 		'body'  => '',
 		'bullets' => array(
@@ -46,7 +46,7 @@ $cards          = array(
 	),
 	array(
 		'num'   => '04',
-		'image' => 'consultation-by-field-real-expert.jpg',
+		'image' => 'consultation-by-field-real-expert.webp',
 		'title' => "분야별 '진짜' 전문가 자문단",
 		'body'  => '',
 		'bullets' => array(
@@ -56,7 +56,7 @@ $cards          = array(
 	),
 	array(
 		'num'   => '05',
-		'image' => 'lawyerteam-direct-support.png',
+		'image' => 'lawyerteam-direct-support.webp',
 		'title' => "개인 변호사가 아닌 '로이어팀' 조력",
 		'body'  => '',
 		'bullets' => array(
@@ -67,7 +67,7 @@ $cards          = array(
 	),
 	array(
 		'num'   => '06',
-		'image' => 'first-level-specialist-consultation.png',
+		'image' => 'first-level-specialist-consultation.webp',
 		'title' => '단계별 자문팀 동시 조력',
 		'body'  => '',
 		'bullets' => array(
@@ -78,7 +78,7 @@ $cards          = array(
 	),
 	array(
 		'num'   => '07',
-		'image' => 'stepwise-lawyerteam-support.jpg',
+		'image' => 'stepwise-lawyerteam-support.webp',
 		'title' => "수행 변호사가 의뢰인과 '직접' 소통",
 		'body'  => '',
 		'bullets' => array(
@@ -89,7 +89,7 @@ $cards          = array(
 	),
 	array(
 		'num'   => '08',
-		'image' => 'postcase-continuous-support.jpg',
+		'image' => 'postcase-continuous-support.webp',
 		'title' => '사건 종결 후에도 지속 조력',
 		'body'  => '',
 		'bullets' => array(

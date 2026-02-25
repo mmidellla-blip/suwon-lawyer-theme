@@ -48,8 +48,9 @@ $has_quote  = ! empty( $lawyer['quote'] );
 				<span class="lawyer-profile-title" itemprop="jobTitle"><?php echo esc_html( $lawyer['title'] ); ?></span>
 			</header>
 			<?php if ( ! empty( $lawyer['items'] ) ) : ?>
+				<?php $profile_list_items = array_slice( $lawyer['items'], 0, 3 ); ?>
 				<ul class="lawyer-profile-list" aria-label="<?php echo esc_attr( $lawyer['name'] . ' ' . __( '변호사 경력', 'della-theme' ) ); ?>">
-					<?php foreach ( $lawyer['items'] as $item ) : ?>
+					<?php foreach ( $profile_list_items as $item ) : ?>
 						<li><?php echo esc_html( $item ); ?></li>
 					<?php endforeach; ?>
 				</ul>

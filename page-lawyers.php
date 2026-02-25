@@ -87,8 +87,9 @@ get_header();
 									<span class="lawyer-list-card-title" itemprop="jobTitle"><?php echo esc_html( $lawyer['title'] ); ?></span>
 								</h3>
 								<?php if ( ! empty( $lawyer['items'] ) ) : ?>
+									<?php $list_items = array_slice( $lawyer['items'], 0, 3 ); ?>
 									<ul class="lawyer-list-card-list" aria-label="<?php echo esc_attr( $lawyer['name'] . ' ' . __( '변호사 경력', 'della-theme' ) ); ?>">
-										<?php foreach ( $lawyer['items'] as $item ) : ?>
+										<?php foreach ( $list_items as $item ) : ?>
 											<li><?php echo esc_html( $item ); ?></li>
 										<?php endforeach; ?>
 									</ul>

@@ -14,7 +14,7 @@ if ( ! $consultation_url ) {
 	$consultation_url = 'https://sexcrimecenter-dongju.com/';
 }
 
-$consultation_bg = content_url( 'uploads/2026/02/consultation-bg.png' );
+$consultation_bg = content_url( 'uploads/2026/02/consultation-bg.webp' );
 ?>
 <section id="consultation-cta" class="consultation-cta" aria-labelledby="consultation-cta-heading">
 	<div class="consultation-cta-bg" style="background-image: url('<?php echo esc_url( $consultation_bg ); ?>');" aria-hidden="true"></div>
