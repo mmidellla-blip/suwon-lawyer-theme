@@ -45,7 +45,26 @@ if ( isset( $_GET['q'] ) && $search === '' ) {
 	exit;
 }
 
-/* 대 카테고리 (성공사례 하위): slug = WordPress 카테고리 slug, label = 표시명 */
+/* 성공사례 카테고리 (대응정보 글 제외: 반드시 이 카테고리 포함된 글만 노출) */
+$success_cat = get_category_by_slug( '성공사례' );
+if ( ! $success_cat ) {
+	$success_cat = get_category_by_slug( 'success-cases' );
+}
+if ( ! $success_cat ) {
+	$success_cat = get_category_by_slug( 'success-case' );
+}
+if ( ! $success_cat ) {
+	$all_cats = get_categories( array( 'hide_empty' => false ) );
+	foreach ( $all_cats as $c ) {
+		if ( $c->name === '성공사례' || $c->name === '성공 사례' ) {
+			$success_cat = $c;
+			break;
+		}
+	}
+}
+$success_cat_id = $success_cat ? (int) $success_cat->term_id : 0;
+
+/* 대 카테고리 (필터용): slug = WordPress 카테고리 slug, label = 표시명 */
 $sidebar_main_cats = array(
 	array( 'slug' => 'rape', 'label' => __( '강간', 'della-theme' ) ),
 	array( 'slug' => 'sexual_assult', 'label' => __( '강제추행', 'della-theme' ) ),
@@ -56,7 +75,6 @@ $sidebar_main_cats = array(
 );
 $topic_tags = $sidebar_main_cats;
 
-/* 이 6개 카테고리에 속한 글만 노출 (카테고리 글이 아니면 안 나오게) */
 $allowed_cat_ids   = array();
 $main_cat_id_to_label = array();
 foreach ( $sidebar_main_cats as $item ) {
@@ -78,21 +96,18 @@ $query_args = array(
 if ( $search ) {
 	$query_args['s'] = $search;
 }
-if ( $filter_cat ) {
+/* 성공사례 카테고리만 노출 (대응정보 글 제외): cat 또는 category__and 사용 */
+if ( ! $success_cat_id ) {
+	$query_args['category__in'] = ! empty( $allowed_cat_ids ) ? $allowed_cat_ids : array( 0 );
+} elseif ( $filter_cat ) {
 	$filter_term = get_category_by_slug( $filter_cat );
 	if ( $filter_term && ! empty( $allowed_cat_ids ) && in_array( (int) $filter_term->term_id, $allowed_cat_ids, true ) ) {
-		$query_args['cat'] = $filter_term->term_id;
-	} elseif ( ! empty( $allowed_cat_ids ) ) {
-		$query_args['category__in'] = $allowed_cat_ids;
+		$query_args['category__and'] = array( $success_cat_id, (int) $filter_term->term_id );
 	} else {
-		$query_args['category__in'] = array( 0 );
+		$query_args['cat'] = $success_cat_id;
 	}
 } else {
-	if ( ! empty( $allowed_cat_ids ) ) {
-		$query_args['category__in'] = $allowed_cat_ids;
-	} else {
-		$query_args['category__in'] = array( 0 );
-	}
+	$query_args['cat'] = $success_cat_id;
 }
 
 $board_query = new WP_Query( $query_args );

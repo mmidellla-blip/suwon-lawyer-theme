@@ -2319,14 +2319,22 @@ function della_theme_schema_json_ld() {
 		echo '<script type="application/ld+json">' . "\n" . wp_json_encode( $rb_schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n" . '</script>' . "\n";
 	}
 
-	// 성범죄 성공사례 페이지: ItemList (목록 구조화, SEO)
+	// 성범죄 성공사례 페이지: ItemList (목록 구조화, SEO) — 성공사례 카테고리만
 	if ( della_theme_is_success_cases_page() ) {
-		$sc_slugs = array( 'rape', 'sexual_assult', 'military_sexual_crimes', 'sex_work', 'spycam_crime', 'workplace' );
-		$sc_cat_ids = array();
-		foreach ( $sc_slugs as $slug ) {
-			$term = get_category_by_slug( $slug );
-			if ( $term ) {
-				$sc_cat_ids[] = $term->term_id;
+		$sc_cat = get_category_by_slug( '성공사례' );
+		if ( ! $sc_cat ) {
+			$sc_cat = get_category_by_slug( 'success-cases' );
+		}
+		if ( ! $sc_cat ) {
+			$sc_cat = get_category_by_slug( 'success-case' );
+		}
+		if ( ! $sc_cat ) {
+			$sc_cats = get_categories( array( 'hide_empty' => false ) );
+			foreach ( $sc_cats as $c ) {
+				if ( $c->name === '성공사례' || $c->name === '성공 사례' ) {
+					$sc_cat = $c;
+					break;
+				}
 			}
 		}
 		$sc_args = array(
@@ -2337,8 +2345,8 @@ function della_theme_schema_json_ld() {
 			'order'          => 'DESC',
 			'fields'         => 'ids',
 		);
-		if ( ! empty( $sc_cat_ids ) ) {
-			$sc_args['category__in'] = $sc_cat_ids;
+		if ( $sc_cat ) {
+			$sc_args['cat'] = (int) $sc_cat->term_id;
 		} else {
 			$sc_args['category__in'] = array( 0 );
 		}
