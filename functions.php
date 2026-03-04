@@ -574,6 +574,7 @@ function della_theme_ensure_description_length( $description, $law_firm_name = '
 
 /**
  * SEO: 문서당 하나의 <title>, 페이지별 고유·정확한 제목 (30–65자, 네이버 검색로봇 대응)
+ * 메인은 100점 메타 세트와 동일한 title 사용 (중복 방지).
  */
 function della_theme_document_title_parts( $parts ) {
 	$site = get_bloginfo( 'name' );
@@ -583,24 +584,22 @@ function della_theme_document_title_parts( $parts ) {
 		return $parts;
 	}
 	if ( is_front_page() ) {
-		$parts['title'] = della_theme_trim_document_title(
-			__( '수원성범죄변호사', 'della-theme' ) . ' · ' . __( '수원성범죄전문변호사', 'della-theme' ) . ' | ' . $site
-		);
+		$parts['title'] = '수원 성범죄 전문변호사 | 강제추행·카메라촬영 대응 | 법무법인 동주';
 		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
 	}
 	if ( della_theme_is_lawyers_page() ) {
-		$parts['title'] = della_theme_trim_document_title( __( '성범죄 전문 변호사', 'della-theme' ) . ' | ' . $site );
+		$parts['title'] = della_theme_trim_document_title( '성범죄 전문변호사 소개 | 형사법 전문 변호사 팀 | 법무법인 동주' );
 		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
 	}
 	if ( della_theme_is_response_board_page() ) {
-		$parts['title'] = della_theme_trim_document_title( __( '성범죄 대응정보', 'della-theme' ) . ' | ' . $site );
+		$parts['title'] = della_theme_trim_document_title( '성범죄 대응정보 가이드 | 강제추행·불법촬영·아청법·판례·FAQ | 법무법인 동주' );
 		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
 	}
 	if ( della_theme_is_success_cases_page() ) {
-		$parts['title'] = della_theme_trim_document_title( __( '성범죄 성공사례', 'della-theme' ) . ' | ' . $site );
+		$parts['title'] = della_theme_trim_document_title( '수원 성범죄 성공사례 | 강제추행·불법촬영 무혐의·불송치 사례 | 법무법인 동주' );
 		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
 	}
@@ -620,48 +619,66 @@ function della_theme_document_title_parts( $parts ) {
 add_filter( 'document_title_parts', 'della_theme_document_title_parts', 10, 1 );
 
 /**
- * SEO: meta keywords (네이버·다음 등 국내 검색엔진 대응)
- * 메인 키워드 + 보조 키워드(죄종별·결과/상황·브랜딩)
+ * SEO: 메인(홈) 전용 100점 메타 세트 — title/description/og/canonical/robots 중복 없이 1회만 출력
+ * SEO 플러그인(AIOSEO/Yoast 등) 사용 시: 플러그인 설정에서 "홈/메인 페이지"용 title, description, OG, canonical, robots
+ * 출력을 끄거나 "테마/수동"으로 두어 이 세트만 나가도록 하면 중복으로 인한 SEO 점수 하락을 막을 수 있습니다.
  */
-function della_theme_seo_meta_keywords() {
-	$keywords = array(
-		__( '수원성범죄변호사', 'della-theme' ),
-		__( '수원성범죄전문변호사', 'della-theme' ),
-		__( '수원강제추행변호사', 'della-theme' ),
-		__( '수원성추행변호사', 'della-theme' ),
-		__( '수원형사전문변호사', 'della-theme' ),
-		__( '수원강제추행', 'della-theme' ),
-		__( '수원강간변호사', 'della-theme' ),
-		__( '수원성범죄일부노출', 'della-theme' ),
-		__( '수원카촬변호사', 'della-theme' ),
-		__( '수원친족간성범죄', 'della-theme' ),
-		__( '수원강제추행기소유예', 'della-theme' ),
-		__( '수원강제추행죄', 'della-theme' ),
-		__( '수원성범죄전문로펌', 'della-theme' ),
-		__( '수원성범죄전문법무법인', 'della-theme' ),
-		__( '수원형사변호사', 'della-theme' ),
-		__( '수원성범죄전문', 'della-theme' ),
-		__( '성범죄피해자변호사', 'della-theme' ),
-		__( '형사전문변호사', 'della-theme' ),
-		__( '법무법인 동주', 'della-theme' ),
-		get_bloginfo( 'name' ),
+function della_theme_front_page_meta_100() {
+	if ( ! is_front_page() ) {
+		return;
+	}
+	$road    = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
+	$road2   = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
+	$street  = trim( $road . ' ' . $road2 );
+	$phone   = get_theme_mod( 'della_phone', '031-216-1155' );
+	$base_url = home_url( '/' );
+	// OG 이미지: /img/og-sexcrime-dongju.jpg 또는 업로드 경로. 없으면 미디어에 업로드 후 경로 수정.
+	$og_image = home_url( '/img/og-sexcrime-dongju.jpg' );
+	$logo_url = home_url( '/img/logo.png' );
+	?>
+	<meta name="description" content="수원 성범죄 전문변호사 법무법인 동주. 중앙지검 부장검사·국정원·경찰청 경력 변호사가 고소 전 합의부터 경찰조사, 검찰송치, 재판까지 직접 대응합니다. 수원 광교." />
+	<meta property="og:type" content="website" />
+	<meta property="og:locale" content="ko_KR" />
+	<meta property="og:site_name" content="법무법인 동주" />
+	<meta property="og:title" content="수원 성범죄 전문변호사 | 강제추행·카메라촬영 대응 | 법무법인 동주" />
+	<meta property="og:description" content="중앙지검 부장검사·국정원·경찰청 경력 변호사가 고소 전 합의부터 경찰조사, 검찰송치, 재판까지 직접 대응합니다. 수원 광교." />
+	<meta property="og:url" content="<?php echo esc_url( $base_url ); ?>" />
+	<meta property="og:image" content="<?php echo esc_url( $og_image ); ?>" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="수원 성범죄 전문변호사 | 법무법인 동주" />
+	<meta name="twitter:description" content="경찰조사·검찰송치·재판까지 대표·파트너 변호사가 직접 대응합니다. 수원 광교." />
+	<meta name="twitter:image" content="<?php echo esc_url( $og_image ); ?>" />
+	<link rel="canonical" href="<?php echo esc_url( $base_url ); ?>" />
+	<meta name="robots" content="index,follow,max-image-preview:large" />
+	<script type="application/ld+json">
+	<?php
+	echo wp_json_encode(
+		array(
+			'@context'    => 'https://schema.org',
+			'@type'       => 'LegalService',
+			'name'        => '법무법인 동주',
+			'url'         => $base_url,
+			'image'       => $og_image,
+			'logo'        => $logo_url,
+			'description' => '수원 성범죄 전문변호사 법무법인 동주. 고소 전 합의부터 경찰조사, 검찰송치, 재판까지 직접 대응.',
+			'address'     => array(
+				'@type'           => 'PostalAddress',
+				'addressCountry'  => 'KR',
+				'addressRegion'   => '경기도',
+				'addressLocality' => '수원',
+				'streetAddress'   => $street,
+			),
+			'areaServed'  => array( '수원', '용인', '성남', '화성', '동탄', '안양', '의왕', '안산', '오산', '평택', '안성', '이천' ),
+			'telephone'   => $phone,
+			'priceRange'  => '$$',
+		),
+		JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 	);
-	if ( della_theme_is_response_board_page() ) {
-		$keywords = array_merge( array(
-			__( '성범죄 대응정보', 'della-theme' ),
-			__( '성범죄 법조문', 'della-theme' ),
-			__( '성범죄 판례', 'della-theme' ),
-		), $keywords );
-	}
-	if ( della_theme_is_success_cases_page() ) {
-		$keywords = array_merge( array(
-			__( '성범죄 성공사례', 'della-theme' ),
-			__( '강간 강제추행 성공사례', 'della-theme' ),
-		), $keywords );
-	}
-	echo '<meta name="keywords" content="' . esc_attr( implode( ', ', $keywords ) ) . '" />' . "\n";
+	?>
+	</script>
+	<?php
 }
-add_action( 'wp_head', 'della_theme_seo_meta_keywords', 1 );
+add_action( 'wp_head', 'della_theme_front_page_meta_100', 0 );
 
 /**
  * SEO: Front page default meta description (키워드 포함, 120–320자)
@@ -1244,76 +1261,9 @@ function della_theme_lawyer_profile_url( $slug ) {
 function della_theme_get_lawyers() {
 	return array(
 		array(
-			'slug'         => 'dongju-kim-yunseo',
-			'name'         => '김윤서',
-			'title'        => '파트너변호사',
-			'image'        => 'dongju-kim-yunseo-lawyer.png',
-			'image_profile'=> 'dongju-kim-yunseo_profile.webp',
-			'quote'        => '형사법·소년법 전문성과 세심한 소통으로 의뢰인 신뢰를 받고 있습니다.',
-			'specialties'  => array( '형사법', '소년법' ),
-			'education'    => array( '숙명여자대학교 법과대학 최우수졸업(수석졸업)', '고려대학교 법학과 (석사) 졸업 형사법 전공', '고려대학교 법학과 (박사) 수료 형사법 전공','변호사시험합격'),
-			'items'        => array( '대한변협[형사법] 전문 변호사', '대현변협[소년법] 전문 변호사', '고려대 법학박사(형사법) 수료','前 법무법인 마음다해 변호사',
-		    '前 안양시청의회(안양시의회) 입법 전문위원',
-		    '前 한국법제연구원',
-			'前 고려대학교 법학연구원 (형사법)',
-			'前 헌법재판소 경찰청 실무실습',
-			'現 안양시 산업진흥원 기업심사평가위원',
-			'現 IBK기업은행 미래성장성 기업심의전문평가위원',
-			'現 법무법인 동주'),
-		),
-		array(
-			'slug'         => 'dongju-jo-wonjin',
-			'name'         => '조원진',
-			'title'        => '파트너변호사',
-			'image'        => 'dongju-jo-wonjin-lawyer.png',
-			'image_profile'=> 'dongju-jo-wonjin_profile.webp',
-			'quote'        => '교육청·지자체 고문 경험을 바탕으로 신속하고 정확한 법률 대응을 합니다.',
-			'specialties'  => array( '민사법' ),
-			'education'    => array( '경희대학교 법과대학 졸업', '법학전문석사', '변호사시험 합격' ),
-			'items'        => array( '대한변협[형사법] 전문 변호사', '수원지방검찰청 국선변호사', '현 해군본부 군검찰 국선변호인',
-			'대한변호사협회 형사전문변호사',
-			'대한변호사협회 학교폭력전문변호사',
-		 	'前 법무법인 명문',
-			'前 법률사무소 송향',
-			'前 국가정보원(NIS) 기획조정실 변호사',
-			'前 해군본부 군검찰 국선변호인',
-			'前 인천광역시 · 인천광역시교육청 2019회계연도 결산검사위원',
-			'現 대법원 국선변호인',
-			'現 인천광역시의회 법률 · 입법 고문변호사',
-			'現 인천광역시 남동구 고문변호사',
-			'現 인천광역시 교육청 고문변호사',
-			'現 인천광역시 연수구 선거관리위원회 위원',
-			'現 인천광역시 출자기관 운영심의위원회 위원',
-			'現 인천광역시 남동구 스포츠공정위원회 위원',
-			'現 인천광역시 미추홀구 공직자윤리위원회 위원',
-			'現 인천광역시 미추홀구 구정평가위원회 위원',
-			'現 인천광역시 강화교육지원청 학교폭력심의위원회 위원'
-			),
-		),
-		array(
-			'slug'         => 'dongju-oh-seojin',
-			'name'         => '오서진',
-			'title'        => '파트너변호사',
-			'image'        => 'dongju-oh-seojin-lawyer.png',
-			'image_profile'=> 'dongju-oh-seojin_profile.webp',
-			'quote'        => '학교·교육 분야 사건에 대한 이해도가 높다는 평가를 받고 있습니다.',
-			'specialties'  => array( '형사법' ),
-			'education'    => array( '연세대학교 법학전문박사과정(형사법)','법학전문석사','변호사시험 합격' ),
-			'items'        => array( '대한변협[형사법] 전문 변호사', '대한변협[소년법] 전문 변호사', '대한변협[행정법] 전문 변호사',
-			'前 서울중앙지방법원 외부조정센터 조정위원',
-			'前 인천광역시교권보호위원회 위원',
-			'前 인천광역시교육청 변호사',
-			'現 법무법인 동주',
-			'現 인천광역시교육청 소청심사위원회 위원',
-			'現 인천광역시상담지원자문위원회 위원',
-			'現 인천광역시학교안전공제회보상심사위원회 위원',
-			'現 인천광역시교육청 사립학교 징계심의위원회 위원',
-			'現 인천광역시 미추홀구 인사위원회 위원'),
-		),
-		array(
 			'slug'         => 'dongju-park-dongjin',
 			'name'         => '박동진',
-			'title'        => '파트너변호사',
+			'title'        => '성범죄전문변호사',
 			'image'        => 'dongju-park-dongjin-lawyer.png',
 			'image_profile'=> 'dongju-park-dongjin_profile.webp',
 			'quote'        => '의뢰인들의 78%가 박동진 변호사를 노련함이라 평가했습니다.',
@@ -1332,32 +1282,9 @@ function della_theme_get_lawyers() {
 			)
 		),
 		array(
-			'slug'         => 'dongju-isejin',
-			'name'         => '이세진',
-			'title'        => '파트너변호사',
-			'image'        => 'dongju-isejin-lawyer.png',
-			'image_profile'=> 'dongju-isejin_profile.webp',
-			'quote'        => '피해자 국선·학교폭력 사건에서 꼼꼼한 준비와 공감 능력을 인정받고 있습니다.',
-			'specialties'  => array( '형사법' ),
-			'education'    => array( '고려대학교 법과대학 졸업','법학전문석사','변호사시험 합격'),
-			'items'        => array( '대한변협[형사법] 전문 변호사', '대한변협[학교폭력] 전문', '수원지방검찰청 피해자 국선',
-			'대한변호사협회 이혼전문변호사',
-			'前 법무법인 현재',
-			'前 법률사무소 지음',
-			'前 대한변호사협회 대의원',
-			'前 대법원 국선변호인',
-			'수원지방검찰청 피해자 국선변호사',
-			'대한장애인론볼연맹 이사',
-			'일산서부경찰서 법률자문변호사',
-			'네이버지식in전문상담위원',
-			'김포시 통진읍 마을 변호사 (공익활동)',
-			'서울창신초등학교 고문변호사',
-			'現 법무법인 동주'),
-		),
-		array(
 			'slug'         => 'dongju-leesewhan',
 			'name'         => '이세환',
-			'title'        => '대표변호사',
+			'title'        => '성범죄전문변호사',
 			'image'        => 'dongju-leesewhan-lawyer.png',
 			'image_profile'=> 'dongju-leesewhan_profile.webp',
 			'quote'        => '학교폭력·성범죄 사건 현장 경험으로 실무적 해결력을 높이 평가받습니다.',
@@ -1394,6 +1321,96 @@ function della_theme_get_lawyers() {
 				'시사저널 법률 인터뷰',
 				'경향신문 법률 인터뷰',
 			),
+		),
+		array(
+			'slug'         => 'dongju-jo-wonjin',
+			'name'         => '조원진',
+			'title'        => '성범죄전문변호사',
+			'image'        => 'dongju-jo-wonjin-lawyer.png',
+			'image_profile'=> 'dongju-jo-wonjin_profile.webp',
+			'quote'        => '교육청·지자체 고문 경험을 바탕으로 신속하고 정확한 법률 대응을 합니다.',
+			'specialties'  => array( '민사법' ),
+			'education'    => array( '경희대학교 법과대학 졸업', '법학전문석사', '변호사시험 합격' ),
+			'items'        => array( '대한변협[형사법] 전문 변호사', '수원지방검찰청 국선변호사', '현 해군본부 군검찰 국선변호인',
+			'대한변호사협회 형사전문변호사',
+			'대한변호사협회 학교폭력전문변호사',
+		 	'前 법무법인 명문',
+			'前 법률사무소 송향',
+			'前 국가정보원(NIS) 기획조정실 변호사',
+			'前 해군본부 군검찰 국선변호인',
+			'前 인천광역시 · 인천광역시교육청 2019회계연도 결산검사위원',
+			'現 대법원 국선변호인',
+			'現 인천광역시의회 법률 · 입법 고문변호사',
+			'現 인천광역시 남동구 고문변호사',
+			'現 인천광역시 교육청 고문변호사',
+			'現 인천광역시 연수구 선거관리위원회 위원',
+			'現 인천광역시 출자기관 운영심의위원회 위원',
+			'現 인천광역시 남동구 스포츠공정위원회 위원',
+			'現 인천광역시 미추홀구 공직자윤리위원회 위원',
+			'現 인천광역시 미추홀구 구정평가위원회 위원',
+			'現 인천광역시 강화교육지원청 학교폭력심의위원회 위원'
+			),
+		),
+		array(
+			'slug'         => 'dongju-kim-yunseo',
+			'name'         => '김윤서',
+			'title'        => '성범죄전문변호사',
+			'image'        => 'dongju-kim-yunseo-lawyer.png',
+			'image_profile'=> 'dongju-kim-yunseo_profile.webp',
+			'quote'        => '형사법·소년법 전문성과 세심한 소통으로 의뢰인 신뢰를 받고 있습니다.',
+			'specialties'  => array( '형사법', '소년법' ),
+			'education'    => array( '숙명여자대학교 법과대학 최우수졸업(수석졸업)', '고려대학교 법학과 (석사) 졸업 형사법 전공', '고려대학교 법학과 (박사) 수료 형사법 전공','변호사시험합격'),
+			'items'        => array( '대한변협[형사법] 전문 변호사', '대현변협[소년법] 전문 변호사', '고려대 법학박사(형사법) 수료','前 법무법인 마음다해 변호사',
+		    '前 안양시청의회(안양시의회) 입법 전문위원',
+		    '前 한국법제연구원',
+			'前 고려대학교 법학연구원 (형사법)',
+			'前 헌법재판소 경찰청 실무실습',
+			'現 안양시 산업진흥원 기업심사평가위원',
+			'現 IBK기업은행 미래성장성 기업심의전문평가위원',
+			'現 법무법인 동주'),
+		),
+		array(
+			'slug'         => 'dongju-oh-seojin',
+			'name'         => '오서진',
+			'title'        => '성범죄전문변호사',
+			'image'        => 'dongju-oh-seojin-lawyer.png',
+			'image_profile'=> 'dongju-oh-seojin_profile.webp',
+			'quote'        => '학교·교육 분야 사건에 대한 이해도가 높다는 평가를 받고 있습니다.',
+			'specialties'  => array( '형사법' ),
+			'education'    => array( '연세대학교 법학전문박사과정(형사법)','법학전문석사','변호사시험 합격' ),
+			'items'        => array( '대한변협[형사법] 전문 변호사', '대한변협[소년법] 전문 변호사', '대한변협[행정법] 전문 변호사',
+			'前 서울중앙지방법원 외부조정센터 조정위원',
+			'前 인천광역시교권보호위원회 위원',
+			'前 인천광역시교육청 변호사',
+			'現 법무법인 동주',
+			'現 인천광역시교육청 소청심사위원회 위원',
+			'現 인천광역시상담지원자문위원회 위원',
+			'現 인천광역시학교안전공제회보상심사위원회 위원',
+			'現 인천광역시교육청 사립학교 징계심의위원회 위원',
+			'現 인천광역시 미추홀구 인사위원회 위원'),
+		),
+		array(
+			'slug'         => 'dongju-isejin',
+			'name'         => '이세진',
+			'title'        => '성범죄전문변호사',
+			'image'        => 'dongju-isejin-lawyer.png',
+			'image_profile'=> 'dongju-isejin_profile.webp',
+			'quote'        => '피해자 국선·학교폭력 사건에서 꼼꼼한 준비와 공감 능력을 인정받고 있습니다.',
+			'specialties'  => array( '형사법' ),
+			'education'    => array( '고려대학교 법과대학 졸업','법학전문석사','변호사시험 합격'),
+			'items'        => array( '대한변협[형사법] 전문 변호사', '대한변협[학교폭력] 전문', '수원지방검찰청 피해자 국선',
+			'대한변호사협회 이혼전문변호사',
+			'前 법무법인 현재',
+			'前 법률사무소 지음',
+			'前 대한변호사협회 대의원',
+			'前 대법원 국선변호인',
+			'수원지방검찰청 피해자 국선변호사',
+			'대한장애인론볼연맹 이사',
+			'일산서부경찰서 법률자문변호사',
+			'네이버지식in전문상담위원',
+			'김포시 통진읍 마을 변호사 (공익활동)',
+			'서울창신초등학교 고문변호사',
+			'現 법무법인 동주'),
 		),
 	);
 }
@@ -1806,17 +1823,32 @@ function della_theme_trigger_404() {
 /**
  * SEO: Canonical URL — 현재 URL 기준 정규 URL 1개만 출력 (중복 방지)
  * singular, 홈, 아카이브, 검색, 페이지네이션 등 전 타입 대응
+ * 메인 페이지는 100점 메타 세트에서 출력하므로 여기서는 스킵.
  */
 function della_theme_canonical() {
 	if ( is_404() ) {
 		return;
 	}
-	// 메인(홈)은 항상 사이트 루트 URL — 고정 페이지 슬러그(/테스트야-몰카/ 등)가 canonical에 나오지 않게
-	if ( is_front_page() || ( is_home() && get_option( 'show_on_front' ) === 'posts' ) ) {
+	if ( is_front_page() ) {
+		return;
+	}
+	// 메인(홈)은 100점 메타에서 출력. 그 외 홈은 사이트 루트
+	if ( is_home() && get_option( 'show_on_front' ) === 'posts' ) {
 		$canonical = home_url( '/' );
-	} elseif ( function_exists( 'della_theme_is_lawyers_page' ) && della_theme_is_lawyers_page() && get_query_var( 'lawyer_slug' ) ) {
-		// 성범죄 전문 변호사 상세: /lawyers/{slug}/ 정규 URL
-		$canonical = function_exists( 'della_theme_lawyer_profile_url' ) ? della_theme_lawyer_profile_url( get_query_var( 'lawyer_slug' ) ) : '';
+	} elseif ( function_exists( 'della_theme_is_lawyers_page' ) && della_theme_is_lawyers_page() ) {
+		if ( get_query_var( 'lawyer_slug' ) ) {
+			// 성범죄 전문 변호사 상세: /lawyers/{slug}/ 정규 URL
+			$canonical = function_exists( 'della_theme_lawyer_profile_url' ) ? della_theme_lawyer_profile_url( get_query_var( 'lawyer_slug' ) ) : '';
+		} else {
+			// 목록 페이지는 della_theme_lawyers_page_meta()에서 canonical 출력
+			return;
+		}
+	} elseif ( function_exists( 'della_theme_is_success_cases_page' ) && della_theme_is_success_cases_page() ) {
+		// 성공사례 허브는 della_theme_success_cases_page_meta()에서 canonical 출력 (?tag=/?cat= 반영)
+		return;
+	} elseif ( function_exists( 'della_theme_is_response_board_page' ) && della_theme_is_response_board_page() ) {
+		// 대응정보 허브는 전용 메타에서 canonical 처리
+		return;
 	} else {
 		$canonical = function_exists( 'wp_get_canonical_url' ) ? wp_get_canonical_url() : null;
 		if ( empty( $canonical ) ) {
@@ -1828,10 +1860,111 @@ function della_theme_canonical() {
 		}
 	}
 	if ( ! empty( $canonical ) ) {
+		$canonical = remove_query_arg( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content' ), $canonical );
 		echo '<link rel="canonical" href="' . esc_url( $canonical ) . '" />' . "\n";
 	}
 }
 add_action( 'wp_head', 'della_theme_canonical', 1 );
+
+/**
+ * SEO: 성범죄 전문 변호사(목록) 페이지 전용 메타 — title은 document_title_parts에서 설정
+ * description, canonical, robots, og, twitter 일괄 출력 (소개 페이지 의도·중복 방지)
+ */
+function della_theme_lawyers_page_meta() {
+	if ( ! function_exists( 'della_theme_is_lawyers_page' ) || ! della_theme_is_lawyers_page() ) {
+		return;
+	}
+	if ( get_query_var( 'lawyer_slug' ) ) {
+		return; // 상세 페이지는 제외, 목록 페이지만
+	}
+	$url = function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : get_permalink();
+	$og_image = home_url( '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg' );
+	?>
+	<meta name="description" content="법무법인 동주 성범죄 전문변호사 팀을 소개합니다. 형사법 전문 변호사들이 성범죄 사건에서 경찰조사·검찰송치·재판까지 단계별 대응 전략을 체계적으로 설계합니다. 상담 전 변호사 경력과 전문분야를 확인하세요." />
+	<link rel="canonical" href="<?php echo esc_url( $url ); ?>" />
+	<meta name="robots" content="index,follow" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="법무법인 동주" />
+	<meta property="og:title" content="성범죄 전문변호사 소개 | 형사법 전문 변호사 팀 | 법무법인 동주" />
+	<meta property="og:description" content="법무법인 동주 성범죄 전문변호사 팀 소개. 형사법 전문 변호사들이 경찰조사·검찰송치·재판까지 단계별 대응 전략을 설계합니다." />
+	<meta property="og:url" content="<?php echo esc_url( $url ); ?>" />
+	<meta property="og:image" content="<?php echo esc_url( $og_image ); ?>" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="성범죄 전문변호사 소개 | 법무법인 동주" />
+	<meta name="twitter:description" content="형사법 전문 변호사 팀 소개. 성범죄 사건 대응 경험과 전략을 확인하세요." />
+	<meta name="twitter:image" content="<?php echo esc_url( $og_image ); ?>" />
+	<?php
+}
+add_action( 'wp_head', 'della_theme_lawyers_page_meta', 1 );
+
+/**
+ * SEO: 성범죄 대응정보 허브 페이지 전용 메타 — description, robots, og, twitter (중복 방지)
+ * ?tag= / ?cat= URL은 index,follow 유지
+ */
+function della_theme_response_board_page_meta() {
+	if ( ! function_exists( 'della_theme_is_response_board_page' ) || ! della_theme_is_response_board_page() ) {
+		return;
+	}
+	$url = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : get_permalink();
+	$tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
+	$cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
+	if ( $tag || $cat ) {
+		$url = add_query_arg( array_filter( array( 'tag' => $tag ? $tag : null, 'cat' => $cat ? $cat : null ) ), $url );
+	}
+	$title = '성범죄 대응정보 가이드 | 강제추행·불법촬영·아청법·판례·FAQ | 법무법인 동주';
+	$description = '성범죄 대응정보를 유형별로 정리했습니다. 강제추행·불법촬영·아청법·군성범죄 등 법조문, 판례, FAQ와 수사·재판 단계별 대응 포인트를 한곳에서 확인하세요.';
+	?>
+	<meta name="description" content="<?php echo esc_attr( $description ); ?>" />
+	<meta name="robots" content="index,follow" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="법무법인 동주" />
+	<meta property="og:title" content="<?php echo esc_attr( $title ); ?>" />
+	<meta property="og:description" content="<?php echo esc_attr( $description ); ?>" />
+	<meta property="og:url" content="<?php echo esc_url( $url ); ?>" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>" />
+	<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>" />
+	<?php
+}
+add_action( 'wp_head', 'della_theme_response_board_page_meta', 1 );
+
+/**
+ * SEO: 성범죄 성공사례 허브 페이지 전용 메타 — description, canonical, robots, og, twitter (중복 방지)
+ * ?tag= / ?cat= URL은 index,follow 유지. meta keywords는 출력하지 않음.
+ */
+function della_theme_success_cases_page_meta() {
+	if ( ! function_exists( 'della_theme_is_success_cases_page' ) || ! della_theme_is_success_cases_page() ) {
+		return;
+	}
+	$url = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink();
+	$tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
+	$cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
+	if ( $tag || $cat ) {
+		$url = add_query_arg( array_filter( array( 'tag' => $tag ? $tag : null, 'cat' => $cat ? $cat : null ) ), $url );
+	}
+	$title = '수원 성범죄 성공사례 | 강제추행·불법촬영 무혐의·불송치 사례 | 법무법인 동주';
+	$description = '강제추행, 불법촬영, 디지털성범죄 사건에서 무혐의·불송치·기소유예 등 실제 결과를 이끈 성범죄 성공사례를 확인하세요. 경찰조사 대응부터 재판 전략까지 실제 사건 기반 대응 사례를 정리했습니다.';
+	$og_image = home_url( '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg' );
+	?>
+	<meta name="description" content="<?php echo esc_attr( $description ); ?>" />
+	<link rel="canonical" href="<?php echo esc_url( $url ); ?>" />
+	<meta name="robots" content="index,follow,max-image-preview:large" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="법무법인 동주" />
+	<meta property="og:title" content="<?php echo esc_attr( $title ); ?>" />
+	<meta property="og:description" content="<?php echo esc_attr( $description ); ?>" />
+	<meta property="og:url" content="<?php echo esc_url( $url ); ?>" />
+	<meta property="og:image" content="<?php echo esc_url( $og_image ); ?>" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>" />
+	<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>" />
+	<?php
+}
+add_action( 'wp_head', 'della_theme_success_cases_page_meta', 1 );
 
 /**
  * SEO: Robots meta — 404·검색결과·내용 없는 아카이브 noindex로 불용 문서/중복 색인 방지
@@ -1885,6 +2018,18 @@ function della_theme_og_twitter_meta() {
 	if ( defined( 'WPSEO_VERSION' ) || class_exists( 'RankMath', false ) || class_exists( 'All_in_One_SEO_Pack', false ) ) {
 		return;
 	}
+	// 성범죄 전문 변호사 목록 페이지는 della_theme_lawyers_page_meta()에서 출력
+	if ( function_exists( 'della_theme_is_lawyers_page' ) && della_theme_is_lawyers_page() && ! get_query_var( 'lawyer_slug' ) ) {
+		return;
+	}
+	// 성범죄 대응정보 허브 페이지는 전용 메타에서 출력
+	if ( function_exists( 'della_theme_is_response_board_page' ) && della_theme_is_response_board_page() ) {
+		return;
+	}
+	// 성범죄 성공사례 허브 페이지는 전용 메타에서 출력
+	if ( function_exists( 'della_theme_is_success_cases_page' ) && della_theme_is_success_cases_page() ) {
+		return;
+	}
 	if ( ! is_singular() && ! is_front_page() ) {
 		return;
 	}
@@ -1918,8 +2063,7 @@ function della_theme_og_twitter_meta() {
 			$image = della_theme_lawyer_image_url( $lawyers[0]['image'], $img_base, $upload_dir['basedir'] . '/2026/02' );
 		}
 	} elseif ( della_theme_is_response_board_page() ) {
-		$description = __( '성범죄 대응정보: 강간·강제추행·군성범죄·불법촬영·성매매·직장내 성희롱 등 법조문, 판례, FAQ, 수사·재판 단계별 대응 가이드. 수원 성범죄 전문 변호사.', 'della-theme' );
-		$description = wp_strip_all_tags( $description ) . ' | ' . $law_firm_name;
+		$description = '성범죄 대응정보를 유형별로 정리했습니다. 강제추행·불법촬영·아청법·군성범죄 등 법조문, 판례, FAQ와 수사·재판 단계별 대응 포인트를 한곳에서 확인하세요.';
 		$description = della_theme_trim_meta_description( $description );
 		$type = 'website';
 	} elseif ( della_theme_is_success_cases_page() ) {
@@ -1996,9 +2140,11 @@ function della_theme_schema_json_ld() {
 	$schema           = array();
 	$schema_breadcrumb = array();
 
-	// WebSite (front page: static or blog)
+	// WebSite (front page: static or blog). 메인은 100점 메타에서 LegalService 출력 → 여기서 WebSite 생략(중복 방지).
 	$schema['@context'] = 'https://schema.org';
 	if ( is_front_page() ) {
+		// della_theme_front_page_meta_100() 에서 LegalService 출력.
+	} elseif ( is_home() && get_option( 'show_on_front' ) === 'posts' ) {
 		$schema['@type'] = 'WebSite';
 		$schema['name'] = get_bloginfo( 'name' );
 		$fp_desc = della_theme_front_page_description();
@@ -2139,7 +2285,7 @@ function della_theme_schema_json_ld() {
 		$rb_args = array(
 			'post_type'      => 'post',
 			'post_status'    => 'publish',
-			'posts_per_page' => 15,
+			'posts_per_page' => 10,
 			'orderby'        => 'date',
 			'order'          => 'DESC',
 			'fields'         => 'ids',
@@ -2157,7 +2303,6 @@ function della_theme_schema_json_ld() {
 					'@type'    => 'ListItem',
 					'position' => $pos,
 					'url'      => get_permalink( $pid ),
-					'name'     => get_the_title( $pid ),
 				);
 			}
 		}
@@ -2187,7 +2332,7 @@ function della_theme_schema_json_ld() {
 		$sc_args = array(
 			'post_type'      => 'post',
 			'post_status'    => 'publish',
-			'posts_per_page' => 15,
+			'posts_per_page' => 10,
 			'orderby'        => 'date',
 			'order'          => 'DESC',
 			'fields'         => 'ids',
@@ -2207,7 +2352,6 @@ function della_theme_schema_json_ld() {
 					'@type'    => 'ListItem',
 					'position' => $pos,
 					'url'      => get_permalink( $pid ),
-					'name'     => get_the_title( $pid ),
 				);
 			}
 		}
@@ -2215,9 +2359,8 @@ function della_theme_schema_json_ld() {
 		$sc_schema = array(
 			'@context'        => 'https://schema.org',
 			'@type'           => 'ItemList',
-			'name'            => __( '성범죄 성공사례 목록', 'della-theme' ),
-			'description'     => __( '성범죄 성공사례 게시판. 강간·강제추행·군성범죄·불법촬영·성매매·직장내 성희롱 등 수원 성범죄 전문 변호사 성공 사례.', 'della-theme' ),
-			'url'             => get_permalink(),
+			'name'            => '성범죄 성공사례',
+			'url'             => function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink(),
 			'numberOfItems'   => count( $sc_items ),
 			'itemListElement' => $sc_items,
 		);

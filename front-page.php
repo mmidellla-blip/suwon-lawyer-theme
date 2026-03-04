@@ -18,6 +18,10 @@ get_header();
 
 <?php get_template_part( 'template-parts/response-info' ); ?>
 
+<?php get_template_part( 'template-parts/hub-guide' ); ?>
+
+<?php get_template_part( 'template-parts/response-type-hub' ); ?>
+
 <?php get_template_part( 'template-parts/consultation-cta' ); ?>
 
 <?php get_template_part( 'template-parts/directions' ); ?>

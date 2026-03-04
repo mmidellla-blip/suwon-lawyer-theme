@@ -1679,9 +1679,10 @@ article.page:last-child {
   }
 }
 
-/* Screen reader only */
-.screen-reader-text {
-  position: absolute;
+/* Screen reader only (접근성·SEO용, 화면에는 미노출) */
+.screen-reader-text,
+.sr-only {
+  position: absolute !important;
   width: 1px;
   height: 1px;
   padding: 0;

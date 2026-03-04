@@ -13,6 +13,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 $paged    = max( 1, get_query_var( 'paged' ) ? (int) get_query_var( 'paged' ) : ( isset( $_GET['paged'] ) ? (int) $_GET['paged'] : 1 ) );
 $search   = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ( isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '' );
 $filter_cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
+if ( empty( $filter_cat ) && isset( $_GET['tag'] ) ) {
+	$tag_label   = sanitize_text_field( wp_unslash( $_GET['tag'] ) );
+	$tag_to_slug = array(
+		'강간'     => 'rape',
+		'강제추행' => 'sexual_assult',
+		'군성범죄' => 'military_sexual_crimes',
+		'성매매'   => 'sex_work',
+		'불법촬영' => 'spycam_crime',
+		'직장내'   => 'workplace',
+		'아청법'   => 'achaeng',
+	);
+	if ( isset( $tag_to_slug[ $tag_label ] ) ) {
+		$filter_cat = $tag_to_slug[ $tag_label ];
+	}
+}
 
 /* 대 카테고리 (성공사례와 동일 slug): slug = WordPress 카테고리 slug */
 $sidebar_main_cats = array(
@@ -23,16 +38,15 @@ $sidebar_main_cats = array(
 	array( 'slug' => 'spycam_crime', 'label' => __( '불법촬영', 'della-theme' ) ),
 	array( 'slug' => 'workplace', 'label' => __( '직장내', 'della-theme' ) ),
 );
-/* 소 카테고리 (대별 동일 라벨, slug는 대+소 조합으로 구분) */
+/* 소 카테고리 (대별 동일 라벨, slug는 대+소 조합으로 구분) — 표시 순서 */
 $sidebar_sub_defs = array(
-	array( 'slug' => '법조문', 'label' => __( '법조문', 'della-theme' ) ),
-	array( 'slug' => '구성요건-핵심-쟁점-강간', 'label' => __( '구성요건·핵심·쟁점·강간', 'della-theme' ) ),
+	array( 'slug' => '법조문', 'label' => __( '법조문, 처벌·양형 기준', 'della-theme' ) ),
+	array( 'slug' => '구성요건-핵심-쟁점-강간', 'label' => __( '구성요건, 핵심쟁점', 'della-theme' ) ),
+	array( 'slug' => '판례', 'label' => __( '관련 판례', 'della-theme' ) ),
+	array( 'slug' => '유형별-사건', 'label' => __( '유형별 사례', 'della-theme' ) ),
+	array( 'slug' => '수사-재판-단계별-대응', 'label' => __( '대응가이드', 'della-theme' ) ),
 	array( 'slug' => 'faq', 'label' => __( 'FAQ', 'della-theme' ) ),
-	array( 'slug' => '수사-재판-단계별-대응', 'label' => __( '수사 재판 단계별 대응', 'della-theme' ) ),
-	array( 'slug' => '판례', 'label' => __( '판례', 'della-theme' ) ),
-	array( 'slug' => '유형별-사건', 'label' => __( '유형별 사건', 'della-theme' ) ),
-	array( 'slug' => '처벌-양형-전과', 'label' => __( '처벌·양형·전과', 'della-theme' ) ),
-	array( 'slug' => '최신판례-이슈', 'label' => __( '최신판례·이슈', 'della-theme' ) ),
+	array( 'slug' => '최신판례-이슈', 'label' => __( '최신이슈', 'della-theme' ) ),
 );
 $topic_tags = $sidebar_main_cats;
 
@@ -96,8 +110,9 @@ get_header();
 	<div class="response-board-top">
 		<div class="response-board-top-inner">
 			<header class="response-board-header">
-				<h1 class="response-board-title"><?php esc_html_e( '성범죄 대응정보', 'della-theme' ); ?></h2>
+				<h1 class="response-board-title"><?php esc_html_e( '성범죄 대응정보', 'della-theme' ); ?></h1>
 				<p class="response-board-desc"><?php esc_html_e( '강간·강제추행·군성범죄·불법촬영·성매매·직장내 성희롱 등 법조문, 판례, FAQ, 수사·재판 단계별 대응 가이드.', 'della-theme' ); ?></p>
+				<p class="response-board-intro">성범죄 사건은 초기 진술과 증거 보존이 결과에 큰 영향을 미칩니다. 이 페이지는 강제추행, 불법촬영, 아청법, 군성범죄 등 유형별 핵심 쟁점과 법조문·판례·FAQ를 정리해 제공합니다. 또한 경찰 조사, 검찰 송치, 재판 단계별로 확인해야 할 대응 포인트를 안내합니다. 필요한 주제를 선택해 빠르게 확인하세요.</p>
 			</header>
 
 			<form class="response-board-search" role="search" method="get" action="<?php echo esc_url( $base_url ); ?>" aria-label="<?php esc_attr_e( '대응정보 검색', 'della-theme' ); ?>">
@@ -119,7 +134,7 @@ get_header();
 			<div class="response-board-tags">
 				<?php foreach ( $topic_tags as $tag ) : ?>
 					<?php
-					$tag_url = add_query_arg( array( 'cat' => $tag['slug'], 'paged' => 1 ), $base_url );
+					$tag_url  = add_query_arg( array( 'tag' => $tag['label'], 'paged' => 1 ), $base_url );
 					$is_active = ( $filter_cat === $tag['slug'] || strpos( $filter_cat, $tag['slug'] . '-' ) === 0 );
 					?>
 					<a href="<?php echo esc_url( $tag_url ); ?>" class="response-board-tag <?php echo $is_active ? 'is-active' : ''; ?>">#<?php echo esc_html( $tag['label'] ); ?></a>
@@ -197,12 +212,18 @@ get_header();
 							$post_cats = get_the_category();
 							$post_cat_name = ! empty( $post_cats[0] ) ? $post_cats[0]->name : '';
 							?>
+							<?php
+							$item_title = get_post_meta( get_the_ID(), 'della_info_seo_title', true );
+							if ( ! $item_title ) {
+								$item_title = get_the_title();
+							}
+							?>
 							<li class="response-board-item" role="listitem">
-								<a href="<?php the_permalink(); ?>" class="response-board-item-link" title="<?php the_title_attribute( array( 'echo' => false ) ); ?>">
+								<a href="<?php the_permalink(); ?>" class="response-board-item-link" title="<?php echo esc_attr( $item_title ); ?>">
 									<?php if ( $post_cat_name ) : ?>
 										<span class="response-board-item-cat">[<?php echo esc_html( $post_cat_name ); ?>]</span>
 									<?php endif; ?>
-									<span class="response-board-item-title"><?php the_title(); ?></span>
+									<span class="response-board-item-title"><?php echo esc_html( $item_title ); ?></span>
 									<time class="response-board-item-date" datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?></time>
 								</a>
 							</li>
@@ -245,6 +266,11 @@ get_header();
 						</nav>
 					<?php endif; ?>
 				<?php endif; ?>
+				<div class="response-board-internal-links internal-links">
+					<a href="<?php echo esc_url( function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/success-cases/' ) ); ?>">성범죄 성공사례 보기</a>
+					<a href="<?php echo esc_url( function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : home_url( '/lawyers/' ) ); ?>">성범죄 전문변호사 소개</a>
+					<a href="<?php echo esc_url( home_url( '/#consultation-cta' ) ); ?>">상담 신청</a>
+				</div>
 			</section>
 		</div>
 	</div>

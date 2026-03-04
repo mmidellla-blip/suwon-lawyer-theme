@@ -1,6 +1,6 @@
 <?php
 /**
- * Consultation CTA (상담 신청) section - dark overlay, centered copy, CTA button
+ * Consultation CTA (상담 신청) section - SEO-friendly, dark overlay, centered copy, CTA button
  *
  * @package Della_Theme
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $consultation_url = get_theme_mod( 'della_consultation_url', '' );
 if ( ! $consultation_url ) {
-	$consultation_url = 'https://sexcrimecenter-dongju.com/';
+	$consultation_url = 'https://sexcrimecenter-dongju.com/bbs/board.php?bo_table=online&me_code=6010';
 }
 
 $consultation_bg = content_url( 'uploads/2026/02/consultation-bg.webp' );
@@ -20,10 +20,10 @@ $consultation_bg = content_url( 'uploads/2026/02/consultation-bg.webp' );
 	<div class="consultation-cta-bg" style="background-image: url('<?php echo esc_url( $consultation_bg ); ?>');" aria-hidden="true"></div>
 	<div class="consultation-cta-overlay" aria-hidden="true"></div>
 	<div class="consultation-cta-inner">
-		<h2 id="consultation-cta-heading" class="consultation-cta-title screen-reader-text"><?php esc_html_e( '상담 신청', 'della-theme' ); ?></h2>
-		<p class="consultation-cta-line1"><?php esc_html_e( "성범죄 사건에 있어 '대응의 질'은 결과를 좌우합니다.", 'della-theme' ); ?></p>
-		<p class="consultation-cta-line2"><?php esc_html_e( '체계적으로 상담받고, 전략적으로 대응하세요.', 'della-theme' ); ?></p>
-		<p class="consultation-cta-line3"><?php echo esc_html__( '동주가 ', 'della-theme' ); ?><span class="consultation-cta-highlight"><?php esc_html_e( '여러분의 방패', 'della-theme' ); ?></span><?php echo esc_html__( '가 되어드리겠습니다.', 'della-theme' ); ?></p>
-		<a href="<?php echo esc_url( $consultation_url ); ?>" class="consultation-cta-button" aria-label="<?php esc_attr_e( '상담 신청하기', 'della-theme' ); ?>"><?php esc_html_e( '상담 신청', 'della-theme' ); ?> &gt;</a>
+		<h2 id="consultation-cta-heading" class="consultation-cta-title consultation-cta-line1">수원 성범죄 상담 | 강제추행·카메라촬영·아청법 사건 대응</h2>
+		<p class="consultation-cta-line2">수원 성범죄 전문변호사가 경찰조사부터 재판까지 단계별 대응 전략을 설계합니다.</p>
+		<p class="consultation-cta-line3">강제추행·카메라촬영·아청법 사건, 지금 상황에 맞는 상담을 받아보세요.</p>
+		<p class="consultation-cta-note">경찰 출석·압수수색·긴급 상황도 즉시 대응합니다.</p>
+		<a href="<?php echo esc_url( $consultation_url ); ?>" class="consultation-cta-button" aria-label="수원 성범죄 전문변호사 상담 신청">수원 성범죄 상담 신청 &gt;</a>
 	</div>
 </section>

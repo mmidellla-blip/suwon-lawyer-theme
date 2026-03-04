@@ -1,6 +1,6 @@
 <?php
 /**
- * Success Stories section - posts from category "성공사례"
+ * Success Stories section - posts from category "성공사례" (SEO-friendly)
  *
  * @package Della_Theme
  */
@@ -23,12 +23,12 @@ if ( ! $cat ) {
 	}
 }
 
-/* 전체보기 = 성범죄 성공사례 페이지(page-success-cases.php) */
 $archive_url = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/' );
-$query       = null;
+$info_url   = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/성범죄-대응정보/' );
+$query      = null;
 if ( $cat ) {
 	$query = new WP_Query( array(
-		'category_name' => $cat->slug,
+		'category_name'  => $cat->slug,
 		'posts_per_page' => 12,
 		'orderby'        => 'date',
 		'order'          => 'DESC',
@@ -41,8 +41,18 @@ if ( $cat ) {
 	<div class="success-stories-inner">
 		<header class="success-stories-header">
 			<div class="success-stories-header-left">
-				<h2 id="success-stories-heading" class="success-stories-title"><span class="success-stories-title-accent">성공사례</span> 모음</h2>
-				<a href="<?php echo esc_url( $archive_url ); ?>" class="success-stories-cta" title="<?php esc_attr_e( '성공사례 전체 목록 보기', 'della-theme' ); ?>" aria-label="<?php esc_attr_e( '성공사례 전체 목록 보기', 'della-theme' ); ?>">성공사례 전체보기</a>
+				<h2 id="success-stories-heading" class="success-stories-title section-title">성범죄 성공사례</h2>
+				<p class="section-desc">강제추행, 불법촬영, 아청법 사건에서 무혐의·기소유예 등 결과를 이끈 실제 사건 사례입니다.</p>
+				<div class="case-links">
+					<a href="<?php echo esc_url( $archive_url ); ?>">성범죄 성공사례</a>
+					<span class="dot" aria-hidden="true">·</span>
+					<a href="<?php echo esc_url( $info_url ); ?>">성범죄 대응정보</a>
+					<span class="dot" aria-hidden="true">·</span>
+					<a href="<?php echo esc_url( add_query_arg( array( 'tag' => '강제추행', 'paged' => 1 ), $info_url ) ); ?>">강제추행 대응 방법 보기</a>
+					<span class="dot" aria-hidden="true">·</span>
+					<a href="<?php echo esc_url( add_query_arg( array( 'tag' => '불법촬영', 'paged' => 1 ), $info_url ) ); ?>">불법촬영 처벌 기준 보기</a>
+				</div>
+				<a href="<?php echo esc_url( $archive_url ); ?>" class="success-stories-cta case-btn" title="<?php esc_attr_e( '성공사례 전체 목록 보기', 'della-theme' ); ?>" aria-label="<?php esc_attr_e( '성공사례 전체 목록 보기', 'della-theme' ); ?>">성공사례 전체보기 →</a>
 			</div>
 			<?php if ( $query && $query->have_posts() ) : ?>
 			<div class="success-stories-nav-wrap" aria-hidden="true">
@@ -65,18 +75,33 @@ if ( $cat ) {
 				while ( $query->have_posts() ) :
 					$query->the_post();
 					$position++;
-					$thumb  = get_the_post_thumbnail_url( get_the_ID(), 'medium_large' );
-					$img_alt = get_the_title() ? sprintf( /* translators: %s: post title */ __( '성공사례: %s', 'della-theme' ), get_the_title() ) : '';
+					$post_id   = get_the_ID();
+					$thumb     = get_the_post_thumbnail_url( $post_id, 'medium_large' );
+					$case_type   = get_post_meta( $post_id, 'della_case_type', true );
+					$case_result = get_post_meta( $post_id, 'della_case_result', true );
+					$seo_title   = get_post_meta( $post_id, 'della_case_seo_title', true );
+					if ( $case_type && $case_result ) {
+						$img_alt = '수원 ' . $case_type . ' ' . $case_result . ' 성공사례 판결문';
+					} else {
+						$img_alt = '수원 성범죄 성공사례 판결문';
+					}
+					if ( $seo_title ) {
+						$card_title = $seo_title;
+					} elseif ( $case_type && $case_result ) {
+						$card_title = $case_type . ' ' . $case_result . ' 받은 사례';
+					} else {
+						$card_title = get_the_title();
+					}
 					$itemlist_items[] = array(
 						'@type'    => 'ListItem',
 						'position' => $position,
 						'url'      => get_permalink(),
-						'name'     => get_the_title(),
+						'name'     => $card_title,
 					);
 					?>
 					<article class="success-story-card" itemscope itemtype="https://schema.org/Article">
 						<link itemprop="url" href="<?php echo esc_url( get_permalink() ); ?>">
-						<a href="<?php the_permalink(); ?>" class="success-story-link" title="<?php the_title_attribute( array( 'echo' => false ) ); ?>">
+						<a href="<?php echo esc_url( get_permalink() ); ?>" class="success-story-link" title="<?php echo esc_attr( $card_title ); ?>">
 							<div class="success-story-doc">
 								<?php if ( $thumb ) : ?>
 									<img src="<?php echo esc_url( $thumb ); ?>" alt="<?php echo esc_attr( $img_alt ); ?>" class="success-story-doc-img" loading="lazy" width="280" height="360" itemprop="image">
@@ -87,7 +112,7 @@ if ( $cat ) {
 								<?php endif; ?>
 							</div>
 							<div class="success-story-body">
-								<h3 class="success-story-title" itemprop="headline"><?php the_title(); ?></h3>
+								<h3 class="success-story-title" itemprop="headline"><?php echo esc_html( $card_title ); ?></h3>
 								<?php if ( has_excerpt() ) : ?>
 									<p class="success-story-excerpt" itemprop="description"><?php echo esc_html( get_the_excerpt() ); ?></p>
 								<?php endif; ?>
@@ -102,8 +127,8 @@ if ( $cat ) {
 			$itemlist_schema = array(
 				'@context'        => 'https://schema.org',
 				'@type'           => 'ItemList',
-				'name'            => __( '성공사례 모음', 'della-theme' ),
-				'description'     => __( '성범죄 사건 성공사례 목록', 'della-theme' ),
+				'name'            => '수원 성범죄 성공사례',
+				'description'     => '수원 성범죄 전문변호사가 해결한 강제추행·카메라촬영·아청법 사건의 실제 결과',
 				'numberOfItems'   => count( $itemlist_items ),
 				'itemListElement' => $itemlist_items,
 			);

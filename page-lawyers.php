@@ -38,8 +38,16 @@ if ( $lawyer_slug ) {
 	return;
 }
 
-// 목록 페이지
-$lawyers = della_theme_get_lawyers();
+// 목록 페이지: 카드용 이미지는 성범죄 전용 프로필 이미지 사용 (상세 페이지는 기존 image_profile 유지)
+$lawyers       = della_theme_get_lawyers();
+$list_img_map  = array(
+	'dongju-park-dongjin' => 'park-dongjin-sexcrime-lawyer-profile.webp',
+	'dongju-leesewhan'    => 'lee-sehwan-sexcrime-lawyer-profile.webp',
+	'dongju-jo-wonjin'    => 'cho-jowonjin-sexcrime-profile.webp',
+	'dongju-kim-yunseo'   => 'kim-yunseo-sexcrime-profile.webp',
+	'dongju-oh-seojin'    => 'oh-seojin-sexcrime-profile.webp',
+	'dongju-isejin'       => 'lee-sejin-sexcrime-profile.webp',
+);
 get_header();
 ?>
 
@@ -49,9 +57,10 @@ get_header();
 
 	<article class="lawyer-list-article">
 		<header class="lawyer-list-header">
-			<h1 class="lawyer-list-title"><?php esc_html_e( '성범죄 전문 변호사', 'della-theme' ); ?></h1>
-			<p class="lawyer-list-desc"><?php echo esc_html( get_bloginfo( 'name' ) ); ?> <?php esc_html_e( '수원 성범죄 전문 변호사 팀을 소개합니다.', 'della-theme' ); ?></p>
-			<p class="lawyer-list-intro"><?php esc_html_e( '강간·강제추행·불법촬영·디지털성범죄 등 성범죄 사건의 초기 대응부터 재판까지, 전문 변호사가 함께합니다.', 'della-theme' ); ?></p>
+			<h1 class="lawyer-list-title">수원 성범죄 전문변호사<br>강제추행·카메라촬영·디지털성범죄 대응 변호사</h1>
+			<p class="lawyer-list-desc"><?php echo esc_html( get_bloginfo( 'name' ) ); ?> 수원 성범죄 전문 변호사 팀 소개</p>
+			<p class="lawyer-list-intro">강제추행·카메라촬영·디지털성범죄·아청법 등 성범죄 사건을 전문 대응합니다. 경찰 조사부터 검찰·재판까지 체계적으로 전략을 수립해 의뢰인 권리를 보호합니다.</p>
+			<p class="lawyer-list-intro">초기 대응이 결과를 좌우합니다. 수원 성범죄 전문변호사 팀이 사건에 맞는 맞춤 전략으로 함께합니다.</p>
 		</header>
 
 		<section class="lawyer-list-section" aria-labelledby="lawyer-list-heading">
@@ -63,11 +72,13 @@ get_header();
 					if ( ! $profile_url ) {
 						continue;
 					}
-					$img_src    = della_theme_lawyer_image_url( $lawyer['image'], $img_base, $img_dir );
-					$img_srcset = della_theme_lawyer_image_srcset( $lawyer['image'], $img_base, $img_dir );
-					$img_alt    = $lawyer['name'] . ' ' . $lawyer['title'] . ' ' . __( '프로필 사진', 'della-theme' );
+					$list_image = isset( $lawyer['slug'] ) && isset( $list_img_map[ $lawyer['slug'] ] ) ? $list_img_map[ $lawyer['slug'] ] : $lawyer['image'];
+					$img_src    = della_theme_lawyer_image_url( $list_image, $img_base, $img_dir );
+					$img_srcset = della_theme_lawyer_image_srcset( $list_image, $img_base, $img_dir );
+					$img_alt    = '수원 성범죄 전문변호사 ' . $lawyer['name'];
 					?>
 					<article class="lawyer-list-card" itemscope itemtype="https://schema.org/Person">
+						<h2 class="screen-reader-text">수원 성범죄 전문변호사 <?php echo esc_html( $lawyer['name'] ); ?></h2>
 						<a href="<?php echo esc_url( $profile_url ); ?>" class="lawyer-list-card-link">
 							<div class="lawyer-list-card-image-wrap">
 								<img
@@ -100,8 +111,36 @@ get_header();
 				<?php endforeach; ?>
 			</div>
 		</section>
+
+		<section class="lawyer-list-areas" aria-labelledby="lawyer-list-areas-heading">
+			<h2 id="lawyer-list-areas-heading">주요 대응 분야</h2>
+			<ul>
+				<li>강제추행</li>
+				<li>카메라촬영·불법촬영</li>
+				<li>디지털성범죄</li>
+				<li>아청법</li>
+				<li>경찰조사 대응</li>
+			</ul>
+		</section>
+
+		<div class="internal-links">
+			<a href="<?php echo esc_url( function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/success-cases/' ) ); ?>">성공사례 보기</a>
+			<a href="<?php echo esc_url( function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/response-info/' ) ); ?>">대응정보</a>
+			<a href="<?php echo esc_url( home_url( '/#consultation-cta' ) ); ?>">상담 신청</a>
+		</div>
 	</article>
 
 </main>
 
+<?php
+$lawyers_page_schema = array(
+	'@context'    => 'https://schema.org',
+	'@type'       => 'LegalService',
+	'name'        => '법무법인 동주 성범죄 전문변호사',
+	'areaServed'  => 'Suwon',
+	'serviceType' => 'Criminal Defense Lawyer',
+	'description' => '수원 성범죄 전문변호사 팀이 강제추행, 카메라촬영, 디지털성범죄 사건을 대응합니다.',
+);
+?>
+<script type="application/ld+json"><?php echo wp_json_encode( $lawyers_page_schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ); ?></script>
 <?php get_footer(); ?>

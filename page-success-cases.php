@@ -14,12 +14,29 @@ $paged    = max( 1, get_query_var( 'paged' ) ? (int) get_query_var( 'paged' ) : 
 $search_raw = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ( isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '' );
 $search   = trim( $search_raw );
 $filter_cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
+if ( empty( $filter_cat ) && isset( $_GET['tag'] ) ) {
+	$tag_label   = sanitize_text_field( wp_unslash( $_GET['tag'] ) );
+	$tag_to_slug  = array(
+		'강간'     => 'rape',
+		'강제추행' => 'sexual_assult',
+		'군성범죄' => 'military_sexual_crimes',
+		'성매매'   => 'sex_work',
+		'불법촬영' => 'spycam_crime',
+		'직장내'   => 'workplace',
+	);
+	if ( isset( $tag_to_slug[ $tag_label ] ) ) {
+		$filter_cat = $tag_to_slug[ $tag_label ];
+	}
+}
 
 /* 검색어 없이 검색 버튼 눌렀을 때: 전체 결과 페이지로 이동 (q 제거) */
 if ( isset( $_GET['q'] ) && $search === '' ) {
 	$redirect_url = get_permalink();
 	if ( $filter_cat ) {
 		$redirect_url = add_query_arg( 'cat', $filter_cat, $redirect_url );
+	}
+	if ( isset( $_GET['tag'] ) && $_GET['tag'] !== '' ) {
+		$redirect_url = add_query_arg( 'tag', sanitize_text_field( wp_unslash( $_GET['tag'] ) ), $redirect_url );
 	}
 	if ( $paged > 1 ) {
 		$redirect_url = add_query_arg( 'paged', $paged, $redirect_url );
@@ -91,14 +108,18 @@ get_header();
 	<div class="response-board-top">
 		<div class="response-board-top-inner">
 			<header class="response-board-header">
-				<h1 class="response-board-title"><?php esc_html_e( '성범죄 성공사례', 'della-theme' ); ?></h2>
-				<p class="response-board-desc"><?php esc_html_e( '성범죄 성공사례에 대해서 한줄 요약 설명', 'della-theme' ); ?></p>
+				<h1 class="response-board-title"><?php esc_html_e( '성범죄 성공사례', 'della-theme' ); ?></h1>
+				<p class="response-board-intro success-cases-intro">성범죄 사건은 초기 대응과 진술 방향에 따라 결과가 크게 달라질 수 있습니다.<br>법무법인 동주는 강제추행·불법촬영·디지털성범죄·아청법 사건을 실제 사건 경험을 바탕으로 대응하고 있으며, 무혐의·불송치·기소유예·무죄 등 결과를 이끈 성공사례를 유형별로 정리했습니다.</p>
+				<p class="response-board-intro success-cases-intro">경찰 조사부터 검찰 송치, 재판까지 단계별로 어떤 전략이 중요한지 사례를 통해 확인하세요.</p>
 			</header>
 
 			<form class="response-board-search" role="search" method="get" action="<?php echo esc_url( $base_url ); ?>" aria-label="<?php esc_attr_e( '성공사례 검색', 'della-theme' ); ?>">
 				<input type="hidden" name="paged" value="1" />
 				<?php if ( $filter_cat ) : ?>
 					<input type="hidden" name="cat" value="<?php echo esc_attr( $filter_cat ); ?>" />
+				<?php endif; ?>
+				<?php if ( isset( $_GET['tag'] ) && $_GET['tag'] !== '' ) : ?>
+					<input type="hidden" name="tag" value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_GET['tag'] ) ) ); ?>" />
 				<?php endif; ?>
 				<label for="response-board-search-scope" class="screen-reader-text"><?php esc_html_e( '검색 범위', 'della-theme' ); ?></label>
 				<select id="response-board-search-scope" name="scope" class="response-board-search-scope" aria-label="<?php esc_attr_e( '검색 범위', 'della-theme' ); ?>">
@@ -114,7 +135,7 @@ get_header();
 			<div class="response-board-tags">
 				<?php foreach ( $topic_tags as $tag ) : ?>
 					<?php
-					$tag_url = add_query_arg( array( 'cat' => $tag['slug'], 'paged' => 1 ), $base_url );
+					$tag_url  = add_query_arg( array( 'tag' => $tag['label'], 'paged' => 1 ), $base_url );
 					$is_active = ( $filter_cat === $tag['slug'] );
 					?>
 					<a href="<?php echo esc_url( $tag_url ); ?>" class="response-board-tag <?php echo $is_active ? 'is-active' : ''; ?>">#<?php echo esc_html( $tag['label'] ); ?></a>
@@ -131,7 +152,7 @@ get_header();
 					<div class="response-board-nav-main-row" role="tablist" aria-label="<?php esc_attr_e( '대 카테고리', 'della-theme' ); ?>">
 						<?php foreach ( $sidebar_main_cats as $main_item ) : ?>
 							<?php
-							$main_url = add_query_arg( array( 'cat' => $main_item['slug'], 'paged' => 1 ), $base_url );
+							$main_url   = add_query_arg( array( 'tag' => $main_item['label'], 'paged' => 1 ), $base_url );
 							$main_active = ( $filter_cat === $main_item['slug'] );
 							?>
 							<a href="<?php echo esc_url( $main_url ); ?>" class="response-board-nav-main-tab <?php echo $main_active ? 'is-active' : ''; ?>" role="tab"><?php echo esc_html( $main_item['label'] ); ?></a>
@@ -142,7 +163,7 @@ get_header();
 				<ul class="response-board-nav-list success-cases-nav-list">
 					<?php foreach ( $sidebar_main_cats as $main_item ) : ?>
 						<?php
-						$main_url = add_query_arg( array( 'cat' => $main_item['slug'], 'paged' => 1 ), $base_url );
+						$main_url   = add_query_arg( array( 'tag' => $main_item['label'], 'paged' => 1 ), $base_url );
 						$main_active = ( $filter_cat === $main_item['slug'] );
 						?>
 						<li>
@@ -190,7 +211,15 @@ get_header();
 								$post_cat_name = $post_cats[0]->name;
 							}
 							$thumb       = get_the_post_thumbnail_url( null, 'medium_large' );
-							$img_alt     = get_the_title() ? sprintf( /* translators: %s: post title */ __( '성공사례: %s', 'della-theme' ), get_the_title() ) : '';
+							$case_result = get_post_meta( get_the_ID(), 'della_case_result', true );
+							if ( ! is_string( $case_result ) || $case_result === '' ) {
+								$case_result = '성공사례';
+							}
+							$img_alt = ( $post_cat_name ? $post_cat_name . ' ' : '' ) . $case_result . ' 성범죄 성공사례 판결문';
+							$card_title = get_post_meta( get_the_ID(), 'della_case_seo_title', true );
+							if ( ! is_string( $card_title ) || $card_title === '' ) {
+								$card_title = get_the_title();
+							}
 							?>
 							<li class="success-cases-card" role="listitem">
 								<a href="<?php the_permalink(); ?>" class="success-cases-card-link">
@@ -207,7 +236,7 @@ get_header();
 										<?php if ( $post_cat_name ) : ?>
 											<span class="success-cases-card-cat">[<?php echo esc_html( $post_cat_name ); ?>]</span>
 										<?php endif; ?>
-										<h3 class="success-cases-card-title"><?php the_title(); ?></h3>
+										<h3 class="success-cases-card-title"><?php echo esc_html( $card_title ); ?></h3>
 										<?php if ( has_excerpt() ) : ?>
 											<p class="success-cases-card-excerpt"><?php echo esc_html( get_the_excerpt() ); ?></p>
 										<?php endif; ?>
@@ -233,6 +262,9 @@ get_header();
 					if ( $filter_cat ) {
 						$pagination_base = add_query_arg( 'cat', $filter_cat, $pagination_base );
 					}
+					if ( isset( $_GET['tag'] ) && $_GET['tag'] !== '' ) {
+						$pagination_base = add_query_arg( 'tag', sanitize_text_field( wp_unslash( $_GET['tag'] ) ), $pagination_base );
+					}
 					$pagination_base = add_query_arg( 'paged', '%#%', $pagination_base );
 					$links = paginate_links( array(
 						'current'   => $current,
@@ -253,6 +285,11 @@ get_header();
 						</nav>
 					<?php endif; ?>
 				<?php endif; ?>
+				<div class="success-cases-internal-links response-board-internal-links internal-links">
+					<a href="<?php echo esc_url( function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/info/' ) ); ?>">대응정보 보기</a>
+					<a href="<?php echo esc_url( function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : home_url( '/lawyer/' ) ); ?>">전문변호사 소개</a>
+					<a href="<?php echo esc_url( home_url( '/#consultation-cta' ) ); ?>">상담 신청</a>
+				</div>
 			</section>
 		</div>
 	</div>

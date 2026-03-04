@@ -24,7 +24,7 @@ $detail_image = $use_profile ? $profile_file : $lawyer['image'];
 
 $img_src    = trailingslashit( $img_base ) . $detail_image;
 $img_srcset = $use_profile ? '' : della_theme_lawyer_image_srcset( $lawyer['image'], $img_base, $img_dir );
-$img_alt    = $lawyer['name'] . ' ' . $lawyer['title'] . ' ' . __( '프로필 사진', 'della-theme' );
+$img_alt    = '수원 성범죄 전문변호사 ' . $lawyer['name'];
 $has_quote  = ! empty( $lawyer['quote'] );
 ?>
 <article class="lawyer-profile" itemscope itemtype="https://schema.org/Person">

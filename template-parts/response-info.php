@@ -1,6 +1,6 @@
 <?php
 /**
- * Response Information (대응 정보) section - card list
+ * Response Information (대응 정보) section - SEO-friendly card list
  *
  * @package Della_Theme
  */
@@ -43,25 +43,34 @@ if ( ! $query || ! $query->have_posts() ) {
 	) );
 }
 
-$response_info_bg = content_url( 'uploads/2026/02/response-info-bg.webp' );
+$response_info_bg  = content_url( 'uploads/2026/02/response-info-bg.webp' );
+$info_url          = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/성범죄-대응정보/' );
+$case_url          = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/' );
 
-// Schema.org ItemList + BlogPosting용 데이터 수집 (SEO)
+// 카테고리 slug → 표시용 태그 (강제추행, 카메라촬영, 아청법, 성범죄 대응)
+$response_info_tag_map = array(
+	'강제추행'     => '강제추행',
+	'sexual_assult' => '강제추행',
+	'rape'          => '강제추행',
+	'카메라촬영'   => '카메라촬영',
+	'spycam'        => '카메라촬영',
+	'불법촬영'     => '카메라촬영',
+	'아청법'       => '아청법',
+	'대응정보'     => '성범죄 대응',
+	'response-info' => '성범죄 대응',
+);
+
 $list_items_schema = array();
 if ( $query && $query->have_posts() ) {
 	$position = 0;
 	while ( $query->have_posts() ) {
 		$query->the_post();
+		$position++;
 		$list_items_schema[] = array(
 			'@type'    => 'ListItem',
-			'position' => ++$position,
-			'item'     => array(
-				'@type'         => 'BlogPosting',
-				'headline'      => get_the_title(),
-				'url'           => get_the_permalink(),
-				'datePublished' => get_the_date( 'c' ),
-				'dateModified'  => get_the_modified_date( 'c' ),
-				'description'   => has_excerpt() ? wp_strip_all_tags( get_the_excerpt() ) : wp_trim_words( wp_strip_all_tags( get_the_content() ), 30 ),
-			),
+			'position' => $position,
+			'url'      => get_permalink(),
+			'name'     => get_the_title(),
 		);
 	}
 	$query->rewind_posts();
@@ -70,19 +79,21 @@ if ( $query && $query->have_posts() ) {
 <section id="response-info" class="response-info" aria-labelledby="response-info-heading" style="background-image: url('<?php echo esc_url( $response_info_bg ); ?>');">
 	<div class="response-info-inner">
 		<header class="response-info-header">
-			<h2 id="response-info-heading" class="response-info-title"><?php esc_html_e( '대응 정보', 'della-theme' ); ?></h2>
-			<a href="<?php echo esc_url( della_theme_response_board_page_url() ); ?>" class="response-info-cta" aria-label="<?php esc_attr_e( '대응 정보 전체 목록 보기', 'della-theme' ); ?>"><?php esc_html_e( '더 보러 가기', 'della-theme' ); ?> &gt;</a>
+			<div class="response-info-header-text">
+				<h2 id="response-info-heading" class="response-info-title section-title">성범죄 대응 정보</h2>
+				<p class="response-info-desc section-desc">성범죄 사건 대응을 위해 알아야 할 처벌 기준과 수사 절차, 대응 전략을 정리했습니다.</p>
+			</div>
+			<a href="<?php echo esc_url( $info_url ); ?>" class="response-info-cta" aria-label="<?php esc_attr_e( '대응 정보 전체 목록 보기', 'della-theme' ); ?>"><?php esc_html_e( '더 보러 가기', 'della-theme' ); ?> &gt;</a>
 		</header>
 
 		<?php if ( $query && $query->have_posts() ) : ?>
 		<?php
-		// Schema.org ItemList JSON-LD (SEO)
 		if ( ! empty( $list_items_schema ) ) {
 			$itemlist_schema = array(
 				'@context'        => 'https://schema.org',
 				'@type'           => 'ItemList',
-				'name'            => __( '대응 정보', 'della-theme' ),
-				'description'     => __( '성범죄 대응 정보 및 법률 상담 관련 최신 글 목록', 'della-theme' ),
+				'name'            => '성범죄 대응 정보',
+				'description'     => '강제추행·카메라촬영·아청법 법률 가이드 및 수원 성범죄 전문변호사 대응 정보',
 				'numberOfItems'   => count( $list_items_schema ),
 				'itemListElement' => $list_items_schema,
 			);
@@ -94,16 +105,26 @@ if ( $query && $query->have_posts() ) {
 				<?php
 				while ( $query->have_posts() ) :
 					$query->the_post();
-					$cats    = get_the_category();
-					$cat_name = ! empty( $cats[0] ) ? $cats[0]->name : '';
-					$card_title = get_the_title();
+					$post_id     = get_the_ID();
+					$card_title  = get_post_meta( $post_id, 'della_info_seo_title', true ) ? get_post_meta( $post_id, 'della_info_seo_title', true ) : get_the_title();
+					$post_cats   = get_the_category();
+					$tag_label   = '성범죄 대응';
+					if ( ! empty( $post_cats[0]->slug ) && isset( $response_info_tag_map[ $post_cats[0]->slug ] ) ) {
+						$tag_label = $response_info_tag_map[ $post_cats[0]->slug ];
+					} else {
+						foreach ( $post_cats as $pc ) {
+							if ( isset( $response_info_tag_map[ $pc->slug ] ) ) {
+								$tag_label = $response_info_tag_map[ $pc->slug ];
+								break;
+							}
+						}
+					}
+					$card_url = get_permalink();
 					?>
 					<li class="response-info-card" role="listitem">
 						<article class="response-info-card-article">
-							<a href="<?php the_permalink(); ?>" class="response-info-card-link" aria-label="<?php echo esc_attr( sprintf( __( '%s 보기', 'della-theme' ), $card_title ) ); ?>">
-								<?php if ( $cat_name ) : ?>
-									<span class="response-info-card-tag" aria-hidden="true"><?php echo esc_html( $cat_name ); ?></span>
-								<?php endif; ?>
+							<a href="<?php echo esc_url( $card_url ); ?>" class="response-info-card-link" aria-label="<?php echo esc_attr( $card_title . ' 보기' ); ?>">
+								<span class="response-info-card-tag" aria-hidden="true"><?php echo esc_html( $tag_label ); ?></span>
 								<h3 class="response-info-card-title"><?php echo esc_html( $card_title ); ?></h3>
 								<?php if ( has_excerpt() ) : ?>
 									<p class="response-info-card-excerpt"><?php echo esc_html( get_the_excerpt() ); ?></p>
@@ -114,6 +135,11 @@ if ( $query && $query->have_posts() ) {
 					</li>
 				<?php endwhile; ?>
 			</ul>
+		</div>
+		<div class="info-links">
+			<a href="<?php echo esc_url( $case_url ); ?>">성범죄 성공사례 보기</a>
+			<span class="dot" aria-hidden="true">·</span>
+			<a href="<?php echo esc_url( $info_url ); ?>">성범죄 대응정보</a>
 		</div>
 		<?php else : ?>
 		<p class="response-info-empty"><?php esc_html_e( '등록된 대응 정보가 없습니다.', 'della-theme' ); ?></p>
