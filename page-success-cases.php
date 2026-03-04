@@ -116,6 +116,9 @@ $base_url    = get_permalink();
 if ( $paged > 1 && $board_query->max_num_pages > 0 && $paged > $board_query->max_num_pages ) {
 	della_theme_trigger_404();
 }
+if ( function_exists( 'della_theme_render_success_cases_meta' ) ) {
+	add_action( 'wp_head', 'della_theme_render_success_cases_meta', 0 );
+}
 get_header();
 ?>
 

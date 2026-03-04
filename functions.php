@@ -492,9 +492,24 @@ function della_theme_is_response_board_page() {
 
 /**
  * 성범죄 성공사례 페이지 여부 (SEO·메타 전용)
+ * wp_head에서도 동작하도록 queried object ID로 템플릿·슬러그 확인.
  */
 function della_theme_is_success_cases_page() {
-	return is_singular( 'page' ) && get_page_template_slug() === 'page-success-cases.php';
+	if ( ! is_singular( 'page' ) ) {
+		return false;
+	}
+	$post_id = get_queried_object_id();
+	if ( ! $post_id ) {
+		return false;
+	}
+	$template = get_page_template_slug( $post_id );
+	$is_success = ( $template === 'page-success-cases.php' );
+	if ( ! $is_success ) {
+		$post = get_post( $post_id );
+		$slug = $post && isset( $post->post_name ) ? $post->post_name : '';
+		$is_success = in_array( $slug, array( 'success-cases', 'case', '성범죄-성공사례' ), true );
+	}
+	return apply_filters( 'della_theme_is_success_cases_page', $is_success );
 }
 
 /** SEO: page title 30–65 chars, meta description 120–320 chars */
@@ -599,7 +614,7 @@ function della_theme_document_title_parts( $parts ) {
 		return $parts;
 	}
 	if ( della_theme_is_success_cases_page() ) {
-		$parts['title'] = della_theme_trim_document_title( '수원 성범죄 성공사례 | 강제추행·불법촬영 무혐의·불송치 사례 | 법무법인 동주' );
+		$parts['title'] = della_theme_trim_document_title( '수원 성범죄 성공사례 | 강제추행·몰카 기소유예 무혐의 사례 | 법무법인 동주' );
 		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
 	}
@@ -679,6 +694,27 @@ function della_theme_front_page_meta_100() {
 	<?php
 }
 add_action( 'wp_head', 'della_theme_front_page_meta_100', 0 );
+
+/**
+ * Google Analytics 4 (GA4) — head에 gtag 스크립트 출력
+ */
+function della_theme_ga4_script() {
+	$ga_id = apply_filters( 'della_theme_ga4_measurement_id', 'G-9Z7QP4ZBZ9' );
+	if ( empty( $ga_id ) || ! is_string( $ga_id ) ) {
+		return;
+	}
+	?>
+<!-- della GA4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr( $ga_id ); ?>"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '<?php echo esc_js( $ga_id ); ?>');
+</script>
+	<?php
+}
+add_action( 'wp_head', 'della_theme_ga4_script', 5 );
 
 /**
  * SEO: Front page default meta description (키워드 포함, 120–320자)
@@ -1931,11 +1967,12 @@ function della_theme_response_board_page_meta() {
 add_action( 'wp_head', 'della_theme_response_board_page_meta', 1 );
 
 /**
- * SEO: 성범죄 성공사례 허브 페이지 전용 메타 — description, canonical, robots, og, twitter (중복 방지)
- * ?tag= / ?cat= URL은 index,follow 유지. meta keywords는 출력하지 않음.
+ * SEO: 성범죄 성공사례 허브 페이지 전용 메타 출력 (page-success-cases.php에서 wp_head에 등록)
+ * Title 60자 이하, Description 150자 이하. canonical·OG·keywords 포함.
+ * AIOSEO 등 플러그인 사용 시: add_filter( 'della_theme_success_cases_page_meta_disabled', '__return_true' );
  */
-function della_theme_success_cases_page_meta() {
-	if ( ! function_exists( 'della_theme_is_success_cases_page' ) || ! della_theme_is_success_cases_page() ) {
+function della_theme_render_success_cases_meta() {
+	if ( apply_filters( 'della_theme_success_cases_page_meta_disabled', false ) ) {
 		return;
 	}
 	$url = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink();
@@ -1944,27 +1981,50 @@ function della_theme_success_cases_page_meta() {
 	if ( $tag || $cat ) {
 		$url = add_query_arg( array_filter( array( 'tag' => $tag ? $tag : null, 'cat' => $cat ? $cat : null ) ), $url );
 	}
-	$title = '수원 성범죄 성공사례 | 강제추행·불법촬영 무혐의·불송치 사례 | 법무법인 동주';
-	$description = '강제추행, 불법촬영, 디지털성범죄 사건에서 무혐의·불송치·기소유예 등 실제 결과를 이끈 성범죄 성공사례를 확인하세요. 경찰조사 대응부터 재판 전략까지 실제 사건 기반 대응 사례를 정리했습니다.';
+	$title = '수원 성범죄 성공사례 | 강제추행·몰카 기소유예 무혐의 사례 | 법무법인 동주';
+	if ( function_exists( 'mb_strlen' ) && mb_strlen( $title ) > 60 ) {
+		$title = function_exists( 'mb_substr' ) ? mb_substr( $title, 0, 57 ) . '...' : substr( $title, 0, 57 ) . '...';
+	} elseif ( strlen( $title ) > 60 ) {
+		$title = substr( $title, 0, 57 ) . '...';
+	}
+	$description = '수원 성범죄 성공사례를 실제 사건 중심으로 정리했습니다. 강제추행, 카메라등이용촬영죄, 디지털성범죄 사건에서 기소유예·무혐의 결과를 이끌어낸 대응 전략을 확인하세요. 경찰조사부터 재판까지 실제 사례 기반 분석.';
+	if ( function_exists( 'mb_strlen' ) && mb_strlen( $description ) > 150 ) {
+		$description = function_exists( 'mb_substr' ) ? mb_substr( $description, 0, 147 ) . '...' : substr( $description, 0, 147 ) . '...';
+	} elseif ( strlen( $description ) > 150 ) {
+		$description = substr( $description, 0, 147 ) . '...';
+	}
+	$keywords = '수원 성범죄 성공사례, 강제추행 기소유예 사례, 카메라촬영 기소유예, 몰카 무혐의 사례, 성범죄 변호사 성공사례, 성범죄 합의 성공사례';
+	$og_description = '수원 성범죄 사건 대응 실제 성공사례. 강제추행, 카메라촬영, 디지털성범죄 사건에서 기소유예·무혐의 결과를 이끌어낸 대응 전략을 확인하세요.';
 	$og_image = home_url( '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg' );
 	?>
 	<meta name="description" content="<?php echo esc_attr( $description ); ?>" />
+	<meta name="keywords" content="<?php echo esc_attr( $keywords ); ?>" />
 	<link rel="canonical" href="<?php echo esc_url( $url ); ?>" />
 	<meta name="robots" content="index,follow,max-image-preview:large" />
-	<meta property="og:type" content="website" />
-	<meta property="og:site_name" content="법무법인 동주" />
 	<meta property="og:title" content="<?php echo esc_attr( $title ); ?>" />
-	<meta property="og:description" content="<?php echo esc_attr( $description ); ?>" />
+	<meta property="og:description" content="<?php echo esc_attr( $og_description ); ?>" />
+	<meta property="og:type" content="website" />
 	<meta property="og:url" content="<?php echo esc_url( $url ); ?>" />
+	<meta property="og:site_name" content="법무법인 동주" />
+	<meta property="og:locale" content="ko_KR" />
 	<meta property="og:image" content="<?php echo esc_url( $og_image ); ?>" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>" />
-	<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>" />
+	<meta name="twitter:description" content="<?php echo esc_attr( $og_description ); ?>" />
 	<?php
 }
-add_action( 'wp_head', 'della_theme_success_cases_page_meta', 1 );
+
+/**
+ * 성공사례 페이지 여부로 wp_head에서 메타 출력 (다른 페이지 판별용).
+ * 실제 메타 출력은 page-success-cases.php에서 wp_head에 della_theme_render_success_cases_meta 등록으로 처리.
+ */
+function della_theme_success_cases_page_meta() {
+	if ( function_exists( 'della_theme_is_success_cases_page' ) && della_theme_is_success_cases_page() ) {
+		della_theme_render_success_cases_meta();
+	}
+}
 
 /**
  * SEO: Robots meta — 404·검색결과·내용 없는 아카이브 noindex로 불용 문서/중복 색인 방지
