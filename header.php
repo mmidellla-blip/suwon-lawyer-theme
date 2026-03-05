@@ -39,6 +39,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	}
 	?>
 	<?php wp_head(); ?>
+	<?php
+	// AIOSEO에 description이 없을 때를 대비해 테마에서 1회 출력 (기존 description 유지)
+	if ( function_exists( 'della_theme_get_fallback_description' ) ) {
+		$della_desc = della_theme_get_fallback_description();
+		if ( is_string( $della_desc ) && trim( $della_desc ) !== '' ) {
+			echo '<meta name="description" content="' . esc_attr( trim( $della_desc ) ) . '" />' . "\n";
+		}
+	}
+	?>
 </head>
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>

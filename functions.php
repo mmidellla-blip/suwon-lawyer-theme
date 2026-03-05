@@ -912,21 +912,28 @@ function della_theme_front_page_meta_100() {
 add_action( 'wp_head', 'della_theme_front_page_meta_100', 0 );
 
 /**
- * Google Analytics 4 (GA4) — head에 gtag 스크립트 출력
+ * Google Analytics 4 (GA4) — head에 gtag 스크립트 출력 (복수 측정 ID 지원)
  */
 function della_theme_ga4_script() {
-	$ga_id = apply_filters( 'della_theme_ga4_measurement_id', 'G-9Z7QP4ZBZ9' );
-	if ( empty( $ga_id ) || ! is_string( $ga_id ) ) {
+	$ga_ids = apply_filters( 'della_theme_ga4_measurement_ids', array( 'G-C817947ECG', 'G-9Z7QP4ZBZ9' ) );
+	if ( ! is_array( $ga_ids ) ) {
+		$ga_ids = array_filter( array( $ga_ids ) );
+	}
+	$ga_ids = array_filter( array_map( 'trim', $ga_ids ) );
+	if ( empty( $ga_ids ) ) {
 		return;
 	}
+	$first_id = reset( $ga_ids );
 	?>
 <!-- della GA4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr( $ga_id ); ?>"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr( $first_id ); ?>"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', '<?php echo esc_js( $ga_id ); ?>');
+<?php foreach ( $ga_ids as $id ) : ?>
+gtag('config', '<?php echo esc_js( $id ); ?>');
+<?php endforeach; ?>
 </script>
 	<?php
 }
