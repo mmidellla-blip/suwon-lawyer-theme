@@ -38,6 +38,15 @@ $sidebar_main_cats = array(
 	array( 'slug' => 'spycam_crime', 'label' => __( '불법촬영', 'della-theme' ) ),
 	array( 'slug' => 'workplace', 'label' => __( '직장내', 'della-theme' ) ),
 );
+/* WP에서 실제 사용하는 대 카테고리 slug 후보 (테마 slug와 다를 수 있음, 예: sex_work-response_details) */
+$main_cat_wp_slug_alternatives = array(
+	'rape'                  => array( 'rape-response_details' ),
+	'sexual_assult'         => array( 'sexual_assult-response_details' ),
+	'military_sexual_crimes' => array( 'military_sexual_crimes-response_details' ),
+	'sex_work'              => array( 'sex_work-response_details' ),
+	'spycam_crime'          => array( 'spycam_crime-response_details' ),
+	'workplace'             => array( 'workplace-response_details' ),
+);
 /* 소 카테고리 (대별 동일 라벨, slug는 대+소 조합으로 구분) — 표시 순서 */
 $sidebar_sub_defs = array(
 	array( 'slug' => '법조문', 'label' => __( '법조문, 처벌·양형 기준', 'della-theme' ) ),
@@ -47,6 +56,16 @@ $sidebar_sub_defs = array(
 	array( 'slug' => '수사-재판-단계별-대응', 'label' => __( '대응가이드', 'della-theme' ) ),
 	array( 'slug' => 'faq', 'label' => __( 'FAQ', 'della-theme' ) ),
 	array( 'slug' => '최신판례-이슈', 'label' => __( '최신이슈', 'della-theme' ) ),
+);
+/* 테마 소카테고리 slug → WP 실제 slug 접미사 (강간-faq, 강간-관련판례 등) */
+$sub_slug_to_wp_suffix = array(
+	'법조문'                   => '법조문',
+	'구성요건-핵심-쟁점-강간' => '구성요건',
+	'판례'                     => '관련판례',
+	'유형별-사건'             => '유형별사례',
+	'수사-재판-단계별-대응'   => '대응가이드',
+	'faq'                      => 'faq',
+	'최신판례-이슈'           => '최신이슈',
 );
 $topic_tags = $sidebar_main_cats;
 
@@ -81,6 +100,23 @@ if ( ! $cat ) {
 		}
 	}
 }
+/* 성공사례 카테고리 제외 — 대응정보만 조회 */
+$success_cat = get_category_by_slug( '성공사례' );
+if ( ! $success_cat ) {
+	$success_cat = get_category_by_slug( 'success-cases' );
+}
+if ( ! $success_cat ) {
+	$all_cats = get_categories( array( 'hide_empty' => false ) );
+	foreach ( $all_cats as $c ) {
+		if ( $c->name === '성공사례' || $c->name === '성공 사례' ) {
+			$success_cat = $c;
+			break;
+		}
+	}
+}
+if ( $success_cat ) {
+	$query_args['category__not_in'] = array( (int) $success_cat->term_id );
+}
 if ( $cat ) {
 	$query_args['cat'] = $cat->term_id;
 }
@@ -88,14 +124,83 @@ if ( $search ) {
 	$query_args['s'] = $search;
 }
 if ( $filter_cat ) {
-	// 소카테고리(대-소 복합 slug)여도 대 카테고리로 쿼리 — 대응정보는 대 안에 소가 같은 내용이므로 대 카테고리로 검색
-	$slug_for_query = $filter_cat;
+	$filter_category = null;
+	$use_include_children = true;
+	$main_slug = $filter_cat;
+	$sub_slug = '';
 	if ( strpos( $filter_cat, '-' ) !== false ) {
-		$slug_for_query = strtok( $filter_cat, '-' );
+		$main_slug = strtok( $filter_cat, '-' );
+		$sub_slug = substr( $filter_cat, strlen( $main_slug ) + 1 );
 	}
-	$filter_category = get_category_by_slug( $slug_for_query );
+	// 소카테고리 선택 시: WP slug(강간-faq, 강제추행-faq 등)로 1회 조회 후 해당 term만 사용 — 빠른 쿼리
+	if ( $sub_slug !== '' ) {
+		$main_label = '';
+		foreach ( $sidebar_main_cats as $m ) {
+			if ( $m['slug'] === $main_slug ) {
+				$main_label = $m['label'];
+				break;
+			}
+		}
+		if ( $main_label !== '' ) {
+			$wp_suffix = isset( $sub_slug_to_wp_suffix[ $sub_slug ] ) ? $sub_slug_to_wp_suffix[ $sub_slug ] : $sub_slug;
+			$wp_sub_slug = $main_label . '-' . $wp_suffix;
+			$filter_category = get_category_by_slug( $wp_sub_slug );
+			if ( $filter_category ) {
+				$use_include_children = false;
+			}
+		}
+	}
+	// 소카테고리 미매칭 또는 대 카테고리만 선택: 부모 카테고리로 조회 후 include_children
+	if ( $filter_category === null ) {
+		$slug_for_query = $main_slug;
+		$filter_category = get_category_by_slug( $slug_for_query );
+		if ( ! $filter_category ) {
+			foreach ( $sidebar_main_cats as $m ) {
+				if ( $m['slug'] !== $slug_for_query ) {
+					continue;
+				}
+				$filter_category = get_category_by_slug( $m['label'] );
+				if ( ! $filter_category && ! empty( $main_cat_wp_slug_alternatives[ $m['slug'] ] ) ) {
+					foreach ( $main_cat_wp_slug_alternatives[ $m['slug'] ] as $alt_slug ) {
+						$filter_category = get_category_by_slug( $alt_slug );
+						if ( $filter_category ) {
+							break;
+						}
+					}
+				}
+				if ( ! $filter_category ) {
+					$all_cats = get_categories( array( 'hide_empty' => false ) );
+					foreach ( $all_cats as $c ) {
+						if ( $c->name === $m['label'] || $c->slug === $m['label'] ) {
+							$filter_category = $c;
+							break 2;
+						}
+					}
+				}
+				break;
+			}
+		}
+	}
 	if ( $filter_category ) {
-		$query_args['cat'] = $filter_category->term_id;
+		if ( $cat ) {
+			unset( $query_args['cat'] );
+			$query_args['tax_query'] = array(
+				'relation' => 'AND',
+				array(
+					'taxonomy' => 'category',
+					'field'    => 'term_id',
+					'terms'    => array( (int) $cat->term_id ),
+				),
+				array(
+					'taxonomy'         => 'category',
+					'field'            => 'term_id',
+					'terms'            => array( (int) $filter_category->term_id ),
+					'include_children' => $use_include_children,
+				),
+			);
+		} else {
+			$query_args['cat'] = $filter_category->term_id;
+		}
 	}
 }
 
