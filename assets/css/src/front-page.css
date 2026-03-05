@@ -1,7 +1,4 @@
 /* Della Theme – front page */
-/* ==========================================================================
-   Hero section (front page) - full width, matches design
-   ========================================================================== */
 .content-sidebar-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -49,46 +46,22 @@ body.front-page .content-sidebar-wrap .site-main {
 }
 
 .content-sidebar-wrap > .hub-guide,
-.content-sidebar-wrap > .response-type-hub {
-  flex: 0 0 100%;
-  width: 100%;
-}
-
-.content-sidebar-wrap > .success-stories {
-  flex: 0 0 100%;
-  width: 100%;
-  margin-top: 0;
-  padding-top: 0;
-}
-
-.content-sidebar-wrap > .process-cards {
-  flex: 0 0 100%;
-  width: 100%;
-}
-
-.content-sidebar-wrap > .major-services {
-  flex: 0 0 100%;
-  width: 100%;
-}
-
-.content-sidebar-wrap > .response-info {
-  flex: 0 0 100%;
-  width: 100%;
-}
-
-.content-sidebar-wrap > .consultation-cta {
-  flex: 0 0 100%;
-  width: 100%;
-}
-
+.content-sidebar-wrap > .response-type-hub,
+.content-sidebar-wrap > .success-stories,
+.content-sidebar-wrap > .process-cards,
+.content-sidebar-wrap > .major-services,
+.content-sidebar-wrap > .response-info,
+.content-sidebar-wrap > .consultation-cta,
 .content-sidebar-wrap > .directions {
   flex: 0 0 100%;
   width: 100%;
 }
 
-/* ==========================================================================
-   Hub guide + 유형별 대응 (대응 정보 아래 연속 블록, 동일 배경·톤)
-   ========================================================================== */
+.content-sidebar-wrap > .success-stories {
+  margin-top: 0;
+  padding-top: 0;
+}
+
 section.hub-guide {
   padding: var(--space-6) var(--della-gap) var(--space-4);
   background-color: #faf7f2;
@@ -731,17 +704,16 @@ section.response-info .response-info-empty {
   margin: 0;
 }
 
-.directions-address-cols,
-.directions-hours-cols {
+.directions-address-cols {
   display: grid;
   gap: var(--space-2) var(--space-4);
 }
 
-/* 모바일: 전화/네이버예약 버튼 같은 라인, 위쪽 간격 확보 */
 .directions-hours-cols {
+  display: grid;
+  gap: var(--space-2);
   grid-template-columns: 1fr 1fr;
   align-items: stretch;
-  gap: var(--space-2);
 }
 
 .directions-hours-col {
@@ -764,23 +736,8 @@ section.response-info .response-info-empty {
     grid-template-columns: 1fr 1fr;
   }
 
-  .directions-hours-cols {
-    grid-template-columns: 1fr 1fr;
-    align-items: stretch;
-  }
-
-  /* PC: 두 버튼 같은 라인(하단 정렬) + 위에 여백 */
-  .directions-hours-col {
-    display: flex;
-    flex-direction: column;
-  }
-  .directions-hours-col-content {
-    flex: 1 1 auto;
-    margin-bottom: var(--space-5);
-  }
   .directions-hours-col .directions-btn {
     margin-top: 0;
-    align-self: flex-start;
   }
 }
 

@@ -1,10 +1,4 @@
 /* Della Theme – page: response board, success cases */
-/* ==========================================================================
-   성범죄 대응정보 게시판 페이지
-   ========================================================================== */
-/* 로고 아래 브레드크럼 (헤더 직하단) */
-/* 로고 바로 아래 브레드크럼 (헤더와 분리, 흰 배경, 왼쪽 정렬) */
-/* 왼쪽과 가운데 사이에 배치 (좌측 여백으로 살짝 오른쪽) */
 .response-board-breadcrumb-wrap {
   padding: var(--space-1) max(var(--della-gap), env(safe-area-inset-right)) var(--space-1) max(var(--della-gap), env(safe-area-inset-left));
   margin-left: 18%;

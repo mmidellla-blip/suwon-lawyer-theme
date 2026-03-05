@@ -1,7 +1,4 @@
 /* Della Theme – page: lawyers / lawyer profile */
-/* ==========================================================================
-   성범죄 전문 변호사 페이지 (카드형 리스트)
-   ========================================================================== */
 .lawyer-list-page .lawyer-list-article {
   padding: var(--section-y) var(--della-gap);
   max-width: 1100px;

@@ -30,20 +30,46 @@ if ( ! defined( 'ABSPATH' ) ) {
 			}
 		}
 	}
-	// 성공사례 페이지: wp_head 앞에 출력해 플러그인 빈 title/description보다 먼저 노출 (직접 경로 판별)
+	// 성공사례 페이지: wp_head 앞에 title·description 직접 출력 (경로 + 템플릿 판별)
 	$della_req_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-	$della_path    = trim( (string) parse_url( $della_req_uri, PHP_URL_PATH ), '/' );
-	$della_path    = preg_replace( '#/+#', '/', $della_path );
-	$della_is_sc   = ( $della_path === 'success-cases' || strpos( $della_path, 'success-cases/' ) === 0 || strpos( $della_path, '/success-cases' ) !== false || in_array( $della_path, array( 'case', 'success', '성범죄-성공사례', '성공사례' ), true ) );
+	$della_path   = trim( (string) parse_url( $della_req_uri, PHP_URL_PATH ), '/' );
+	$della_path   = preg_replace( '#/+#', '/', $della_path );
+	$della_is_sc  = ( $della_path === 'success-cases' || strpos( $della_path, 'success-cases/' ) === 0 || strpos( $della_path, '/success-cases' ) !== false || in_array( $della_path, array( 'case', 'success', '성범죄-성공사례', '성공사례' ), true ) );
+	if ( ! $della_is_sc && function_exists( 'della_theme_is_success_cases_page' ) && della_theme_is_success_cases_page() ) {
+		$della_is_sc = true;
+	}
 	if ( $della_is_sc ) {
 		$della_sc_title = '수원 성범죄 성공사례 | 강제추행·카메라촬영 무혐의·기소유예 사례 | 법무법인 동주';
 		$della_sc_desc  = '수원 성범죄 사건 성공사례를 확인하세요. 강제추행·카메라촬영·아청법 사건에서 무혐의·기소유예·집행유예 등 실제 결과를 공개합니다. 경찰조사부터 재판까지 법무법인 동주가 직접 대응합니다.';
-		echo '<!-- Della: 성공사례 전용 meta (path=' . esc_attr( $della_path ) . ") -->\n";
 		echo '<title>' . esc_html( $della_sc_title ) . "</title>\n";
 		echo '<meta name="description" content="' . esc_attr( $della_sc_desc ) . '" />' . "\n";
 	}
+	// 변호사 상세(/lawyers/{slug}/): title만 직접 출력 (description은 하단 폴백에서 출력)
+	$della_lawyers_pos = strpos( $della_path, 'lawyers/' );
+	if ( $della_lawyers_pos !== false && function_exists( 'della_theme_get_lawyer_by_slug' ) ) {
+		$della_after = substr( $della_path, $della_lawyers_pos + 8 );
+		$della_parts = explode( '/', $della_after );
+		$della_slug  = isset( $della_parts[0] ) ? trim( $della_parts[0] ) : '';
+		if ( $della_slug !== '' ) {
+			$della_lawyer = della_theme_get_lawyer_by_slug( $della_slug );
+			if ( $della_lawyer && ! empty( $della_lawyer['name'] ) ) {
+				$della_law   = __( '법무법인 동주', 'della-theme' );
+				$della_title = $della_lawyer['name'] . ' 변호사 프로필 | 수원 성범죄 전문변호사 | ' . $della_law;
+				echo '<title>' . esc_html( $della_title ) . "</title>\n";
+			}
+		}
+	}
 	?>
 	<?php wp_head(); ?>
+	<?php
+	// 최종 폴백: 모든 페이지에서 description 누락 방지 — </head> 직전에 한 번 더 출력 (플러그인·캐시와 무관)
+	if ( function_exists( 'della_theme_get_fallback_description' ) ) {
+		$della_fallback_desc = della_theme_get_fallback_description();
+		if ( is_string( $della_fallback_desc ) && trim( $della_fallback_desc ) !== '' ) {
+			echo '<meta name="description" content="' . esc_attr( trim( $della_fallback_desc ) ) . '" />' . "\n";
+		}
+	}
+	?>
 </head>
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
