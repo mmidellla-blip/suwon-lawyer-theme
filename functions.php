@@ -520,6 +520,37 @@ function della_theme_is_success_cases_page() {
 }
 
 /**
+ * 성공사례 부모 카테고리(성범죄성공사례 등) 반환. 없으면 null.
+ *
+ * @return WP_Term|null
+ */
+function della_theme_get_success_case_parent_category() {
+	$cat = get_category_by_slug( '성범죄성공사례' );
+	if ( $cat ) {
+		return $cat;
+	}
+	$cat = get_category_by_slug( '성공사례' );
+	if ( $cat ) {
+		return $cat;
+	}
+	$cat = get_category_by_slug( 'success-cases' );
+	if ( $cat ) {
+		return $cat;
+	}
+	$cat = get_category_by_slug( 'success-case' );
+	if ( $cat ) {
+		return $cat;
+	}
+	$all = get_categories( array( 'hide_empty' => false ) );
+	foreach ( $all as $c ) {
+		if ( $c->name === '성범죄성공사례' || $c->name === '성공사례' || $c->name === '성공 사례' ) {
+			return $c;
+		}
+	}
+	return null;
+}
+
+/**
  * 단일 글(포스트)이 성공사례 카테고리에 속하는지 여부 (상세 페이지 메타용).
  *
  * @param WP_Post|null $post 포스트 객체. null이면 현재 쿼리 포스트.
@@ -532,23 +563,45 @@ function della_theme_is_success_case_post( $post = null ) {
 	if ( ! $post instanceof WP_Post || $post->post_type !== 'post' ) {
 		return false;
 	}
-	$sc_cat = get_category_by_slug( '성공사례' );
-	if ( ! $sc_cat ) {
-		$sc_cat = get_category_by_slug( 'success-cases' );
-	}
-	if ( ! $sc_cat ) {
-		$all = get_categories( array( 'hide_empty' => false ) );
-		foreach ( $all as $c ) {
-			if ( $c->name === '성공사례' || $c->name === '성공 사례' ) {
-				$sc_cat = $c;
-				break;
-			}
-		}
-	}
+	$sc_cat = function_exists( 'della_theme_get_success_case_parent_category' ) ? della_theme_get_success_case_parent_category() : null;
 	if ( ! $sc_cat ) {
 		return false;
 	}
-	return in_category( (int) $sc_cat->term_id, $post );
+	$term_ids = array( (int) $sc_cat->term_id );
+	$children = get_terms( array( 'taxonomy' => 'category', 'parent' => $sc_cat->term_id, 'hide_empty' => false ) );
+	if ( ! is_wp_error( $children ) ) {
+		foreach ( $children as $ch ) {
+			$term_ids[] = (int) $ch->term_id;
+		}
+	}
+	return has_category( $term_ids, $post );
+}
+
+/**
+ * 대응정보 부모 카테고리(성범죄대응정보 등) 반환. 없으면 null.
+ *
+ * @return WP_Term|null
+ */
+function della_theme_get_response_info_parent_category() {
+	$cat = get_category_by_slug( '성범죄대응정보' );
+	if ( $cat ) {
+		return $cat;
+	}
+	$cat = get_category_by_slug( '대응정보' );
+	if ( $cat ) {
+		return $cat;
+	}
+	$cat = get_category_by_slug( 'response-info' );
+	if ( $cat ) {
+		return $cat;
+	}
+	$all = get_categories( array( 'hide_empty' => false ) );
+	foreach ( $all as $c ) {
+		if ( $c->name === '성범죄대응정보' || $c->name === '대응정보' || $c->name === '대응 정보' ) {
+			return $c;
+		}
+	}
+	return null;
 }
 
 /**
@@ -564,23 +617,18 @@ function della_theme_is_response_info_post( $post = null ) {
 	if ( ! $post instanceof WP_Post || $post->post_type !== 'post' ) {
 		return false;
 	}
-	$info_cat = get_category_by_slug( '대응정보' );
-	if ( ! $info_cat ) {
-		$info_cat = get_category_by_slug( 'response-info' );
-	}
-	if ( ! $info_cat ) {
-		$all = get_categories( array( 'hide_empty' => false ) );
-		foreach ( $all as $c ) {
-			if ( $c->name === '대응정보' || $c->name === '대응 정보' ) {
-				$info_cat = $c;
-				break;
-			}
-		}
-	}
+	$info_cat = function_exists( 'della_theme_get_response_info_parent_category' ) ? della_theme_get_response_info_parent_category() : null;
 	if ( ! $info_cat ) {
 		return false;
 	}
-	return in_category( (int) $info_cat->term_id, $post );
+	$term_ids = array( (int) $info_cat->term_id );
+	$children = get_terms( array( 'taxonomy' => 'category', 'parent' => $info_cat->term_id, 'hide_empty' => false ) );
+	if ( ! is_wp_error( $children ) ) {
+		foreach ( $children as $ch ) {
+			$term_ids[] = (int) $ch->term_id;
+		}
+	}
+	return has_category( $term_ids, $post );
 }
 
 /**
@@ -702,7 +750,7 @@ function della_theme_response_info_unique_description( $post ) {
 	if ( $cats ) {
 		$names = array();
 		foreach ( $cats as $c ) {
-			if ( $c->name === '대응정보' || $c->name === '대응 정보' ) {
+			if ( $c->name === '성범죄대응정보' || $c->name === '대응정보' || $c->name === '대응 정보' ) {
 				continue;
 			}
 			$n = trim( $c->name );
@@ -1556,7 +1604,7 @@ function della_theme_get_lawyers() {
 			'education'    => array( '연세대학교 법과대학 졸업', '연세대학교 법학전문박사과정(형사법)', '변호사시험 합격' ),
 			'items'        => array(
 				'대한변협[형사법] 전문 변호사',
-				'대한변협[학교폭력] 전문 ',
+				'강력 성범죄 책임변호사',
 				'전 대법원 국선변호인',
 				'前 법무법인 더쌤 (서울사무소)',
 				'前 법률사무소 지음',
@@ -1642,16 +1690,17 @@ function della_theme_get_lawyers() {
 			'quote'        => '학교·교육 분야 사건에 대한 이해도가 높다는 평가를 받고 있습니다.',
 			'specialties'  => array( '형사법' ),
 			'education'    => array( '연세대학교 법학전문박사과정(형사법)','법학전문석사','변호사시험 합격' ),
-			'items'        => array( '대한변협[형사법] 전문 변호사', '대한변협[소년법] 전문 변호사', '대한변협[행정법] 전문 변호사',
-			'前 서울중앙지방법원 외부조정센터 조정위원',
-			'前 인천광역시교권보호위원회 위원',
-			'前 인천광역시교육청 변호사',
-			'現 법무법인 동주',
-			'現 인천광역시교육청 소청심사위원회 위원',
-			'現 인천광역시상담지원자문위원회 위원',
-			'現 인천광역시학교안전공제회보상심사위원회 위원',
-			'現 인천광역시교육청 사립학교 징계심의위원회 위원',
-			'現 인천광역시 미추홀구 인사위원회 위원'),
+			'items'        => array(
+				'前 서울중앙지법 외부조정센터 조정위원',
+				'現 인천시교육청 사립학교 징계심의위원',
+				'現 인천 미추홀구 인사위원회 위원',
+				'前 인천광역시교권보호위원회 위원',
+				'前 인천광역시교육청 변호사',
+				'現 법무법인 동주',
+				'現 인천광역시교육청 소청심사위원회 위원',
+				'現 인천광역시상담지원자문위원회 위원',
+				'現 인천광역시학교안전공제회보상심사위원회 위원',
+			),
 		),
 		array(
 			'slug'         => 'dongju-isejin',
@@ -2388,7 +2437,7 @@ function della_theme_response_info_post_meta_keywords() {
 	$cats = get_the_category( $post->ID );
 	if ( $cats ) {
 		foreach ( $cats as $c ) {
-			if ( $c->name === '대응정보' || $c->name === '대응 정보' ) {
+			if ( $c->name === '성범죄대응정보' || $c->name === '대응정보' || $c->name === '대응 정보' ) {
 				continue;
 			}
 			$name = trim( $c->name );
@@ -2685,19 +2734,7 @@ function della_theme_schema_json_ld() {
 
 	// 성범죄 대응정보 페이지: ItemList (목록 구조화, 모바일·검색 리치 결과)
 	if ( della_theme_is_response_board_page() ) {
-		$rb_cat = get_category_by_slug( '대응정보' );
-		if ( ! $rb_cat ) {
-			$rb_cat = get_category_by_slug( 'response-info' );
-		}
-		if ( ! $rb_cat ) {
-			$cats = get_categories( array( 'hide_empty' => false ) );
-			foreach ( $cats as $c ) {
-				if ( $c->name === '대응 정보' || $c->name === '대응정보' ) {
-					$rb_cat = $c;
-					break;
-				}
-			}
-		}
+		$rb_cat = function_exists( 'della_theme_get_response_info_parent_category' ) ? della_theme_get_response_info_parent_category() : null;
 		$rb_args = array(
 			'post_type'      => 'post',
 			'post_status'    => 'publish',
@@ -2759,22 +2796,7 @@ function della_theme_schema_json_ld() {
 		) );
 		$same_as = array_values( array_filter( array_map( 'esc_url_raw', $same_as ) ) );
 
-		$sc_cat = get_category_by_slug( '성공사례' );
-		if ( ! $sc_cat ) {
-			$sc_cat = get_category_by_slug( 'success-cases' );
-		}
-		if ( ! $sc_cat ) {
-			$sc_cat = get_category_by_slug( 'success-case' );
-		}
-		if ( ! $sc_cat ) {
-			$sc_cats = get_categories( array( 'hide_empty' => false ) );
-			foreach ( $sc_cats as $c ) {
-				if ( $c->name === '성공사례' || $c->name === '성공 사례' ) {
-					$sc_cat = $c;
-					break;
-				}
-			}
-		}
+		$sc_cat = function_exists( 'della_theme_get_success_case_parent_category' ) ? della_theme_get_success_case_parent_category() : null;
 		$sc_args = array(
 			'post_type'      => 'post',
 			'post_status'    => 'publish',

@@ -16,13 +16,17 @@ $filter_cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['ca
 if ( empty( $filter_cat ) && isset( $_GET['tag'] ) ) {
 	$tag_label   = sanitize_text_field( wp_unslash( $_GET['tag'] ) );
 	$tag_to_slug = array(
-		'강간'     => 'rape',
-		'강제추행' => 'sexual_assult',
-		'군성범죄' => 'military_sexual_crimes',
-		'성매매'   => 'sex_work',
-		'불법촬영' => 'spycam_crime',
-		'직장내'   => 'workplace',
-		'아청법'   => 'achaeng',
+		'강간'             => 'rape',
+		'강제추행'         => 'sexual_assult',
+		'군성범죄'         => 'military_sexual_crimes',
+		'성매매'           => 'sex_work',
+		'불법촬영'         => 'spycam_crime',
+		'디지털성범죄'     => 'spycam_crime',
+		'직장내'           => 'workplace',
+		'직장내성범죄'     => 'workplace',
+		'공공장소성범죄'   => 'public_place_sex_crimes',
+		'미성년자대상성범죄' => 'minor_targeted_sex_crimes',
+		'아청법'           => 'achaeng',
 	);
 	if ( isset( $tag_to_slug[ $tag_label ] ) ) {
 		$filter_cat = $tag_to_slug[ $tag_label ];
@@ -35,17 +39,21 @@ $sidebar_main_cats = array(
 	array( 'slug' => 'sexual_assult', 'label' => __( '강제추행', 'della-theme' ) ),
 	array( 'slug' => 'military_sexual_crimes', 'label' => __( '군성범죄', 'della-theme' ) ),
 	array( 'slug' => 'sex_work', 'label' => __( '성매매', 'della-theme' ) ),
-	array( 'slug' => 'spycam_crime', 'label' => __( '불법촬영', 'della-theme' ) ),
-	array( 'slug' => 'workplace', 'label' => __( '직장내', 'della-theme' ) ),
+	array( 'slug' => 'spycam_crime', 'label' => __( '디지털성범죄', 'della-theme' ) ),
+	array( 'slug' => 'workplace', 'label' => __( '직장내성범죄', 'della-theme' ) ),
+	array( 'slug' => 'public_place_sex_crimes', 'label' => __( '공공장소성범죄', 'della-theme' ) ),
+	array( 'slug' => 'minor_targeted_sex_crimes', 'label' => __( '미성년자대상성범죄', 'della-theme' ) ),
 );
 /* WP에서 실제 사용하는 대 카테고리 slug 후보 (테마 slug와 다를 수 있음, 예: sex_work-response_details) */
 $main_cat_wp_slug_alternatives = array(
-	'rape'                  => array( 'rape-response_details' ),
-	'sexual_assult'         => array( 'sexual_assult-response_details' ),
-	'military_sexual_crimes' => array( 'military_sexual_crimes-response_details' ),
-	'sex_work'              => array( 'sex_work-response_details' ),
-	'spycam_crime'          => array( 'spycam_crime-response_details' ),
-	'workplace'             => array( 'workplace-response_details' ),
+	'rape'                       => array( 'rape-response_details' ),
+	'sexual_assult'              => array( 'sexual_assult-response_details' ),
+	'military_sexual_crimes'     => array( 'military_sexual_crimes-response_details' ),
+	'sex_work'                   => array( 'sex_work-response_details' ),
+	'spycam_crime'               => array( 'spycam_crime-response_details' ),
+	'workplace'                  => array( 'workplace-response_details' ),
+	'public_place_sex_crimes'    => array( 'public_place_sex_crimes-response_details' ),
+	'minor_targeted_sex_crimes' => array( 'minor_targeted_sex_crimes-response_details' ),
 );
 /* 소 카테고리 (대별 동일 라벨, slug는 대+소 조합으로 구분) — 표시 순서 */
 $sidebar_sub_defs = array(
@@ -57,15 +65,15 @@ $sidebar_sub_defs = array(
 	array( 'slug' => 'faq', 'label' => __( 'FAQ', 'della-theme' ) ),
 	array( 'slug' => '최신판례-이슈', 'label' => __( '최신이슈', 'della-theme' ) ),
 );
-/* 테마 소카테고리 slug → WP 실제 slug 접미사 (강간-faq, 강간-관련판례 등) */
+/* 테마 소카테고리 slug → WP 실제 slug 접미사 (강간-faq, 강간-법조문, 강간-최신동향 등) */
 $sub_slug_to_wp_suffix = array(
 	'법조문'                   => '법조문',
 	'구성요건-핵심-쟁점-강간' => '구성요건',
-	'판례'                     => '관련판례',
+	'판례'                     => '구성요건',
 	'유형별-사건'             => '유형별사례',
 	'수사-재판-단계별-대응'   => '대응가이드',
 	'faq'                      => 'faq',
-	'최신판례-이슈'           => '최신이슈',
+	'최신판례-이슈'           => '최신동향',
 );
 $topic_tags = $sidebar_main_cats;
 
@@ -87,35 +95,19 @@ $query_args = array(
 	'order'          => 'DESC',
 	'paged'          => $paged,
 );
-$cat = get_category_by_slug( '대응정보' );
-if ( ! $cat ) {
-	$cat = get_category_by_slug( 'response-info' );
-}
-if ( ! $cat ) {
-	$cats = get_categories( array( 'hide_empty' => false ) );
-	foreach ( $cats as $c ) {
-		if ( $c->name === '대응 정보' || $c->name === '대응정보' ) {
-			$cat = $c;
-			break;
-		}
-	}
-}
-/* 성공사례 카테고리 제외 — 대응정보만 조회 */
-$success_cat = get_category_by_slug( '성공사례' );
-if ( ! $success_cat ) {
-	$success_cat = get_category_by_slug( 'success-cases' );
-}
-if ( ! $success_cat ) {
-	$all_cats = get_categories( array( 'hide_empty' => false ) );
-	foreach ( $all_cats as $c ) {
-		if ( $c->name === '성공사례' || $c->name === '성공 사례' ) {
-			$success_cat = $c;
-			break;
-		}
-	}
-}
+/* 대응정보 부모: 성범죄대응정보(slug=성범죄대응정보) → 대응정보 등 fallback */
+$cat = function_exists( 'della_theme_get_response_info_parent_category' ) ? della_theme_get_response_info_parent_category() : null;
+/* 성공사례 카테고리 제외 — 대응정보만 조회 (부모 성범죄성공사례 + 자식 강간-성공사례 등) */
+$success_cat = function_exists( 'della_theme_get_success_case_parent_category' ) ? della_theme_get_success_case_parent_category() : null;
 if ( $success_cat ) {
-	$query_args['category__not_in'] = array( (int) $success_cat->term_id );
+	$exclude_ids = array( (int) $success_cat->term_id );
+	$success_children = get_terms( array( 'taxonomy' => 'category', 'parent' => $success_cat->term_id, 'hide_empty' => false ) );
+	if ( ! is_wp_error( $success_children ) ) {
+		foreach ( $success_children as $ch ) {
+			$exclude_ids[] = (int) $ch->term_id;
+		}
+	}
+	$query_args['category__not_in'] = $exclude_ids;
 }
 if ( $cat ) {
 	$query_args['cat'] = $cat->term_id;
@@ -221,8 +213,8 @@ get_header();
 		<div class="response-board-top-inner">
 			<header class="response-board-header">
 				<h1 class="response-board-title"><?php esc_html_e( '성범죄 대응정보', 'della-theme' ); ?></h1>
-				<p class="response-board-desc"><?php esc_html_e( '강간·강제추행·군성범죄·불법촬영·성매매·직장내 성희롱 등 법조문, 판례, FAQ, 수사·재판 단계별 대응 가이드.', 'della-theme' ); ?></p>
-				<p class="response-board-intro">성범죄 사건은 초기 진술과 증거 보존이 결과에 큰 영향을 미칩니다. 이 페이지는 강제추행, 불법촬영, 아청법, 군성범죄 등 유형별 핵심 쟁점과 법조문·판례·FAQ를 정리해 제공합니다. 또한 경찰 조사, 검찰 송치, 재판 단계별로 확인해야 할 대응 포인트를 안내합니다. 필요한 주제를 선택해 빠르게 확인하세요.</p>
+				<p class="response-board-desc"><?php esc_html_e( '강간·강제추행·군성범죄·디지털성범죄·성매매·직장내성범죄·공공장소성범죄·미성년자대상성범죄 등 법조문, 판례, FAQ, 수사·재판 단계별 대응 가이드.', 'della-theme' ); ?></p>
+				<p class="response-board-intro">성범죄 사건은 초기 진술과 증거 보존이 결과에 큰 영향을 미칩니다. 이 페이지는 강제추행, 디지털성범죄, 아청법, 군성범죄 등 유형별 핵심 쟁점과 법조문·판례·FAQ를 정리해 제공합니다. 또한 경찰 조사, 검찰 송치, 재판 단계별로 확인해야 할 대응 포인트를 안내합니다. 필요한 주제를 선택해 빠르게 확인하세요.</p>
 			</header>
 
 			<form class="response-board-search" role="search" method="get" action="<?php echo esc_url( $base_url ); ?>" aria-label="<?php esc_attr_e( '대응정보 검색', 'della-theme' ); ?>">

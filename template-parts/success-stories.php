@@ -9,26 +9,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$cat = get_category_by_slug( '성공사례' );
-if ( ! $cat ) {
-	$cat = get_category_by_slug( 'success-case' );
-}
-if ( ! $cat ) {
-	$cats = get_categories( array( 'hide_empty' => false ) );
-	foreach ( $cats as $c ) {
-		if ( $c->name === '성공사례' ) {
-			$cat = $c;
-			break;
-		}
-	}
-}
+$cat = function_exists( 'della_theme_get_success_case_parent_category' ) ? della_theme_get_success_case_parent_category() : null;
 
 $archive_url = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/' );
 $info_url   = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/성범죄-대응정보/' );
 $query      = null;
 if ( $cat ) {
 	$query = new WP_Query( array(
-		'category_name'  => $cat->slug,
+		'cat'            => (int) $cat->term_id,
 		'posts_per_page' => 12,
 		'orderby'        => 'date',
 		'order'          => 'DESC',

@@ -49,26 +49,11 @@ if ( isset( $_GET['q'] ) && $search === '' ) {
 	exit;
 }
 
-/* 성공사례 카테고리 (대응정보 글 제외: 반드시 이 카테고리 포함된 글만 노출) */
-$success_cat = get_category_by_slug( '성공사례' );
-if ( ! $success_cat ) {
-	$success_cat = get_category_by_slug( 'success-cases' );
-}
-if ( ! $success_cat ) {
-	$success_cat = get_category_by_slug( 'success-case' );
-}
-if ( ! $success_cat ) {
-	$all_cats = get_categories( array( 'hide_empty' => false ) );
-	foreach ( $all_cats as $c ) {
-		if ( $c->name === '성공사례' || $c->name === '성공 사례' ) {
-			$success_cat = $c;
-			break;
-		}
-	}
-}
+/* 성공사례 카테고리: 부모 성범죄성공사례(slug=성범죄성공사례), 자식 강간-성공사례·강제추행-성공사례 등 */
+$success_cat = function_exists( 'della_theme_get_success_case_parent_category' ) ? della_theme_get_success_case_parent_category() : null;
 $success_cat_id = $success_cat ? (int) $success_cat->term_id : 0;
 
-/* 대 카테고리 (필터용): slug = WordPress 카테고리 slug, label = 표시명 */
+/* 대 카테고리 (필터용): theme slug → WP slug는 라벨-성공사례 (예: 강간-성공사례) */
 $sidebar_main_cats = array(
 	array( 'slug' => 'rape', 'label' => __( '강간', 'della-theme' ) ),
 	array( 'slug' => 'sexual_assult', 'label' => __( '강제추행', 'della-theme' ) ),
@@ -82,7 +67,10 @@ $topic_tags = $sidebar_main_cats;
 $allowed_cat_ids   = array();
 $main_cat_id_to_label = array();
 foreach ( $sidebar_main_cats as $item ) {
-	$term = get_category_by_slug( $item['slug'] );
+	$term = get_category_by_slug( $item['label'] . '-성공사례' );
+	if ( ! $term ) {
+		$term = get_category_by_slug( $item['slug'] );
+	}
 	if ( $term ) {
 		$allowed_cat_ids[] = $term->term_id;
 		$main_cat_id_to_label[ (int) $term->term_id ] = $item['label'];
@@ -105,6 +93,14 @@ if ( ! $success_cat_id ) {
 	$query_args['category__in'] = ! empty( $allowed_cat_ids ) ? $allowed_cat_ids : array( 0 );
 } elseif ( $filter_cat ) {
 	$filter_term = get_category_by_slug( $filter_cat );
+	if ( ! $filter_term ) {
+		foreach ( $sidebar_main_cats as $item ) {
+			if ( $item['slug'] === $filter_cat ) {
+				$filter_term = get_category_by_slug( $item['label'] . '-성공사례' );
+				break;
+			}
+		}
+	}
 	if ( $filter_term && ! empty( $allowed_cat_ids ) && in_array( (int) $filter_term->term_id, $allowed_cat_ids, true ) ) {
 		$query_args['category__and'] = array( $success_cat_id, (int) $filter_term->term_id );
 	} else {
@@ -209,7 +205,7 @@ get_header();
 							if ( ! $post_cat_name ) {
 								foreach ( $post_cats as $pc ) {
 									foreach ( $sidebar_main_cats as $main_item ) {
-										if ( isset( $pc->slug ) && $pc->slug === $main_item['slug'] ) {
+										if ( isset( $pc->slug ) && ( $pc->slug === $main_item['slug'] || $pc->slug === $main_item['label'] . '-성공사례' ) ) {
 											$post_cat_name = $main_item['label'];
 											break 2;
 										}
@@ -217,7 +213,7 @@ get_header();
 								}
 							}
 							if ( ! $post_cat_name && ! empty( $post_cats ) ) {
-								$parent_slugs = array( '성공사례', '성공 사례', 'success-cases' );
+								$parent_slugs = array( '성범죄성공사례', '성공사례', '성공 사례', 'success-cases' );
 								foreach ( $post_cats as $pc ) {
 									$s = isset( $pc->slug ) ? $pc->slug : '';
 									if ( ! in_array( $s, $parent_slugs, true ) ) {
