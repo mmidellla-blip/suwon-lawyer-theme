@@ -162,6 +162,102 @@
   color: inherit;
 }
 
+/* 주요 대응 분야·하단 링크: 성공사례/대응정보와 비슷한 전문 블록 스타일 */
+.lawyer-list-block {
+  margin-top: var(--space-5);
+  padding: var(--space-4) var(--della-gap) var(--space-5);
+  background: #faf8f5;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+}
+
+.lawyer-list-block-label {
+  margin: 0 0 var(--space-3);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--della-color-text, #1a1a1a);
+  letter-spacing: -0.01em;
+  font-family: var(--della-font-base);
+}
+
+.lawyer-list-areas-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lawyer-list-areas-list li {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--della-point-color, #88783c);
+  background: #fff;
+  border: 1px solid rgba(139, 128, 95, 0.35);
+  border-radius: 6px;
+}
+
+/* 하단 내부 링크: CTR 블록 (성공사례/대응정보와 동일 톤) */
+.lawyer-list-page .internal-links-ctr {
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--della-gap) var(--space-5);
+  background: #faf8f5;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+}
+
+.lawyer-list-page .internal-links-ctr .internal-links-label {
+  margin: 0 0 var(--space-3);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--della-color-text, #1a1a1a);
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.lawyer-list-page .internal-links-ctr .internal-links-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.lawyer-list-page .internal-links-ctr .internal-links-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--della-point-color, #88783c);
+  background: #fff;
+  border: 1px solid rgba(139, 128, 95, 0.35);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.lawyer-list-page .internal-links-ctr .internal-links-actions a:hover {
+  color: #fff;
+  background: var(--della-point-color, #88783c);
+  border-color: var(--della-point-color, #88783c);
+  text-decoration: none;
+}
+
+@media (max-width: 899px) {
+  .lawyer-list-page .internal-links-ctr .internal-links-actions a {
+    min-height: var(--touch-target-min, 48px);
+    padding: 0.6rem 1rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 /* ==========================================================================
    변호사 페이지(상세·목록): 헤더부터 콘텐츠까지 가로 전체 풀
    ========================================================================== */

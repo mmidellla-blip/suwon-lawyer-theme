@@ -112,9 +112,9 @@ get_header();
 			</div>
 		</section>
 
-		<section class="lawyer-list-areas" aria-labelledby="lawyer-list-areas-heading">
-			<h2 id="lawyer-list-areas-heading">주요 대응 분야</h2>
-			<ul>
+		<section class="lawyer-list-areas lawyer-list-block" aria-labelledby="lawyer-list-areas-heading">
+			<h2 id="lawyer-list-areas-heading" class="lawyer-list-block-label">주요 대응 분야</h2>
+			<ul class="lawyer-list-areas-list">
 				<li>강제추행</li>
 				<li>카메라촬영·불법촬영</li>
 				<li>디지털성범죄</li>
@@ -123,10 +123,13 @@ get_header();
 			</ul>
 		</section>
 
-		<div class="internal-links">
-			<a href="<?php echo esc_url( function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/success-cases/' ) ); ?>">성공사례 보기</a>
-			<a href="<?php echo esc_url( function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/response-info/' ) ); ?>">대응정보</a>
-			<a href="<?php echo esc_url( home_url( '/#consultation-cta' ) ); ?>">상담 신청</a>
+		<div class="internal-links internal-links-ctr">
+			<p class="internal-links-label">다음에 보면 좋은 안내</p>
+			<div class="internal-links-actions">
+				<a href="<?php echo esc_url( function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/success-cases/' ) ); ?>">성공사례 보기</a>
+				<a href="<?php echo esc_url( function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/response-info/' ) ); ?>">대응정보</a>
+				<a href="<?php echo esc_url( home_url( '/#consultation-cta' ) ); ?>">상담 신청</a>
+			</div>
 		</div>
 	</article>
 

@@ -303,10 +303,13 @@ get_header();
 						</nav>
 					<?php endif; ?>
 				<?php endif; ?>
-				<div class="success-cases-internal-links response-board-internal-links internal-links">
-					<a href="<?php echo esc_url( function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/info/' ) ); ?>">대응정보 보기</a>
-					<a href="<?php echo esc_url( function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : home_url( '/lawyer/' ) ); ?>">전문변호사 소개</a>
-					<a href="<?php echo esc_url( home_url( '/#consultation-cta' ) ); ?>">상담 신청</a>
+				<div class="success-cases-internal-links response-board-internal-links internal-links internal-links-ctr">
+					<p class="internal-links-label">다음에 보면 좋은 안내</p>
+					<div class="internal-links-actions">
+						<a href="<?php echo esc_url( function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/info/' ) ); ?>">성범죄 유형별 대응 가이드</a>
+						<a href="<?php echo esc_url( function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : home_url( '/lawyer/' ) ); ?>">대응 변호사 팀 소개</a>
+						<a href="<?php echo esc_url( home_url( '/#consultation-cta' ) ); ?>">법률 상담 예약</a>
+					</div>
 				</div>
 			</section>
 		</div>

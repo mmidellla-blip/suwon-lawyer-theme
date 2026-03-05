@@ -614,7 +614,7 @@ function della_theme_document_title_parts( $parts ) {
 		return $parts;
 	}
 	if ( della_theme_is_success_cases_page() ) {
-		$parts['title'] = della_theme_trim_document_title( '수원 성범죄 성공사례 | 강제추행·몰카 기소유예 무혐의 사례 | 법무법인 동주' );
+		$parts['title'] = della_theme_trim_document_title( '수원 성범죄 성공사례 | 강제추행·카메라촬영 무혐의·기소유예 사례 | 법무법인 동주' );
 		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
 	}
@@ -820,6 +820,34 @@ function della_theme_customize_register( $wp_customize ) {
 	$wp_customize->add_control( 'della_naver_reserve_url', array(
 		'label'       => __( '네이버 예약 URL', 'della-theme' ),
 		'description' => __( '비우면 버튼이 링크되지 않습니다.', 'della-theme' ),
+		'section'     => 'della_directions_section',
+		'type'        => 'url',
+	) );
+	$wp_customize->add_setting( 'della_postal_code', array(
+		'default'           => '',
+		'sanitize_callback' => 'sanitize_text_field',
+	) );
+	$wp_customize->add_control( 'della_postal_code', array(
+		'label'       => __( '우편번호 (스키마용)', 'della-theme' ),
+		'description' => __( '성공사례 등 JSON-LD 주소에 사용. 비우면 출력하지 않습니다.', 'della-theme' ),
+		'section'     => 'della_directions_section',
+		'type'        => 'text',
+	) );
+	$wp_customize->add_setting( 'della_naver_place_url', array(
+		'default'           => '',
+		'sanitize_callback' => 'esc_url_raw',
+	) );
+	$wp_customize->add_control( 'della_naver_place_url', array(
+		'label'       => __( '네이버 플레이스 URL (스키마 sameAs)', 'della-theme' ),
+		'section'     => 'della_directions_section',
+		'type'        => 'url',
+	) );
+	$wp_customize->add_setting( 'della_naver_blog_url', array(
+		'default'           => '',
+		'sanitize_callback' => 'esc_url_raw',
+	) );
+	$wp_customize->add_control( 'della_naver_blog_url', array(
+		'label'       => __( '네이버 블로그 URL (스키마 sameAs)', 'della-theme' ),
 		'section'     => 'della_directions_section',
 		'type'        => 'url',
 	) );
@@ -1976,44 +2004,61 @@ function della_theme_render_success_cases_meta() {
 		return;
 	}
 	$url = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink();
+	if ( ! $url || ! is_string( $url ) ) {
+		$url = home_url( '/' );
+	}
 	$tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
 	$cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
 	if ( $tag || $cat ) {
 		$url = add_query_arg( array_filter( array( 'tag' => $tag ? $tag : null, 'cat' => $cat ? $cat : null ) ), $url );
 	}
-	$title = '수원 성범죄 성공사례 | 강제추행·몰카 기소유예 무혐의 사례 | 법무법인 동주';
+
+	$title = '수원 성범죄 성공사례 | 강제추행·카메라촬영 무혐의·기소유예 사례 | 법무법인 동주';
 	if ( function_exists( 'mb_strlen' ) && mb_strlen( $title ) > 60 ) {
 		$title = function_exists( 'mb_substr' ) ? mb_substr( $title, 0, 57 ) . '...' : substr( $title, 0, 57 ) . '...';
 	} elseif ( strlen( $title ) > 60 ) {
 		$title = substr( $title, 0, 57 ) . '...';
 	}
-	$description = '수원 성범죄 성공사례를 실제 사건 중심으로 정리했습니다. 강제추행, 카메라등이용촬영죄, 디지털성범죄 사건에서 기소유예·무혐의 결과를 이끌어낸 대응 전략을 확인하세요. 경찰조사부터 재판까지 실제 사례 기반 분석.';
+	$title = trim( (string) $title ) !== '' ? $title : '수원 성범죄 성공사례 | 법무법인 동주';
+
+	$description = '수원 성범죄 사건 성공사례를 확인하세요. 강제추행·카메라촬영·아청법 사건에서 무혐의·기소유예·집행유예 등 실제 결과를 공개합니다. 경찰조사부터 재판까지 법무법인 동주가 직접 대응합니다.';
 	if ( function_exists( 'mb_strlen' ) && mb_strlen( $description ) > 150 ) {
 		$description = function_exists( 'mb_substr' ) ? mb_substr( $description, 0, 147 ) . '...' : substr( $description, 0, 147 ) . '...';
 	} elseif ( strlen( $description ) > 150 ) {
 		$description = substr( $description, 0, 147 ) . '...';
 	}
+	$description = trim( (string) $description ) !== '' ? $description : '수원 성범죄 성공사례. 강제추행·카메라촬영·아청법 사건 무혐의·기소유예 대응 사례. 법무법인 동주.';
+
 	$keywords = '수원 성범죄 성공사례, 강제추행 기소유예 사례, 카메라촬영 기소유예, 몰카 무혐의 사례, 성범죄 변호사 성공사례, 성범죄 합의 성공사례';
-	$og_description = '수원 성범죄 사건 대응 실제 성공사례. 강제추행, 카메라촬영, 디지털성범죄 사건에서 기소유예·무혐의 결과를 이끌어낸 대응 전략을 확인하세요.';
+	$og_title = '수원 성범죄 성공사례 | 강제추행·카메라촬영 무혐의 사례 | 법무법인 동주';
+	$og_description = '수원 성범죄 사건 실제 성공사례. 강제추행·카메라촬영·아청법 사건 무혐의·기소유예 결과를 확인하세요.';
+	$og_site_name = '법무법인 동주 - 수원 성범죄 전문변호사';
+	$twitter_title = '수원 성범죄 성공사례 | 법무법인 동주';
+	$twitter_description = '강제추행·카메라촬영·아청법 사건 실제 성공사례. 무혐의·기소유예 대응 사례 확인.';
 	$og_image = home_url( '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg' );
+	if ( ! $og_image || $og_image === home_url( '/' ) ) {
+		$og_image = home_url( '/img/og-sexcrime-dongju.jpg' );
+	}
 	?>
+	<title><?php echo esc_html( $title ); ?></title>
 	<meta name="description" content="<?php echo esc_attr( $description ); ?>" />
 	<meta name="keywords" content="<?php echo esc_attr( $keywords ); ?>" />
 	<link rel="canonical" href="<?php echo esc_url( $url ); ?>" />
 	<meta name="robots" content="index,follow,max-image-preview:large" />
-	<meta property="og:title" content="<?php echo esc_attr( $title ); ?>" />
-	<meta property="og:description" content="<?php echo esc_attr( $og_description ); ?>" />
 	<meta property="og:type" content="website" />
+	<meta property="og:title" content="<?php echo esc_attr( $og_title ); ?>" />
+	<meta property="og:description" content="<?php echo esc_attr( $og_description ); ?>" />
 	<meta property="og:url" content="<?php echo esc_url( $url ); ?>" />
-	<meta property="og:site_name" content="법무법인 동주" />
+	<meta property="og:site_name" content="<?php echo esc_attr( $og_site_name ); ?>" />
 	<meta property="og:locale" content="ko_KR" />
 	<meta property="og:image" content="<?php echo esc_url( $og_image ); ?>" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>" />
-	<meta name="twitter:description" content="<?php echo esc_attr( $og_description ); ?>" />
+	<meta name="twitter:title" content="<?php echo esc_attr( $twitter_title ); ?>" />
+	<meta name="twitter:description" content="<?php echo esc_attr( $twitter_description ); ?>" />
 	<?php
+	remove_action( 'wp_head', '_wp_render_title_tag', 1 );
 }
 
 /**
@@ -2249,8 +2294,8 @@ function della_theme_schema_json_ld() {
 		}
 	}
 
-	// WebPage (single page) / CollectionPage (성범죄 대응정보)
-	if ( is_singular( 'page' ) ) {
+	// WebPage (single page) / CollectionPage (성범죄 대응정보). 성공사례는 아래 @graph에서만 출력.
+	if ( is_singular( 'page' ) && ! della_theme_is_success_cases_page() ) {
 		$post = get_queried_object();
 		if ( $post instanceof WP_Post ) {
 			$schema['@type'] = 'WebPage';
@@ -2260,11 +2305,6 @@ function della_theme_schema_json_ld() {
 			if ( della_theme_is_response_board_page() ) {
 				$schema['@type'] = array( 'WebPage', 'CollectionPage' );
 				$schema['description'] = __( '성범죄 대응정보: 강간·강제추행·군성범죄·불법촬영·성매매·직장내 성희롱 등 법조문, 판례, FAQ, 수사·재판 단계별 대응 가이드.', 'della-theme' );
-				$schema['inLanguage'] = 'ko-KR';
-			}
-			if ( della_theme_is_success_cases_page() ) {
-				$schema['@type'] = array( 'WebPage', 'CollectionPage' );
-				$schema['description'] = __( '성범죄 성공사례: 강간·강제추행·군성범죄·불법촬영·성매매·직장내 성희롱 등 수원 성범죄 전문 변호사 성공 사례 모음.', 'della-theme' );
 				$schema['inLanguage'] = 'ko-KR';
 			}
 		}
@@ -2379,8 +2419,30 @@ function della_theme_schema_json_ld() {
 		echo '<script type="application/ld+json">' . "\n" . wp_json_encode( $rb_schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n" . '</script>' . "\n";
 	}
 
-	// 성범죄 성공사례 페이지: ItemList (목록 구조화, SEO) — 성공사례 카테고리만
+	// 성범죄 성공사례 페이지: @graph (WebSite, LegalService, WebPage, BreadcrumbList, ItemList)
 	if ( della_theme_is_success_cases_page() ) {
+		$base_url    = home_url( '/' );
+		$sc_page_url = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink();
+		$road        = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
+		$road2       = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
+		$street      = trim( $road . ' ' . $road2 );
+		$phone       = get_theme_mod( 'della_phone', '031-216-1155' );
+		$postal_code = get_theme_mod( 'della_postal_code', '' );
+		$logo_id     = get_theme_mod( 'custom_logo', 0 );
+		$logo_url    = $logo_id ? wp_get_attachment_image_url( (int) $logo_id, 'full' ) : '';
+		if ( ! $logo_url ) {
+			$logo_url = home_url( '/img/logo.png' );
+		}
+		$og_image = apply_filters( 'della_theme_schema_og_image', home_url( '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg' ) );
+		if ( ! $og_image ) {
+			$og_image = home_url( '/img/og-sexcrime-dongju.jpg' );
+		}
+		$same_as = array_filter( array(
+			get_theme_mod( 'della_naver_place_url', '' ),
+			get_theme_mod( 'della_naver_blog_url', '' ),
+		) );
+		$same_as = array_values( array_filter( array_map( 'esc_url_raw', $same_as ) ) );
+
 		$sc_cat = get_category_by_slug( '성공사례' );
 		if ( ! $sc_cat ) {
 			$sc_cat = get_category_by_slug( 'success-cases' );
@@ -2403,7 +2465,6 @@ function della_theme_schema_json_ld() {
 			'posts_per_page' => 10,
 			'orderby'        => 'date',
 			'order'          => 'DESC',
-			'fields'         => 'ids',
 		);
 		if ( $sc_cat ) {
 			$sc_args['cat'] = (int) $sc_cat->term_id;
@@ -2411,26 +2472,97 @@ function della_theme_schema_json_ld() {
 			$sc_args['category__in'] = array( 0 );
 		}
 		$sc_query = new WP_Query( $sc_args );
-		$sc_items = array();
+		$sc_list_items = array();
 		if ( $sc_query->have_posts() ) {
 			$pos = 0;
-			foreach ( $sc_query->posts as $pid ) {
+			foreach ( $sc_query->posts as $post ) {
 				$pos++;
-				$sc_items[] = array(
+				$item_name = get_the_title( $post );
+				$seo_title = get_post_meta( $post->ID, 'della_case_seo_title', true );
+				if ( is_string( $seo_title ) && trim( $seo_title ) !== '' ) {
+					$item_name = trim( $seo_title );
+				}
+				$sc_list_items[] = array(
 					'@type'    => 'ListItem',
 					'position' => $pos,
-					'url'      => get_permalink( $pid ),
+					'url'      => get_permalink( $post ),
+					'name'     => $item_name,
 				);
 			}
 		}
 		wp_reset_postdata();
+
+		$address = array(
+			'@type'           => 'PostalAddress',
+			'addressCountry'  => 'KR',
+			'addressRegion'   => '경기도',
+			'addressLocality' => '수원시',
+			'streetAddress'   => $street,
+		);
+		if ( $postal_code !== '' ) {
+			$address['postalCode'] = $postal_code;
+		}
+
+		$legal_service = array(
+			'@type'        => 'LegalService',
+			'@id'          => $base_url . '#legalservice',
+			'name'         => '법무법인 동주',
+			'url'          => $base_url,
+			'logo'         => $logo_url,
+			'image'        => array( $og_image ),
+			'telephone'    => $phone,
+			'priceRange'   => '상담 문의',
+			'areaServed'   => array(
+				array( '@type' => 'AdministrativeArea', 'name' => '수원' ),
+				array( '@type' => 'AdministrativeArea', 'name' => '경기도' ),
+			),
+			'serviceType'  => array( '성범죄 변호', '강제추행 변호', '카메라등이용촬영죄 변호', '아청법 변호' ),
+			'address'      => $address,
+		);
+		if ( ! empty( $same_as ) ) {
+			$legal_service['sameAs'] = $same_as;
+		}
+
+		$graph = array(
+			array(
+				'@type'       => 'WebSite',
+				'@id'         => $base_url . '#website',
+				'url'         => $base_url,
+				'name'        => get_bloginfo( 'name' ),
+				'inLanguage'  => 'ko-KR',
+			),
+			$legal_service,
+			array(
+				'@type'      => 'WebPage',
+				'@id'        => $sc_page_url . '#webpage',
+				'url'        => $sc_page_url,
+				'name'       => '수원 성범죄 성공사례 | 법무법인 동주',
+				'isPartOf'   => array( '@id' => $base_url . '#website' ),
+				'about'      => array( '@id' => $base_url . '#legalservice' ),
+				'inLanguage' => 'ko-KR',
+				'breadcrumb' => array( '@id' => $sc_page_url . '#breadcrumb' ),
+			),
+			array(
+				'@type'           => 'BreadcrumbList',
+				'@id'             => $sc_page_url . '#breadcrumb',
+				'itemListElement' => array(
+					array( '@type' => 'ListItem', 'position' => 1, 'name' => '홈', 'item' => $base_url ),
+					array( '@type' => 'ListItem', 'position' => 2, 'name' => '성공사례', 'item' => $sc_page_url ),
+				),
+			),
+			array(
+				'@type'           => 'ItemList',
+				'@id'             => $sc_page_url . '#case-list',
+				'name'            => '수원 성범죄 성공사례 목록',
+				'itemListOrder'   => 'https://schema.org/ItemListOrderDescending',
+				'numberOfItems'   => count( $sc_list_items ),
+				'itemListElement' => $sc_list_items,
+			),
+		);
+
 		$sc_schema = array(
-			'@context'        => 'https://schema.org',
-			'@type'           => 'ItemList',
-			'name'            => '성범죄 성공사례',
-			'url'             => function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink(),
-			'numberOfItems'   => count( $sc_items ),
-			'itemListElement' => $sc_items,
+			'@context' => 'https://schema.org',
+			'@graph'   => $graph,
 		);
 		echo '<script type="application/ld+json">' . "\n" . wp_json_encode( $sc_schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n" . '</script>' . "\n";
 	}
@@ -2464,7 +2596,7 @@ function della_theme_schema_json_ld() {
 		echo '<script type="application/ld+json">' . "\n" . wp_json_encode( $sitemap_schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n" . '</script>' . "\n";
 	}
 
-	if ( ! empty( $schema_breadcrumb['itemListElement'] ) ) {
+	if ( ! empty( $schema_breadcrumb['itemListElement'] ) && ! della_theme_is_success_cases_page() ) {
 		echo '<script type="application/ld+json">' . "\n" . wp_json_encode( $schema_breadcrumb, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n" . '</script>' . "\n";
 	}
 }
