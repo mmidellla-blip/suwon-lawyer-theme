@@ -201,6 +201,9 @@ if ( $filter_cat ) {
 		} else {
 			$query_args['cat'] = $filter_category->term_id;
 		}
+	} else {
+		// 필터는 선택됐으나 해당 WP 카테고리를 찾지 못함 → 결과 없음으로 처리 (다른 글이 전체 나오지 않게)
+		$query_args['post__in'] = array( 0 );
 	}
 }
 
@@ -337,8 +340,9 @@ get_header();
 						<?php
 						endwhile;
 					else :
+						$empty_msg = $search ? __( '검색어에 맞는 글이 없습니다.', 'della-theme' ) : ( $filter_cat ? __( '해당 카테고리에 글이 없습니다.', 'della-theme' ) : __( '등록된 글이 없습니다.', 'della-theme' ) );
 						?>
-						<li class="response-board-empty"><?php echo $search ? esc_html__( '검색어에 맞는 글이 없습니다.', 'della-theme' ) : esc_html__( '등록된 글이 없습니다.', 'della-theme' ); ?></li>
+						<li class="response-board-empty"><?php echo esc_html( $empty_msg ); ?></li>
 					<?php endif; ?>
 				</ul>
 
