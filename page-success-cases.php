@@ -152,7 +152,6 @@ get_header();
 	<div class="response-board">
 		<div class="response-board-body">
 			<nav class="response-board-sidebar" aria-label="<?php esc_attr_e( '카테고리', 'della-theme' ); ?>">
-				<!-- 모바일: 대 카테고리만 가로 스크롤 -->
 				<div class="response-board-nav-mobile">
 					<div class="response-board-nav-main-row" role="tablist" aria-label="<?php esc_attr_e( '대 카테고리', 'della-theme' ); ?>">
 						<?php foreach ( $sidebar_main_cats as $main_item ) : ?>
@@ -164,7 +163,6 @@ get_header();
 						<?php endforeach; ?>
 					</div>
 				</div>
-				<!-- 데스크톱: 대 카테고리만 리스트 (서브 없음) -->
 				<ul class="response-board-nav-list success-cases-nav-list">
 					<?php foreach ( $sidebar_main_cats as $main_item ) : ?>
 						<?php

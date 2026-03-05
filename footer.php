@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 
-	</div><!-- .content-sidebar-wrap -->
+	</div>
 
 	<?php get_template_part( 'template-parts/quick-menu' ); ?>
 
@@ -31,14 +31,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 			<div class="footer-divider" aria-hidden="true"></div>
 
-			<!-- 데스크톱: 주소 항상 노출 -->
 			<div class="footer-addresses footer-addresses-desk">
 				<p class="footer-address-line"><?php esc_html_e( '서울사무소', 'della-theme' ); ?>: <?php esc_html_e( '서울 서초구 서초중앙로 123 (서초동), 13층 (서초동, 엘렌타워)', 'della-theme' ); ?></p>
 				<p class="footer-address-line"><?php esc_html_e( '수원 사무소', 'della-theme' ); ?>: <?php esc_html_e( '수원시 영통구 광교중앙로248번길 7-2, B동 902-903호(하동, 원희캐슬광교)', 'della-theme' ); ?></p>
 				<p class="footer-address-line"><?php esc_html_e( '인천 사무소', 'della-theme' ); ?>: <?php esc_html_e( '인천시 미추홀구 학익소로 66, 403-404호(학익동, 선정빌딩)', 'della-theme' ); ?></p>
 			</div>
 
-			<!-- 모바일: 지사 주소 아코디언 -->
 			<details class="footer-addresses-accordion footer-addresses-mobile">
 				<summary class="footer-accordion-summary">
 					<span class="footer-accordion-title"><?php esc_html_e( '지사 주소', 'della-theme' ); ?></span>
@@ -76,7 +74,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 	</footer>
 
-</div><!-- #page -->
+</div>
 
 <?php wp_footer(); ?>
 </body>

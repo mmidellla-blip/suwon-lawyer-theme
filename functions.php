@@ -1174,7 +1174,6 @@ function della_theme_ga4_script() {
 	}
 	$first_id = reset( $ga_ids );
 	?>
-<!-- della GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr( $first_id ); ?>"></script>
 <script>
 window.dataLayer = window.dataLayer || [];

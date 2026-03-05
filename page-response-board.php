@@ -69,7 +69,7 @@ $sidebar_sub_defs = array(
 $sub_slug_to_wp_suffix = array(
 	'법조문'                   => '법조문',
 	'구성요건-핵심-쟁점-강간' => '구성요건',
-	'관련판례'                => '관련-판례',
+	'관련판례'                => '관련판례',
 	'유형별-사건'             => '유형별사례',
 	'수사-재판-단계별-대응'   => '대응가이드',
 	'faq'                      => 'faq',
@@ -112,7 +112,7 @@ if ( $search ) {
 if ( $filter_cat ) {
 	$filter_category = null;
 	$use_include_children = true;
-	$filter_transient_key = 'della_resp_filter_v3_' . preg_replace( '/[^a-z0-9_\-]/i', '_', $filter_cat );
+	$filter_transient_key = 'della_resp_filter_v4_' . preg_replace( '/[^a-z0-9_\-]/i', '_', $filter_cat );
 	$cached_filter = get_transient( $filter_transient_key );
 	if ( false !== $cached_filter && is_array( $cached_filter ) && ! empty( $cached_filter['term_id'] ) ) {
 		$term = get_term( (int) $cached_filter['term_id'], 'category' );
@@ -257,7 +257,6 @@ get_header();
 	<div class="response-board">
 		<div class="response-board-body">
 			<nav class="response-board-sidebar" aria-label="<?php esc_attr_e( '카테고리', 'della-theme' ); ?>">
-				<!-- 모바일: 대·소 카테고리 가로 스크롤 -->
 				<div class="response-board-nav-mobile">
 					<div class="response-board-nav-main-row" role="tablist" aria-label="<?php esc_attr_e( '대 카테고리', 'della-theme' ); ?>">
 						<?php foreach ( $sidebar_main_cats as $main_item ) : ?>

@@ -114,7 +114,6 @@ $directions_schema = array(
 			</div>
 		</div>
 
-		<!-- 모바일 전용: 구분선 + 비고 (방문상담/네이버예약 버튼 다음) -->
 		<div class="directions-notes-wrap directions-notes-mobile">
 			<div class="directions-divider directions-notes-divider" aria-hidden="true"></div>
 			<div class="directions-notes">
