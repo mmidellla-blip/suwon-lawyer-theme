@@ -216,18 +216,29 @@ add_action( 'after_switch_theme', 'della_theme_ensure_response_board_page' );
 add_action( 'init', 'della_theme_ensure_response_board_page', 0 );
 
 /**
- * 성범죄 대응정보 게시판 페이지 URL
+ * 성범죄 대응정보 게시판 페이지 URL (요청당 1회만 get_pages).
  */
 function della_theme_response_board_page_url() {
+	static $url = null;
+	if ( $url !== null ) {
+		return $url;
+	}
 	$pages = get_pages( array(
 		'meta_key'   => '_wp_page_template',
 		'meta_value' => 'page-response-board.php',
 		'number'     => 1,
 	) );
-	if ( ! empty( $pages ) ) {
-		return get_permalink( $pages[0] );
+	$url = ! empty( $pages ) ? get_permalink( $pages[0] ) : home_url( '/response-info/' );
+	return $url;
+}
+
+/** 온라인 상담 신청 페이지 URL (테마 설정 또는 기본 외부 링크). */
+function della_theme_consultation_url() {
+	$url = get_theme_mod( 'della_consultation_url', '' );
+	if ( is_string( $url ) && trim( $url ) !== '' ) {
+		return trim( $url );
 	}
-	return home_url( '/response-info/' );
+	return 'https://sexcrimecenter-dongju.com/bbs/board.php?bo_table=online&me_code=6010';
 }
 
 /**
@@ -293,18 +304,20 @@ add_action( 'after_switch_theme', 'della_theme_ensure_success_cases_page' );
 add_action( 'init', 'della_theme_ensure_success_cases_page', 0 );
 
 /**
- * 성범죄 성공사례 게시판 페이지 URL
+ * 성범죄 성공사례 게시판 페이지 URL (요청당 1회만 get_pages).
  */
 function della_theme_success_cases_page_url() {
+	static $url = null;
+	if ( $url !== null ) {
+		return $url;
+	}
 	$pages = get_pages( array(
 		'meta_key'   => '_wp_page_template',
 		'meta_value' => 'page-success-cases.php',
 		'number'     => 1,
 	) );
-	if ( ! empty( $pages ) ) {
-		return get_permalink( $pages[0] );
-	}
-	return home_url( '/success-cases/' );
+	$url = ! empty( $pages ) ? get_permalink( $pages[0] ) : home_url( '/success-cases/' );
+	return $url;
 }
 
 /**
@@ -519,39 +532,73 @@ function della_theme_is_success_cases_page() {
 	return apply_filters( 'della_theme_is_success_cases_page', $is_success );
 }
 
+if ( ! defined( 'DELLA_THEME_CAT_TRANSIENT_TTL' ) ) {
+	/** 대응정보/성공사례 카테고리 트랜지언트 TTL (초). */
+	define( 'DELLA_THEME_CAT_TRANSIENT_TTL', 3600 );
+}
+
+/** @return int 카테고리 관련 트랜지언트 TTL(초). */
+function della_theme_cat_transient_ttl() {
+	return defined( 'DELLA_THEME_CAT_TRANSIENT_TTL' ) ? (int) DELLA_THEME_CAT_TRANSIENT_TTL : 3600;
+}
+
 /**
  * 성공사례 부모 카테고리(성범죄성공사례 등) 반환. 없으면 null.
+ * 요청당 정적 캐시 + 요청 간 트랜지언트 캐시로 DB 조회 최소화.
  *
  * @return WP_Term|null
  */
 function della_theme_get_success_case_parent_category() {
+	static $cached = null;
+	if ( $cached !== null ) {
+		return $cached;
+	}
+	$transient_key = 'della_success_parent_term_id';
+	$term_id = get_transient( $transient_key );
+	if ( false !== $term_id && $term_id > 0 ) {
+		$term = get_term( (int) $term_id, 'category' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			$cached = $term;
+			return $cached;
+		}
+	}
 	$cat = get_category_by_slug( '성범죄성공사례' );
 	if ( $cat ) {
+		set_transient( $transient_key, $cat->term_id, della_theme_cat_transient_ttl() );
+		$cached = $cat;
 		return $cat;
 	}
 	$cat = get_category_by_slug( '성공사례' );
 	if ( $cat ) {
+		set_transient( $transient_key, $cat->term_id, della_theme_cat_transient_ttl() );
+		$cached = $cat;
 		return $cat;
 	}
 	$cat = get_category_by_slug( 'success-cases' );
 	if ( $cat ) {
+		set_transient( $transient_key, $cat->term_id, della_theme_cat_transient_ttl() );
+		$cached = $cat;
 		return $cat;
 	}
 	$cat = get_category_by_slug( 'success-case' );
 	if ( $cat ) {
+		set_transient( $transient_key, $cat->term_id, della_theme_cat_transient_ttl() );
+		$cached = $cat;
 		return $cat;
 	}
-	$all = get_categories( array( 'hide_empty' => false ) );
-	foreach ( $all as $c ) {
-		if ( $c->name === '성범죄성공사례' || $c->name === '성공사례' || $c->name === '성공 사례' ) {
-			return $c;
-		}
+	$terms = get_terms( array( 'taxonomy' => 'category', 'slug' => array( '성범죄성공사례', '성공사례', 'success-cases', 'success-case' ), 'hide_empty' => false, 'number' => 4 ) );
+	if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+		set_transient( $transient_key, $terms[0]->term_id, della_theme_cat_transient_ttl() );
+		$cached = $terms[0];
+		return $cached;
 	}
+	$cached = null;
 	return null;
 }
 
 /**
  * 단일 글(포스트)이 성공사례 카테고리에 속하는지 여부 (상세 페이지 메타용).
+ * 캐시된 성공사례 term_id 배열 사용으로 get_terms 중복 제거.
  *
  * @param WP_Post|null $post 포스트 객체. null이면 현재 쿼리 포스트.
  * @return bool
@@ -563,49 +610,213 @@ function della_theme_is_success_case_post( $post = null ) {
 	if ( ! $post instanceof WP_Post || $post->post_type !== 'post' ) {
 		return false;
 	}
-	$sc_cat = function_exists( 'della_theme_get_success_case_parent_category' ) ? della_theme_get_success_case_parent_category() : null;
-	if ( ! $sc_cat ) {
-		return false;
-	}
-	$term_ids = array( (int) $sc_cat->term_id );
-	$children = get_terms( array( 'taxonomy' => 'category', 'parent' => $sc_cat->term_id, 'hide_empty' => false ) );
-	if ( ! is_wp_error( $children ) ) {
-		foreach ( $children as $ch ) {
-			$term_ids[] = (int) $ch->term_id;
-		}
-	}
-	return has_category( $term_ids, $post );
+	$term_ids = function_exists( 'della_theme_get_success_case_exclude_term_ids' ) ? della_theme_get_success_case_exclude_term_ids() : array();
+	return ! empty( $term_ids ) && has_category( $term_ids, $post );
 }
 
 /**
  * 대응정보 부모 카테고리(성범죄대응정보 등) 반환. 없으면 null.
+ * 요청당 정적 캐시 + 요청 간 트랜지언트 캐시로 DB 조회 최소화.
  *
  * @return WP_Term|null
  */
 function della_theme_get_response_info_parent_category() {
+	static $cached = null;
+	if ( $cached !== null ) {
+		return $cached;
+	}
+	$transient_key = 'della_resp_info_parent_term_id';
+	$term_id = get_transient( $transient_key );
+	if ( false !== $term_id && $term_id > 0 ) {
+		$term = get_term( (int) $term_id, 'category' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			$cached = $term;
+			return $cached;
+		}
+	}
 	$cat = get_category_by_slug( '성범죄대응정보' );
 	if ( $cat ) {
+		set_transient( $transient_key, $cat->term_id, della_theme_cat_transient_ttl() );
+		$cached = $cat;
 		return $cat;
 	}
 	$cat = get_category_by_slug( '대응정보' );
 	if ( $cat ) {
+		set_transient( $transient_key, $cat->term_id, della_theme_cat_transient_ttl() );
+		$cached = $cat;
 		return $cat;
 	}
 	$cat = get_category_by_slug( 'response-info' );
 	if ( $cat ) {
+		set_transient( $transient_key, $cat->term_id, della_theme_cat_transient_ttl() );
+		$cached = $cat;
 		return $cat;
 	}
-	$all = get_categories( array( 'hide_empty' => false ) );
-	foreach ( $all as $c ) {
-		if ( $c->name === '성범죄대응정보' || $c->name === '대응정보' || $c->name === '대응 정보' ) {
-			return $c;
-		}
+	$terms = get_terms( array( 'taxonomy' => 'category', 'slug' => array( '성범죄대응정보', '대응정보', 'response-info' ), 'hide_empty' => false, 'number' => 3 ) );
+	if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+		set_transient( $transient_key, $terms[0]->term_id, della_theme_cat_transient_ttl() );
+		$cached = $terms[0];
+		return $cached;
 	}
+	$cached = null;
 	return null;
 }
 
 /**
+ * 대응정보 페이지 쿼리에서 제외할 카테고리 term_id 배열 (성공사례 부모 + 자식).
+ * 요청당 정적 캐시 + 요청 간 트랜지언트 캐시로 DB 조회 최소화.
+ *
+ * @return int[]
+ */
+function della_theme_get_success_case_exclude_term_ids() {
+	static $cached = null;
+	if ( $cached !== null ) {
+		return $cached;
+	}
+	$transient_key = 'della_success_exclude_term_ids';
+	$stored = get_transient( $transient_key );
+	if ( false !== $stored && is_array( $stored ) ) {
+		$cached = array_map( 'intval', $stored );
+		return $cached;
+	}
+	$success_cat = function_exists( 'della_theme_get_success_case_parent_category' ) ? della_theme_get_success_case_parent_category() : null;
+	if ( ! $success_cat ) {
+		$cached = array();
+		return $cached;
+	}
+	$exclude_ids = array( (int) $success_cat->term_id );
+	$children = get_terms( array( 'taxonomy' => 'category', 'parent' => $success_cat->term_id, 'hide_empty' => false, 'fields' => 'ids' ) );
+	if ( ! is_wp_error( $children ) && ! empty( $children ) ) {
+		$exclude_ids = array_merge( $exclude_ids, array_map( 'intval', $children ) );
+	}
+	set_transient( $transient_key, $exclude_ids, della_theme_cat_transient_ttl() );
+	$cached = $exclude_ids;
+	return $cached;
+}
+
+/**
+ * 대응정보 카테고리 term_id 배열 (부모 + 자식). is_response_info_post 등에서 사용.
+ * 요청당 정적 캐시 + 트랜지언트로 get_terms 중복 제거.
+ *
+ * @return int[]
+ */
+function della_theme_get_response_info_term_ids() {
+	static $cached = null;
+	if ( $cached !== null ) {
+		return $cached;
+	}
+	$transient_key = 'della_resp_info_term_ids';
+	$stored = get_transient( $transient_key );
+	if ( false !== $stored && is_array( $stored ) ) {
+		$cached = array_map( 'intval', $stored );
+		return $cached;
+	}
+	$info_cat = function_exists( 'della_theme_get_response_info_parent_category' ) ? della_theme_get_response_info_parent_category() : null;
+	if ( ! $info_cat ) {
+		$cached = array();
+		return $cached;
+	}
+	$term_ids = array( (int) $info_cat->term_id );
+	$children = get_terms( array( 'taxonomy' => 'category', 'parent' => $info_cat->term_id, 'hide_empty' => false, 'fields' => 'ids' ) );
+	if ( ! is_wp_error( $children ) && ! empty( $children ) ) {
+		$term_ids = array_merge( $term_ids, array_map( 'intval', $children ) );
+	}
+	set_transient( $transient_key, $term_ids, della_theme_cat_transient_ttl() );
+	$cached = $term_ids;
+	return $cached;
+}
+
+/**
+ * 카테고리 관련 트랜지언트 삭제 (관리자에서 카테고리 수정/삭제 시 캐시 무효화).
+ */
+function della_theme_flush_category_transients() {
+	delete_transient( 'della_success_parent_term_id' );
+	delete_transient( 'della_resp_info_parent_term_id' );
+	delete_transient( 'della_success_exclude_term_ids' );
+	delete_transient( 'della_resp_info_term_ids' );
+	delete_transient( 'della_success_allowed_cat_data' );
+	global $wpdb;
+	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_della_resp_filter_%'" );
+}
+
+/**
+ * 성공사례 페이지 대 카테고리 목록 (slug, label). 페이지·캐시 헬퍼와 동기화용.
+ *
+ * @return array[] [ ['slug' => ..., 'label' => ...], ... ]
+ */
+function della_theme_get_success_case_sidebar_main_cats() {
+	return array(
+		array( 'slug' => 'rape', 'label' => __( '강간', 'della-theme' ) ),
+		array( 'slug' => 'sexual_assult', 'label' => __( '강제추행', 'della-theme' ) ),
+		array( 'slug' => 'public_place_sex_crimes', 'label' => __( '공공장소성범죄', 'della-theme' ) ),
+		array( 'slug' => 'military_sexual_crimes', 'label' => __( '군성범죄', 'della-theme' ) ),
+		array( 'slug' => 'spycam_crime', 'label' => __( '디지털성범죄', 'della-theme' ) ),
+		array( 'slug' => 'minor_targeted_sex_crimes', 'label' => __( '미성년자성범죄', 'della-theme' ) ),
+		array( 'slug' => 'sex_work', 'label' => __( '성매매', 'della-theme' ) ),
+		array( 'slug' => 'workplace', 'label' => __( '직장내성범죄', 'della-theme' ) ),
+	);
+}
+
+/**
+ * 성공사례 허브 필터용 허용 카테고리 ID 목록 및 term_id→label 매핑.
+ * 요청당 정적 캐시 + 트랜지언트로 get_category_by_slug 반복 제거.
+ *
+ * @return array { ids: int[], id_to_label: int[] }
+ */
+function della_theme_get_success_case_allowed_cat_data() {
+	static $cached = null;
+	if ( $cached !== null ) {
+		return $cached;
+	}
+	$transient_key = 'della_success_allowed_cat_data';
+	$stored = get_transient( $transient_key );
+	if ( false !== $stored && is_array( $stored ) && isset( $stored['ids'], $stored['id_to_label'] ) ) {
+		if ( ! isset( $stored['slug_to_id'] ) || ! is_array( $stored['slug_to_id'] ) ) {
+			$stored['slug_to_id'] = array();
+		}
+		$cached = $stored;
+		return $cached;
+	}
+	$allowed_cat_ids = array();
+	$main_cat_id_to_label = array();
+	$slug_to_id = array();
+	$items = della_theme_get_success_case_sidebar_main_cats();
+	foreach ( $items as $item ) {
+		$term = get_category_by_slug( $item['label'] . '-성공사례' );
+		if ( ! $term ) {
+			$term = get_category_by_slug( $item['slug'] );
+		}
+		if ( $term ) {
+			$tid = (int) $term->term_id;
+			$allowed_cat_ids[] = $term->term_id;
+			$main_cat_id_to_label[ $tid ] = $item['label'];
+			$slug_to_id[ $item['slug'] ] = $tid;
+		}
+	}
+	$cached = array( 'ids' => $allowed_cat_ids, 'id_to_label' => $main_cat_id_to_label, 'slug_to_id' => $slug_to_id );
+	set_transient( $transient_key, $cached, della_theme_cat_transient_ttl() );
+	return $cached;
+}
+
+add_action( 'edited_term', 'della_theme_flush_category_transients_on_term_change', 10, 3 );
+add_action( 'delete_term', 'della_theme_flush_category_transients_on_term_change', 10, 3 );
+
+/**
+ * taxonomy가 category일 때만 트랜지언트 플러시.
+ *
+ * @param int    $term_id  Term ID.
+ * @param int    $tt_id    Term taxonomy ID.
+ * @param string $taxonomy Taxonomy slug.
+ */
+function della_theme_flush_category_transients_on_term_change( $term_id, $tt_id, $taxonomy = '' ) {
+	if ( $taxonomy === 'category' ) {
+		della_theme_flush_category_transients();
+	}
+}
+
+/**
  * 단일 글이 대응정보 카테고리에 속하는지 여부 (상세 페이지 메타·키워드용).
+ * 캐시된 대응정보 term_id 배열 사용으로 get_terms 중복 제거.
  *
  * @param WP_Post|null $post 포스트 객체. null이면 현재 쿼리 포스트.
  * @return bool
@@ -617,18 +828,8 @@ function della_theme_is_response_info_post( $post = null ) {
 	if ( ! $post instanceof WP_Post || $post->post_type !== 'post' ) {
 		return false;
 	}
-	$info_cat = function_exists( 'della_theme_get_response_info_parent_category' ) ? della_theme_get_response_info_parent_category() : null;
-	if ( ! $info_cat ) {
-		return false;
-	}
-	$term_ids = array( (int) $info_cat->term_id );
-	$children = get_terms( array( 'taxonomy' => 'category', 'parent' => $info_cat->term_id, 'hide_empty' => false ) );
-	if ( ! is_wp_error( $children ) ) {
-		foreach ( $children as $ch ) {
-			$term_ids[] = (int) $ch->term_id;
-		}
-	}
-	return has_category( $term_ids, $post );
+	$term_ids = function_exists( 'della_theme_get_response_info_term_ids' ) ? della_theme_get_response_info_term_ids() : array();
+	return ! empty( $term_ids ) && has_category( $term_ids, $post );
 }
 
 /**
@@ -1568,7 +1769,7 @@ function della_theme_lawyer_profile_url( $slug ) {
 /**
  * 변호사 리스트 (hero·성범죄 전문 변호사 페이지 공통)
  *
- * @return array { slug, name, title, image, image_profile?, quote?, specialties[], education[], items[] }
+ * @return array { slug, name, title, image, image_profile?, specialties[], education[], items[] }
  */
 function della_theme_get_lawyers() {
 	return array(
@@ -1578,8 +1779,7 @@ function della_theme_get_lawyers() {
 			'title'        => '성범죄전문변호사',
 			'image'        => 'dongju-park-dongjin-lawyer.png',
 			'image_profile'=> 'dongju-park-dongjin_profile.webp',
-			'quote'        => '의뢰인들의 78%가 박동진 변호사를 노련함이라 평가했습니다.',
-			'specialties'  => array( '형사법', '학교폭력' ),
+			'specialties'  => array( '형사법' ),
 			'education'    => array( '계성고등학교 졸업', '서울대학교 법과대학 법학과 졸업', '서울대학교 대학원 법학과 졸업(법학석사)', '러시아 모스크바법과대학 연수', '사법시험 합격', '사법연수원 21기' ),
 			'items'        => array( '전 서울중앙지검 부장판사','전 부산지검 부장검사 변호사', '전 대구지검 경주지청 지청장', 
 			'서울고등검찰청 검사(2006, 2016-2018)',
@@ -1599,13 +1799,12 @@ function della_theme_get_lawyers() {
 			'title'        => '성범죄전문변호사',
 			'image'        => 'dongju-leesewhan-lawyer.png',
 			'image_profile'=> 'dongju-leesewhan_profile.webp',
-			'quote'        => '학교폭력·성범죄 사건 현장 경험으로 실무적 해결력을 높이 평가받습니다.',
 			'specialties'  => array( '형사법' ),
 			'education'    => array( '연세대학교 법과대학 졸업', '연세대학교 법학전문박사과정(형사법)', '변호사시험 합격' ),
 			'items'        => array(
-				'대한변협[형사법] 전문 변호사',
 				'강력 성범죄 책임변호사',
-				'전 대법원 국선변호인',
+				'前 대법원 국선변호인',
+				'現 수원남부경찰서 상담변호사',
 				'前 법무법인 더쌤 (서울사무소)',
 				'前 법률사무소 지음',
 				'前 공동법률사무소 동주',
@@ -1640,27 +1839,26 @@ function della_theme_get_lawyers() {
 			'title'        => '성범죄전문변호사',
 			'image'        => 'dongju-jo-wonjin-lawyer.png',
 			'image_profile'=> 'dongju-jo-wonjin_profile.webp',
-			'quote'        => '교육청·지자체 고문 경험을 바탕으로 신속하고 정확한 법률 대응을 합니다.',
-			'specialties'  => array( '민사법' ),
+			'specialties'  => array( '형사법' ),
 			'education'    => array( '경희대학교 법과대학 졸업', '법학전문석사', '변호사시험 합격' ),
-			'items'        => array( '대한변협[형사법] 전문 변호사', '수원지방검찰청 국선변호사', '현 해군본부 군검찰 국선변호인',
-			'대한변호사협회 형사전문변호사',
-			'대한변호사협회 학교폭력전문변호사',
-		 	'前 법무법인 명문',
-			'前 법률사무소 송향',
-			'前 국가정보원(NIS) 기획조정실 변호사',
-			'前 해군본부 군검찰 국선변호인',
-			'前 인천광역시 · 인천광역시교육청 2019회계연도 결산검사위원',
-			'現 대법원 국선변호인',
-			'現 인천광역시의회 법률 · 입법 고문변호사',
-			'現 인천광역시 남동구 고문변호사',
-			'現 인천광역시 교육청 고문변호사',
-			'現 인천광역시 연수구 선거관리위원회 위원',
-			'現 인천광역시 출자기관 운영심의위원회 위원',
-			'現 인천광역시 남동구 스포츠공정위원회 위원',
-			'現 인천광역시 미추홀구 공직자윤리위원회 위원',
-			'現 인천광역시 미추홀구 구정평가위원회 위원',
-			'現 인천광역시 강화교육지원청 학교폭력심의위원회 위원'
+			'items'        => array(
+				'형사전문변호사',
+				'前 국가정보원(NIS) 기획조정실 변호사',
+				'前 해군본부 군검찰 국선변호인',
+				'現 인천광역시의회 법률·입법 고문변호사',
+				'대한변호사협회 학교폭력전문변호사',
+				'前 법무법인 명문',
+				'前 법률사무소 송향',
+				'前 인천광역시 · 인천광역시교육청 2019회계연도 결산검사위원',
+				'現 대법원 국선변호인',
+				'現 인천광역시 남동구 고문변호사',
+				'現 인천광역시 교육청 고문변호사',
+				'現 인천광역시 연수구 선거관리위원회 위원',
+				'現 인천광역시 출자기관 운영심의위원회 위원',
+				'現 인천광역시 남동구 스포츠공정위원회 위원',
+				'現 인천광역시 미추홀구 공직자윤리위원회 위원',
+				'現 인천광역시 미추홀구 구정평가위원회 위원',
+				'現 인천광역시 강화교육지원청 학교폭력심의위원회 위원',
 			),
 		),
 		array(
@@ -1669,17 +1867,16 @@ function della_theme_get_lawyers() {
 			'title'        => '성범죄전문변호사',
 			'image'        => 'dongju-kim-yunseo-lawyer.png',
 			'image_profile'=> 'dongju-kim-yunseo_profile.webp',
-			'quote'        => '형사법·소년법 전문성과 세심한 소통으로 의뢰인 신뢰를 받고 있습니다.',
-			'specialties'  => array( '형사법', '소년법' ),
+			'specialties'  => array( '형사법' ),
 			'education'    => array( '숙명여자대학교 법과대학 최우수졸업(수석졸업)', '고려대학교 법학과 (석사) 졸업 형사법 전공', '고려대학교 법학과 (박사) 수료 형사법 전공','변호사시험합격'),
-			'items'        => array( '대한변협[형사법] 전문 변호사', '대현변협[소년법] 전문 변호사', '고려대 법학박사(형사법) 수료','前 법무법인 마음다해 변호사',
-		    '前 안양시청의회(안양시의회) 입법 전문위원',
-		    '前 한국법제연구원',
-			'前 고려대학교 법학연구원 (형사법)',
-			'前 헌법재판소 경찰청 실무실습',
-			'現 안양시 산업진흥원 기업심사평가위원',
-			'現 IBK기업은행 미래성장성 기업심의전문평가위원',
-			'現 법무법인 동주'),
+			'items'        => array(
+				'성범죄 합의 책임변호사',
+				'前 안양시의회 입법 전문위원',
+				'前 헌법재판소·경찰청 실무실습',
+				'現 안양시 산업진흥원 기업심사평가위원',
+				'現 IBK기업은행 미래성장성 기업심의전문평가위원',
+				'現 법무법인 동주',
+			),
 		),
 		array(
 			'slug'         => 'dongju-oh-seojin',
@@ -1687,13 +1884,13 @@ function della_theme_get_lawyers() {
 			'title'        => '성범죄전문변호사',
 			'image'        => 'dongju-oh-seojin-lawyer.png',
 			'image_profile'=> 'dongju-oh-seojin_profile.webp',
-			'quote'        => '학교·교육 분야 사건에 대한 이해도가 높다는 평가를 받고 있습니다.',
 			'specialties'  => array( '형사법' ),
 			'education'    => array( '연세대학교 법학전문박사과정(형사법)','법학전문석사','변호사시험 합격' ),
 			'items'        => array(
-				'前 서울중앙지법 외부조정센터 조정위원',
-				'現 인천시교육청 사립학교 징계심의위원',
-				'現 인천 미추홀구 인사위원회 위원',
+				'디지털성범죄 책임변호사',
+				'前 서울중앙지방법원 조정위원',
+				'現 인천교육청 징계심의위원',
+				'現 미추홀구 인사위원',
 				'前 인천광역시교권보호위원회 위원',
 				'前 인천광역시교육청 변호사',
 				'現 법무법인 동주',
@@ -1708,22 +1905,24 @@ function della_theme_get_lawyers() {
 			'title'        => '성범죄전문변호사',
 			'image'        => 'dongju-isejin-lawyer.png',
 			'image_profile'=> 'dongju-isejin_profile.webp',
-			'quote'        => '피해자 국선·학교폭력 사건에서 꼼꼼한 준비와 공감 능력을 인정받고 있습니다.',
-			'specialties'  => array( '형사법' ),
+			'specialties'  => array( '형사법', '민사법' ),
 			'education'    => array( '고려대학교 법과대학 졸업','법학전문석사','변호사시험 합격'),
-			'items'        => array( '대한변협[형사법] 전문 변호사', '대한변협[학교폭력] 전문', '수원지방검찰청 피해자 국선',
-			'대한변호사협회 이혼전문변호사',
-			'前 법무법인 현재',
-			'前 법률사무소 지음',
-			'前 대한변호사협회 대의원',
-			'前 대법원 국선변호인',
-			'수원지방검찰청 피해자 국선변호사',
-			'대한장애인론볼연맹 이사',
-			'일산서부경찰서 법률자문변호사',
-			'네이버지식in전문상담위원',
-			'김포시 통진읍 마을 변호사 (공익활동)',
-			'서울창신초등학교 고문변호사',
-			'現 법무법인 동주'),
+			'items'        => array(
+				'여성·청소년 성범죄 책임변호사',
+				'前 대법원 국선변호인',
+				'現 수원지검 피해자 국선변호사',
+				'現 일산서부경찰서 법률자문변호사',
+				'대한변호사협회 이혼전문변호사',
+				'前 법무법인 현재',
+				'前 법률사무소 지음',
+				'前 대한변호사협회 대의원',
+				'수원지방검찰청 피해자 국선변호사',
+				'대한장애인론볼연맹 이사',
+				'네이버지식in전문상담위원',
+				'김포시 통진읍 마을 변호사 (공익활동)',
+				'서울창신초등학교 고문변호사',
+				'現 법무법인 동주',
+			),
 		),
 	);
 }
@@ -2913,7 +3112,7 @@ function della_theme_schema_json_ld() {
 			array( 'name' => __( '진행 절차', 'della-theme' ), 'url' => home_url( '/#process-cards' ) ),
 			array( 'name' => __( '주요 서비스', 'della-theme' ), 'url' => home_url( '/#major-services' ) ),
 			array( 'name' => __( '대응 정보', 'della-theme' ), 'url' => home_url( '/성범죄-대응정보/' ) ),
-			array( 'name' => __( '상담 신청', 'della-theme' ), 'url' => home_url( '/#consultation-cta' ) ),
+			array( 'name' => __( '상담 신청', 'della-theme' ), 'url' => ( function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : home_url( '/' ) ) ),
 			array( 'name' => __( '오시는 길', 'della-theme' ), 'url' => home_url( '/#directions' ) ),
 		);
 		$sitemap_schema = array(

@@ -32,7 +32,7 @@ get_header();
 					<li><a href="<?php echo esc_url( home_url( '/#process-cards' ) ); ?>"><?php esc_html_e( '진행 절차', 'della-theme' ); ?></a></li>
 					<li><a href="<?php echo esc_url( home_url( '/#major-services' ) ); ?>"><?php esc_html_e( '주요 서비스', 'della-theme' ); ?></a></li>
 					<li><a href="<?php echo esc_url( home_url( '/#response-info' ) ); ?>"><?php esc_html_e( '대응 정보', 'della-theme' ); ?></a></li>
-					<li><a href="<?php echo esc_url( home_url( '/#consultation-cta' ) ); ?>"><?php esc_html_e( '상담 신청', 'della-theme' ); ?></a></li>
+					<li><a href="<?php echo esc_url( function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : 'https://sexcrimecenter-dongju.com/bbs/board.php?bo_table=online&me_code=6010' ); ?>"><?php esc_html_e( '상담 신청', 'della-theme' ); ?></a></li>
 					<li><a href="<?php echo esc_url( home_url( '/#directions' ) ); ?>"><?php esc_html_e( '오시는 길', 'della-theme' ); ?></a></li>
 				</ul>
 			</section>

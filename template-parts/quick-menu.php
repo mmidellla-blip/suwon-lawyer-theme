@@ -10,17 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$consultation_url = get_theme_mod( 'della_consultation_url', '' );
-if ( ! $consultation_url ) {
-	$page = get_page_by_path( 'consultation' );
-	if ( ! $page ) {
-		$page = get_page_by_path( 'contact' );
-	}
-	if ( ! $page ) {
-		$page = get_page_by_path( '상담신청' );
-	}
-	$consultation_url = $page ? get_permalink( $page ) : home_url( '/#consultation' );
-}
+$consultation_url = function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : 'https://sexcrimecenter-dongju.com/bbs/board.php?bo_table=online&me_code=6010';
 
 $quick_menu_items = array(
 	array(

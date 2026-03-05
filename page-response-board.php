@@ -88,25 +88,19 @@ foreach ( $sidebar_main_cats as $m ) {
 
 /* 쿼리: 대응정보(또는 선택한 대/소 카테고리) + 검색어 */
 $query_args = array(
-	'post_type'      => 'post',
-	'post_status'    => 'publish',
-	'posts_per_page' => 15,
-	'orderby'        => 'date',
-	'order'          => 'DESC',
-	'paged'          => $paged,
+	'post_type'            => 'post',
+	'post_status'          => 'publish',
+	'posts_per_page'       => 15,
+	'orderby'              => 'date',
+	'order'                => 'DESC',
+	'paged'                => $paged,
+	'ignore_sticky_posts'  => true,
 );
 /* 대응정보 부모: 성범죄대응정보(slug=성범죄대응정보) → 대응정보 등 fallback */
 $cat = function_exists( 'della_theme_get_response_info_parent_category' ) ? della_theme_get_response_info_parent_category() : null;
-/* 성공사례 카테고리 제외 — 대응정보만 조회 (부모 성범죄성공사례 + 자식 강간-성공사례 등) */
-$success_cat = function_exists( 'della_theme_get_success_case_parent_category' ) ? della_theme_get_success_case_parent_category() : null;
-if ( $success_cat ) {
-	$exclude_ids = array( (int) $success_cat->term_id );
-	$success_children = get_terms( array( 'taxonomy' => 'category', 'parent' => $success_cat->term_id, 'hide_empty' => false ) );
-	if ( ! is_wp_error( $success_children ) ) {
-		foreach ( $success_children as $ch ) {
-			$exclude_ids[] = (int) $ch->term_id;
-		}
-	}
+/* 성공사례 카테고리 제외 — 대응정보만 조회 (캐시된 term_id 배열 사용) */
+$exclude_ids = function_exists( 'della_theme_get_success_case_exclude_term_ids' ) ? della_theme_get_success_case_exclude_term_ids() : array();
+if ( ! empty( $exclude_ids ) ) {
 	$query_args['category__not_in'] = $exclude_ids;
 }
 if ( $cat ) {
@@ -118,59 +112,74 @@ if ( $search ) {
 if ( $filter_cat ) {
 	$filter_category = null;
 	$use_include_children = true;
-	$main_slug = $filter_cat;
-	$sub_slug = '';
-	if ( strpos( $filter_cat, '-' ) !== false ) {
-		$main_slug = strtok( $filter_cat, '-' );
-		$sub_slug = substr( $filter_cat, strlen( $main_slug ) + 1 );
-	}
-	// 소카테고리 선택 시: WP slug(강간-faq, 강제추행-faq 등)로 1회 조회 후 해당 term만 사용 — 빠른 쿼리
-	if ( $sub_slug !== '' ) {
-		$main_label = '';
-		foreach ( $sidebar_main_cats as $m ) {
-			if ( $m['slug'] === $main_slug ) {
-				$main_label = $m['label'];
-				break;
-			}
-		}
-		if ( $main_label !== '' ) {
-			$wp_suffix = isset( $sub_slug_to_wp_suffix[ $sub_slug ] ) ? $sub_slug_to_wp_suffix[ $sub_slug ] : $sub_slug;
-			$wp_sub_slug = $main_label . '-' . $wp_suffix;
-			$filter_category = get_category_by_slug( $wp_sub_slug );
-			if ( $filter_category ) {
-				$use_include_children = false;
-			}
+	$filter_transient_key = 'della_resp_filter_' . preg_replace( '/[^a-z0-9_\-]/i', '_', $filter_cat );
+	$cached_filter = get_transient( $filter_transient_key );
+	if ( false !== $cached_filter && is_array( $cached_filter ) && ! empty( $cached_filter['term_id'] ) ) {
+		$term = get_term( (int) $cached_filter['term_id'], 'category' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			$filter_category = $term;
+			$use_include_children = ! empty( $cached_filter['include_children'] );
 		}
 	}
-	// 소카테고리 미매칭 또는 대 카테고리만 선택: 부모 카테고리로 조회 후 include_children
 	if ( $filter_category === null ) {
-		$slug_for_query = $main_slug;
-		$filter_category = get_category_by_slug( $slug_for_query );
-		if ( ! $filter_category ) {
+		$main_slug = $filter_cat;
+		$sub_slug = '';
+		if ( strpos( $filter_cat, '-' ) !== false ) {
+			$main_slug = strtok( $filter_cat, '-' );
+			$sub_slug = substr( $filter_cat, strlen( $main_slug ) + 1 );
+		}
+		// 소카테고리 선택 시: WP slug(강간-faq, 강제추행-faq 등)로 1회 조회 후 해당 term만 사용
+		if ( $sub_slug !== '' ) {
+			$main_label = '';
 			foreach ( $sidebar_main_cats as $m ) {
-				if ( $m['slug'] !== $slug_for_query ) {
+				if ( $m['slug'] === $main_slug ) {
+					$main_label = $m['label'];
+					break;
+				}
+			}
+			if ( $main_label !== '' ) {
+				$wp_suffix = isset( $sub_slug_to_wp_suffix[ $sub_slug ] ) ? $sub_slug_to_wp_suffix[ $sub_slug ] : $sub_slug;
+				$wp_sub_slug = $main_label . '-' . $wp_suffix;
+				$filter_category = get_category_by_slug( $wp_sub_slug );
+				if ( $filter_category ) {
+					$use_include_children = false;
+				}
+			}
+		}
+		// 소카테고리 미매칭 또는 대 카테고리만 선택: 후보 슬러그 1회 get_terms로 조회
+		if ( $filter_category === null ) {
+			$candidate_slugs = array( $main_slug );
+			foreach ( $sidebar_main_cats as $m ) {
+				if ( $m['slug'] !== $main_slug ) {
 					continue;
 				}
-				$filter_category = get_category_by_slug( $m['label'] );
-				if ( ! $filter_category && ! empty( $main_cat_wp_slug_alternatives[ $m['slug'] ] ) ) {
-					foreach ( $main_cat_wp_slug_alternatives[ $m['slug'] ] as $alt_slug ) {
-						$filter_category = get_category_by_slug( $alt_slug );
-						if ( $filter_category ) {
-							break;
-						}
-					}
-				}
-				if ( ! $filter_category ) {
-					$all_cats = get_categories( array( 'hide_empty' => false ) );
-					foreach ( $all_cats as $c ) {
-						if ( $c->name === $m['label'] || $c->slug === $m['label'] ) {
-							$filter_category = $c;
-							break 2;
-						}
-					}
+				$candidate_slugs[] = $m['label'];
+				if ( ! empty( $main_cat_wp_slug_alternatives[ $m['slug'] ] ) ) {
+					$candidate_slugs = array_merge( $candidate_slugs, $main_cat_wp_slug_alternatives[ $m['slug'] ] );
 				}
 				break;
 			}
+			$candidate_slugs = array_unique( array_filter( $candidate_slugs ) );
+			$terms = get_terms( array( 'taxonomy' => 'category', 'slug' => $candidate_slugs, 'hide_empty' => false, 'number' => 1 ) );
+			if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+				$filter_category = $terms[0];
+			}
+			if ( ! $filter_category ) {
+				foreach ( $sidebar_main_cats as $m ) {
+					if ( $m['slug'] !== $main_slug ) {
+						continue;
+					}
+					$by_name = get_terms( array( 'taxonomy' => 'category', 'name' => $m['label'], 'hide_empty' => false, 'number' => 1 ) );
+					if ( ! is_wp_error( $by_name ) && ! empty( $by_name ) ) {
+						$filter_category = $by_name[0];
+					}
+					break;
+				}
+			}
+		}
+		if ( $filter_category ) {
+			$ttl = function_exists( 'della_theme_cat_transient_ttl' ) ? della_theme_cat_transient_ttl() : 3600;
+			set_transient( $filter_transient_key, array( 'term_id' => $filter_category->term_id, 'include_children' => $use_include_children ), $ttl );
 		}
 	}
 	if ( $filter_category ) {
@@ -374,7 +383,7 @@ get_header();
 					<div class="internal-links-actions">
 						<a href="<?php echo esc_url( function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/success-cases/' ) ); ?>">성범죄 성공사례 보기</a>
 						<a href="<?php echo esc_url( function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : home_url( '/lawyers/' ) ); ?>">성범죄 전문변호사 소개</a>
-						<a href="<?php echo esc_url( home_url( '/#consultation-cta' ) ); ?>">상담 신청</a>
+						<a href="<?php echo esc_url( function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : 'https://sexcrimecenter-dongju.com/bbs/board.php?bo_table=online&me_code=6010' ); ?>">상담 신청</a>
 					</div>
 				</div>
 			</section>

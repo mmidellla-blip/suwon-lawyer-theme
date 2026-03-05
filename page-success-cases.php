@@ -21,12 +21,14 @@ $filter_cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['ca
 if ( empty( $filter_cat ) && isset( $_GET['tag'] ) ) {
 	$tag_label   = sanitize_text_field( wp_unslash( $_GET['tag'] ) );
 	$tag_to_slug  = array(
-		'강간'     => 'rape',
-		'강제추행' => 'sexual_assult',
-		'군성범죄' => 'military_sexual_crimes',
-		'성매매'   => 'sex_work',
-		'불법촬영' => 'spycam_crime',
-		'직장내'   => 'workplace',
+		'강간'             => 'rape',
+		'강제추행'         => 'sexual_assult',
+		'공공장소성범죄'   => 'public_place_sex_crimes',
+		'군성범죄'         => 'military_sexual_crimes',
+		'디지털성범죄'     => 'spycam_crime',
+		'미성년자성범죄'   => 'minor_targeted_sex_crimes',
+		'성매매'           => 'sex_work',
+		'직장내성범죄'     => 'workplace',
 	);
 	if ( isset( $tag_to_slug[ $tag_label ] ) ) {
 		$filter_cat = $tag_to_slug[ $tag_label ];
@@ -49,41 +51,25 @@ if ( isset( $_GET['q'] ) && $search === '' ) {
 	exit;
 }
 
-/* 성공사례 카테고리: 부모 성범죄성공사례(slug=성범죄성공사례), 자식 강간-성공사례·강제추행-성공사례 등 */
+/* 성공사례 카테고리: 부모 성범죄성공사례, 자식 강간-성공사례 등 (캐시된 데이터 사용) */
 $success_cat = function_exists( 'della_theme_get_success_case_parent_category' ) ? della_theme_get_success_case_parent_category() : null;
 $success_cat_id = $success_cat ? (int) $success_cat->term_id : 0;
 
-/* 대 카테고리 (필터용): theme slug → WP slug는 라벨-성공사례 (예: 강간-성공사례) */
-$sidebar_main_cats = array(
-	array( 'slug' => 'rape', 'label' => __( '강간', 'della-theme' ) ),
-	array( 'slug' => 'sexual_assult', 'label' => __( '강제추행', 'della-theme' ) ),
-	array( 'slug' => 'military_sexual_crimes', 'label' => __( '군성범죄', 'della-theme' ) ),
-	array( 'slug' => 'sex_work', 'label' => __( '성매매', 'della-theme' ) ),
-	array( 'slug' => 'spycam_crime', 'label' => __( '불법촬영', 'della-theme' ) ),
-	array( 'slug' => 'workplace', 'label' => __( '직장내', 'della-theme' ) ),
-);
+$sidebar_main_cats = function_exists( 'della_theme_get_success_case_sidebar_main_cats' ) ? della_theme_get_success_case_sidebar_main_cats() : array();
 $topic_tags = $sidebar_main_cats;
 
-$allowed_cat_ids   = array();
-$main_cat_id_to_label = array();
-foreach ( $sidebar_main_cats as $item ) {
-	$term = get_category_by_slug( $item['label'] . '-성공사례' );
-	if ( ! $term ) {
-		$term = get_category_by_slug( $item['slug'] );
-	}
-	if ( $term ) {
-		$allowed_cat_ids[] = $term->term_id;
-		$main_cat_id_to_label[ (int) $term->term_id ] = $item['label'];
-	}
-}
+$allowed_data = function_exists( 'della_theme_get_success_case_allowed_cat_data' ) ? della_theme_get_success_case_allowed_cat_data() : array( 'ids' => array(), 'id_to_label' => array(), 'slug_to_id' => array() );
+$allowed_cat_ids = isset( $allowed_data['ids'] ) ? $allowed_data['ids'] : array();
+$main_cat_id_to_label = isset( $allowed_data['id_to_label'] ) ? $allowed_data['id_to_label'] : array();
 
 $query_args = array(
-	'post_type'      => 'post',
-	'post_status'    => 'publish',
-	'posts_per_page' => 4,
-	'orderby'        => 'date',
-	'order'          => 'DESC',
-	'paged'          => $paged,
+	'post_type'            => 'post',
+	'post_status'          => 'publish',
+	'posts_per_page'       => 4,
+	'orderby'              => 'date',
+	'order'                => 'DESC',
+	'paged'                => $paged,
+	'ignore_sticky_posts'  => true,
 );
 if ( $search ) {
 	$query_args['s'] = $search;
@@ -92,17 +78,21 @@ if ( $search ) {
 if ( ! $success_cat_id ) {
 	$query_args['category__in'] = ! empty( $allowed_cat_ids ) ? $allowed_cat_ids : array( 0 );
 } elseif ( $filter_cat ) {
-	$filter_term = get_category_by_slug( $filter_cat );
-	if ( ! $filter_term ) {
-		foreach ( $sidebar_main_cats as $item ) {
-			if ( $item['slug'] === $filter_cat ) {
-				$filter_term = get_category_by_slug( $item['label'] . '-성공사례' );
-				break;
+	$filter_term_id = isset( $allowed_data['slug_to_id'][ $filter_cat ] ) ? (int) $allowed_data['slug_to_id'][ $filter_cat ] : 0;
+	if ( ! $filter_term_id ) {
+		$filter_term = get_category_by_slug( $filter_cat );
+		if ( ! $filter_term ) {
+			foreach ( $sidebar_main_cats as $item ) {
+				if ( $item['slug'] === $filter_cat ) {
+					$filter_term = get_category_by_slug( $item['label'] . '-성공사례' );
+					break;
+				}
 			}
 		}
+		$filter_term_id = $filter_term ? (int) $filter_term->term_id : 0;
 	}
-	if ( $filter_term && ! empty( $allowed_cat_ids ) && in_array( (int) $filter_term->term_id, $allowed_cat_ids, true ) ) {
-		$query_args['category__and'] = array( $success_cat_id, (int) $filter_term->term_id );
+	if ( $filter_term_id && ! empty( $allowed_cat_ids ) && in_array( $filter_term_id, array_map( 'intval', $allowed_cat_ids ), true ) ) {
+		$query_args['category__and'] = array( $success_cat_id, $filter_term_id );
 	} else {
 		$query_args['cat'] = $success_cat_id;
 	}
@@ -305,7 +295,7 @@ get_header();
 					<div class="internal-links-actions">
 						<a href="<?php echo esc_url( function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/info/' ) ); ?>">성범죄 유형별 대응 가이드</a>
 						<a href="<?php echo esc_url( function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : home_url( '/lawyer/' ) ); ?>">대응 변호사 팀 소개</a>
-						<a href="<?php echo esc_url( home_url( '/#consultation-cta' ) ); ?>">법률 상담 예약</a>
+						<a href="<?php echo esc_url( function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : 'https://sexcrimecenter-dongju.com/bbs/board.php?bo_table=online&me_code=6010' ); ?>">법률 상담 예약</a>
 					</div>
 				</div>
 			</section>

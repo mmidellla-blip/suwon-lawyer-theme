@@ -20,7 +20,7 @@ $education   = isset( $lawyer['education'] ) && is_array( $lawyer['education'] )
 $career      = isset( $lawyer['items'] ) && is_array( $lawyer['items'] ) ? $lawyer['items'] : array();
 $media       = isset( $lawyer['media'] ) && is_array( $lawyer['media'] ) ? $lawyer['media'] : array();
 $has_quote   = ! empty( $lawyer['quote'] );
-$info_tabs   = array( __( '형사법', 'della-theme' ), __( '학교폭력', 'della-theme' ), __( '교육청 법률자문', 'della-theme' ), __( '경찰서 법률지원', 'della-theme' ) );
+$info_tabs   = $specialties;
 ?>
 <section class="lawyer-profile-detail" role="region" aria-labelledby="lawyer-profile-detail-heading" aria-label="<?php echo esc_attr( $lawyer['name'] . ' ' . __( '상세 프로필', 'della-theme' ) ); ?>">
 	<div class="lawyer-profile-detail-inner">
@@ -48,7 +48,7 @@ $info_tabs   = array( __( '형사법', 'della-theme' ), __( '학교폭력', 'del
 						foreach ( $specialties as $spec ) :
 							$is_first = ( 0 === $icon_index );
 							$icon_index++;
-							// 첫 번째: 법망치(형사법), 그 외: 건물(학교폭력 등) — 흰 원 안 검정 아웃라인
+							// 첫 번째: 법망치(형사법), 그 외: 건물(행정법 등) — 흰 원 안 검정 아웃라인
 							if ( $is_first ) {
 								// 법망치(형사법) — 흰 원 안 검정 아웃라인
 								$icon_svg = '<svg class="lawyer-specialty-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 22V10M9 10h6"/></svg>';
@@ -69,11 +69,13 @@ $info_tabs   = array( __( '형사법', 'della-theme' ), __( '학교폭력', 'del
 
 			<div id="lawyer-info" class="lawyer-profile-detail-block">
 				<h3 class="lawyer-profile-detail-heading"><?php esc_html_e( '변호사 정보', 'della-theme' ); ?></h3>
+				<?php if ( ! empty( $info_tabs ) ) : ?>
 				<div class="lawyer-info-tabs" role="tablist">
 					<?php foreach ( $info_tabs as $tab ) : ?>
 						<button type="button" class="lawyer-info-tab" role="tab"><?php echo esc_html( $tab ); ?></button>
 					<?php endforeach; ?>
 				</div>
+				<?php endif; ?>
 				<?php if ( $has_quote ) : ?>
 					<blockquote class="lawyer-quote-box">
 						<span class="lawyer-quote-box-mark" aria-hidden="true">"</span>
