@@ -492,7 +492,7 @@ function della_theme_is_response_board_page() {
 
 /**
  * 성범죄 성공사례 페이지 여부 (SEO·메타 전용)
- * wp_head에서도 동작하도록 queried object ID로 템플릿·슬러그 확인.
+ * 템플릿·슬러그·URL 비교로 판별 (wp_head에서도 동작).
  */
 function della_theme_is_success_cases_page() {
 	if ( ! is_singular( 'page' ) ) {
@@ -507,9 +507,230 @@ function della_theme_is_success_cases_page() {
 	if ( ! $is_success ) {
 		$post = get_post( $post_id );
 		$slug = $post && isset( $post->post_name ) ? $post->post_name : '';
-		$is_success = in_array( $slug, array( 'success-cases', 'case', '성범죄-성공사례' ), true );
+		$is_success = in_array( $slug, array( 'success-cases', 'case', 'success', '성범죄-성공사례', '성공사례' ), true );
+	}
+	if ( ! $is_success && function_exists( 'della_theme_success_cases_page_url' ) ) {
+		$current = get_permalink( $post_id );
+		$sc_url  = della_theme_success_cases_page_url();
+		if ( $current && $sc_url ) {
+			$current_norm = rtrim( untrailingslashit( $current ), '/' );
+			$sc_norm      = rtrim( untrailingslashit( $sc_url ), '/' );
+			$is_success   = ( $current_norm === $sc_norm );
+		}
 	}
 	return apply_filters( 'della_theme_is_success_cases_page', $is_success );
+}
+
+/**
+ * 단일 글(포스트)이 성공사례 카테고리에 속하는지 여부 (상세 페이지 메타용).
+ *
+ * @param WP_Post|null $post 포스트 객체. null이면 현재 쿼리 포스트.
+ * @return bool
+ */
+function della_theme_is_success_case_post( $post = null ) {
+	if ( ! $post ) {
+		$post = get_queried_object();
+	}
+	if ( ! $post instanceof WP_Post || $post->post_type !== 'post' ) {
+		return false;
+	}
+	$sc_cat = get_category_by_slug( '성공사례' );
+	if ( ! $sc_cat ) {
+		$sc_cat = get_category_by_slug( 'success-cases' );
+	}
+	if ( ! $sc_cat ) {
+		$all = get_categories( array( 'hide_empty' => false ) );
+		foreach ( $all as $c ) {
+			if ( $c->name === '성공사례' || $c->name === '성공 사례' ) {
+				$sc_cat = $c;
+				break;
+			}
+		}
+	}
+	if ( ! $sc_cat ) {
+		return false;
+	}
+	return in_category( (int) $sc_cat->term_id, $post );
+}
+
+/**
+ * 단일 글이 대응정보 카테고리에 속하는지 여부 (상세 페이지 메타·키워드용).
+ *
+ * @param WP_Post|null $post 포스트 객체. null이면 현재 쿼리 포스트.
+ * @return bool
+ */
+function della_theme_is_response_info_post( $post = null ) {
+	if ( ! $post ) {
+		$post = get_queried_object();
+	}
+	if ( ! $post instanceof WP_Post || $post->post_type !== 'post' ) {
+		return false;
+	}
+	$info_cat = get_category_by_slug( '대응정보' );
+	if ( ! $info_cat ) {
+		$info_cat = get_category_by_slug( 'response-info' );
+	}
+	if ( ! $info_cat ) {
+		$all = get_categories( array( 'hide_empty' => false ) );
+		foreach ( $all as $c ) {
+			if ( $c->name === '대응정보' || $c->name === '대응 정보' ) {
+				$info_cat = $c;
+				break;
+			}
+		}
+	}
+	if ( ! $info_cat ) {
+		return false;
+	}
+	return in_category( (int) $info_cat->term_id, $post );
+}
+
+/**
+ * 성공사례 상세 글 전용 유니크 meta description (글마다 중복 없이).
+ *
+ * @param WP_Post $post 성공사례 포스트.
+ * @return string 120~320자 내 정리된 설명.
+ */
+function della_theme_success_case_unique_description( $post ) {
+	if ( ! $post instanceof WP_Post ) {
+		return '';
+	}
+	$max = defined( 'DELLA_THEME_DESC_MAX' ) ? DELLA_THEME_DESC_MAX - 20 : 300;
+	$law = __( '법무법인 동주', 'della-theme' );
+
+	// 1) 커스텀 SEO 설명이 있으면 우선 사용
+	$custom = get_post_meta( $post->ID, 'della_case_seo_description', true );
+	if ( is_string( $custom ) && trim( $custom ) !== '' ) {
+		$out = wp_strip_all_tags( $custom );
+		$out = preg_replace( '/\s+/', ' ', trim( $out ) );
+		if ( function_exists( 'mb_strlen' ) && mb_strlen( $out ) > $max ) {
+			$out = ( function_exists( 'mb_substr' ) ? mb_substr( $out, 0, $max - 3 ) : substr( $out, 0, $max - 3 ) ) . '…';
+		} elseif ( strlen( $out ) > $max ) {
+			$out = substr( $out, 0, $max - 3 ) . '…';
+		}
+		return della_theme_trim_meta_description( $out );
+	}
+
+	// 2) 제목(또는 SEO 제목)으로 시작해 글마다 구분
+	$title = get_post_meta( $post->ID, 'della_case_seo_title', true );
+	if ( ! is_string( $title ) || trim( $title ) === '' ) {
+		$title = get_the_title( $post );
+	}
+	$title = wp_strip_all_tags( $title );
+	$title = preg_replace( '/\s+/', ' ', trim( $title ) );
+
+	// 3) 요약: 요약문 있으면 사용, 없으면 본문 앞 80단어
+	$summary = '';
+	if ( has_excerpt( $post ) ) {
+		$summary = get_the_excerpt( $post );
+	} else {
+		$summary = wp_trim_words( get_the_content( null, false, $post ), 80 );
+	}
+	$summary = wp_strip_all_tags( $summary );
+	$summary = preg_replace( '/\s+/', ' ', trim( $summary ) );
+
+	// 4) 결과 유형(무혐의·기소유예 등) 있으면 붙여 유니크하게
+	$result = get_post_meta( $post->ID, 'della_case_result', true );
+	$result = is_string( $result ) ? trim( $result ) : '';
+	if ( $result !== '' ) {
+		$result = $result . ' 사례. ';
+	} else {
+		$result = '';
+	}
+
+	// 조합: "제목. 요약. [결과] 사례. 법무법인 동주"
+	$out = $title;
+	if ( $summary !== '' ) {
+		$out .= '. ' . $summary;
+	}
+	$out .= '. ' . $result . $law;
+
+	$out = preg_replace( '/\s+/', ' ', trim( $out ) );
+	if ( function_exists( 'mb_strlen' ) && mb_strlen( $out ) > $max ) {
+		$out = ( function_exists( 'mb_substr' ) ? mb_substr( $out, 0, $max - 3 ) : substr( $out, 0, $max - 3 ) ) . '…';
+	} elseif ( strlen( $out ) > $max ) {
+		$out = substr( $out, 0, $max - 3 ) . '…';
+	}
+	return della_theme_trim_meta_description( $out );
+}
+
+/**
+ * 대응정보 상세 글 전용 유니크 meta description (글마다 중복 없이).
+ *
+ * @param WP_Post $post 대응정보 포스트.
+ * @return string 120~320자 내 정리된 설명.
+ */
+function della_theme_response_info_unique_description( $post ) {
+	if ( ! $post instanceof WP_Post ) {
+		return '';
+	}
+	$max = defined( 'DELLA_THEME_DESC_MAX' ) ? DELLA_THEME_DESC_MAX - 20 : 300;
+	$law = __( '법무법인 동주', 'della-theme' );
+
+	// 1) 커스텀 SEO 설명이 있으면 우선 사용
+	$custom = get_post_meta( $post->ID, 'della_info_seo_description', true );
+	if ( is_string( $custom ) && trim( $custom ) !== '' ) {
+		$out = wp_strip_all_tags( $custom );
+		$out = preg_replace( '/\s+/', ' ', trim( $out ) );
+		if ( function_exists( 'mb_strlen' ) && mb_strlen( $out ) > $max ) {
+			$out = ( function_exists( 'mb_substr' ) ? mb_substr( $out, 0, $max - 3 ) : substr( $out, 0, $max - 3 ) ) . '…';
+		} elseif ( strlen( $out ) > $max ) {
+			$out = substr( $out, 0, $max - 3 ) . '…';
+		}
+		return della_theme_trim_meta_description( $out );
+	}
+
+	// 2) 제목(또는 SEO 제목)으로 시작해 글마다 구분
+	$title = get_post_meta( $post->ID, 'della_info_seo_title', true );
+	if ( ! is_string( $title ) || trim( $title ) === '' ) {
+		$title = get_the_title( $post );
+	}
+	$title = wp_strip_all_tags( $title );
+	$title = preg_replace( '/\s+/', ' ', trim( $title ) );
+
+	// 3) 요약: 요약문 있으면 사용, 없으면 본문 앞 80단어
+	$summary = '';
+	if ( has_excerpt( $post ) ) {
+		$summary = get_the_excerpt( $post );
+	} else {
+		$summary = wp_trim_words( get_the_content( null, false, $post ), 80 );
+	}
+	$summary = wp_strip_all_tags( $summary );
+	$summary = preg_replace( '/\s+/', ' ', trim( $summary ) );
+
+	// 4) 카테고리(대응정보 제외)로 주제 보강 — 유니크하게
+	$cat_label = '';
+	$cats = get_the_category( $post->ID );
+	if ( $cats ) {
+		$names = array();
+		foreach ( $cats as $c ) {
+			if ( $c->name === '대응정보' || $c->name === '대응 정보' ) {
+				continue;
+			}
+			$n = trim( $c->name );
+			if ( $n !== '' ) {
+				$names[] = $n;
+			}
+		}
+		if ( ! empty( $names ) ) {
+			$cat_label = implode( '·', array_slice( $names, 0, 3 ) ) . ' 대응 가이드. ';
+		}
+	}
+
+	// 조합: "제목. 요약. [카테고리] 대응 가이드. 법무법인 동주"
+	$out = $title;
+	if ( $summary !== '' ) {
+		$out .= '. ' . $summary;
+	}
+	$out .= '. ' . $cat_label . $law;
+
+	$out = preg_replace( '/\s+/', ' ', trim( $out ) );
+	if ( function_exists( 'mb_strlen' ) && mb_strlen( $out ) > $max ) {
+		$out = ( function_exists( 'mb_substr' ) ? mb_substr( $out, 0, $max - 3 ) : substr( $out, 0, $max - 3 ) ) . '…';
+	} elseif ( strlen( $out ) > $max ) {
+		$out = substr( $out, 0, $max - 3 ) . '…';
+	}
+	return della_theme_trim_meta_description( $out );
 }
 
 /** SEO: page title 30–65 chars, meta description 120–320 chars */
@@ -600,6 +821,15 @@ function della_theme_document_title_parts( $parts ) {
 	}
 	if ( is_front_page() ) {
 		$parts['title'] = '수원 성범죄 전문변호사 | 강제추행·카메라촬영 대응 | 법무법인 동주';
+		unset( $parts['tagline'], $parts['site'], $parts['page'] );
+		return $parts;
+	}
+	// 성공사례 페이지: URL 경로로 확실히 설정 (플러그인/캐시와 무관)
+	$req_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+	$path    = trim( (string) parse_url( $req_uri, PHP_URL_PATH ), '/' );
+	$path    = preg_replace( '#/+#', '/', $path );
+	if ( $path === 'success-cases' || strpos( $path, 'success-cases/' ) === 0 || in_array( $path, array( 'case', 'success', '성범죄-성공사례', '성공사례' ), true ) ) {
+		$parts['title'] = della_theme_trim_document_title( '수원 성범죄 성공사례 | 강제추행·카메라촬영 무혐의·기소유예 사례 | 법무법인 동주' );
 		unset( $parts['tagline'], $parts['site'], $parts['page'] );
 		return $parts;
 	}
@@ -2000,9 +2230,14 @@ add_action( 'wp_head', 'della_theme_response_board_page_meta', 1 );
  * AIOSEO 등 플러그인 사용 시: add_filter( 'della_theme_success_cases_page_meta_disabled', '__return_true' );
  */
 function della_theme_render_success_cases_meta() {
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
 	if ( apply_filters( 'della_theme_success_cases_page_meta_disabled', false ) ) {
 		return;
 	}
+	$done = true;
 	$url = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink();
 	if ( ! $url || ! is_string( $url ) ) {
 		$url = home_url( '/' );
@@ -2058,18 +2293,46 @@ function della_theme_render_success_cases_meta() {
 	<meta name="twitter:title" content="<?php echo esc_attr( $twitter_title ); ?>" />
 	<meta name="twitter:description" content="<?php echo esc_attr( $twitter_description ); ?>" />
 	<?php
-	remove_action( 'wp_head', '_wp_render_title_tag', 1 );
 }
 
 /**
- * 성공사례 페이지 여부로 wp_head에서 메타 출력 (다른 페이지 판별용).
- * 실제 메타 출력은 page-success-cases.php에서 wp_head에 della_theme_render_success_cases_meta 등록으로 처리.
+ * 성공사례 페이지 여부 (상수·is_success_cases_page·REQUEST_URI).
  */
-function della_theme_success_cases_page_meta() {
+function della_theme_is_on_success_cases_request() {
+	if ( defined( 'DELLA_IS_SUCCESS_CASES_TEMPLATE' ) && DELLA_IS_SUCCESS_CASES_TEMPLATE ) {
+		return true;
+	}
 	if ( function_exists( 'della_theme_is_success_cases_page' ) && della_theme_is_success_cases_page() ) {
-		della_theme_render_success_cases_meta();
+		return true;
+	}
+	$req_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+	$path    = trim( (string) parse_url( $req_uri, PHP_URL_PATH ), '/' );
+	$path    = preg_replace( '#/+#', '/', $path );
+	return in_array( $path, array( 'success-cases', 'case', 'success', '성범죄-성공사례', '성공사례' ), true )
+		|| strpos( $path, 'success-cases/' ) === 0;
+}
+
+/**
+ * wp_head 맨 앞: 성공사례 페이지면 core title 제거 (나중에 우리가 출력).
+ */
+function della_theme_success_cases_remove_core_title() {
+	if ( della_theme_is_on_success_cases_request() ) {
+		remove_action( 'wp_head', '_wp_render_title_tag', 1 );
 	}
 }
+add_action( 'wp_head', 'della_theme_success_cases_remove_core_title', 0 );
+
+/**
+ * 성공사례 페이지일 때 wp_head에서 메타 출력.
+ * priority 999로 맨 마지막에 출력해 플러그인이 빈 title/description 넣어도 덮어씀.
+ */
+function della_theme_success_cases_page_meta() {
+	if ( ! della_theme_is_on_success_cases_request() ) {
+		return;
+	}
+	della_theme_render_success_cases_meta();
+}
+add_action( 'wp_head', 'della_theme_success_cases_page_meta', 999 );
 
 /**
  * SEO: Robots meta — 404·검색결과·내용 없는 아카이브 noindex로 불용 문서/중복 색인 방지
@@ -2104,6 +2367,107 @@ function della_theme_404_meta_description() {
 	echo '<meta name="description" content="' . esc_attr( wp_strip_all_tags( $desc ) ) . '" />' . "\n";
 }
 add_action( 'wp_head', 'della_theme_404_meta_description', 1 );
+
+/**
+ * 글 상세(단일 포스트) 페이지에 meta description 항상 출력.
+ * og_twitter_meta는 플러그인 사용 시 비활성화되므로, 글 상세만 별도로 description 보장.
+ */
+function della_theme_single_post_meta_description() {
+	if ( ! is_singular( 'post' ) ) {
+		return;
+	}
+	$post = get_queried_object();
+	if ( ! $post instanceof WP_Post ) {
+		return;
+	}
+	$law = __( '법무법인 동주', 'della-theme' );
+	$max = defined( 'DELLA_THEME_DESC_MAX' ) ? DELLA_THEME_DESC_MAX - 20 : 300;
+
+	if ( function_exists( 'della_theme_is_success_case_post' ) && della_theme_is_success_case_post( $post ) && function_exists( 'della_theme_success_case_unique_description' ) ) {
+		$description = della_theme_success_case_unique_description( $post );
+	} elseif ( function_exists( 'della_theme_is_response_info_post' ) && della_theme_is_response_info_post( $post ) && function_exists( 'della_theme_response_info_unique_description' ) ) {
+		$description = della_theme_response_info_unique_description( $post );
+	} else {
+		$description = has_excerpt( $post ) ? get_the_excerpt( $post ) : wp_trim_words( get_the_content( null, false, $post ), 50 );
+		$description = wp_strip_all_tags( $description );
+		$description = preg_replace( '/\s+/', ' ', trim( $description ) );
+		if ( function_exists( 'mb_strlen' ) && mb_strlen( $description ) > $max ) {
+			$description = ( function_exists( 'mb_substr' ) ? mb_substr( $description, 0, $max - 3 ) : substr( $description, 0, $max - 3 ) ) . '…';
+		} elseif ( strlen( $description ) > $max ) {
+			$description = substr( $description, 0, $max - 3 ) . '…';
+		}
+		$description = $description . ' | ' . $law;
+		$description = della_theme_trim_meta_description( $description );
+	}
+	if ( empty( $description ) ) {
+		$description = get_the_title( $post ) . ' - ' . $law . ' ' . __( '수원 성범죄 전문 변호사.', 'della-theme' );
+		$description = della_theme_trim_meta_description( $description );
+	}
+	if ( $description ) {
+		echo '<meta name="description" content="' . esc_attr( $description ) . '" />' . "\n";
+	}
+}
+add_action( 'wp_head', 'della_theme_single_post_meta_description', 1 );
+
+/**
+ * 대응정보 상세 글 전용 meta keywords (글별 유니크·보조 SEO).
+ * 공통 키워드 + 글 카테고리·제목 기반으로 조합. (검색엔진은 주로 사용하지 않으나 보조·일부 로봇 참고용)
+ */
+function della_theme_response_info_post_meta_keywords() {
+	if ( ! is_singular( 'post' ) ) {
+		return;
+	}
+	$post = get_queried_object();
+	if ( ! $post instanceof WP_Post ) {
+		return;
+	}
+	if ( ! function_exists( 'della_theme_is_response_info_post' ) || ! della_theme_is_response_info_post( $post ) ) {
+		return;
+	}
+
+	$base = array(
+		'수원 성범죄 대응',
+		'성범죄 대응정보',
+		'법무법인 동주',
+		'강제추행',
+		'불법촬영',
+		'아청법',
+		'성범죄 변호사',
+		'성범죄 법조문',
+		'성범죄 판례',
+	);
+	$post_keywords = array();
+	$cats = get_the_category( $post->ID );
+	if ( $cats ) {
+		foreach ( $cats as $c ) {
+			if ( $c->name === '대응정보' || $c->name === '대응 정보' ) {
+				continue;
+			}
+			$name = trim( $c->name );
+			if ( $name !== '' && ! in_array( $name, $post_keywords, true ) ) {
+				$post_keywords[] = $name;
+			}
+		}
+	}
+	$title = get_the_title( $post );
+	$custom_title = get_post_meta( $post->ID, 'della_info_seo_title', true );
+	if ( is_string( $custom_title ) && trim( $custom_title ) !== '' ) {
+		$title = $custom_title;
+	}
+	$title = wp_strip_all_tags( $title );
+	$title_len = function_exists( 'mb_strlen' ) ? mb_strlen( $title ) : strlen( $title );
+	if ( $title !== '' && $title_len <= 30 && ! in_array( $title, $post_keywords, true ) ) {
+		$post_keywords[] = $title;
+	}
+
+	$all = array_merge( $base, array_slice( $post_keywords, 0, 6 ) );
+	$all = array_unique( array_filter( $all ) );
+	$keywords = implode( ', ', array_slice( $all, 0, 15 ) );
+	if ( $keywords !== '' ) {
+		echo '<meta name="keywords" content="' . esc_attr( $keywords ) . '" />' . "\n";
+	}
+}
+add_action( 'wp_head', 'della_theme_response_info_post_meta_keywords', 1 );
 
 /**
  * LCP 히어로 이미지 preload는 header.php에서 head 최상단으로 출력 (요청 탐색 지연 방지).
@@ -2179,17 +2543,24 @@ function della_theme_og_twitter_meta() {
 	} elseif ( is_singular() ) {
 		$post = get_queried_object();
 		if ( $post instanceof WP_Post ) {
-			$max_pre = defined( 'DELLA_THEME_DESC_MAX' ) ? DELLA_THEME_DESC_MAX - 20 : 300;
-			$description = has_excerpt( $post ) ? get_the_excerpt( $post ) : wp_trim_words( get_the_content( null, false, $post ), 50 );
-			$description = wp_strip_all_tags( $description );
-			$description = preg_replace( '/\s+/', ' ', trim( $description ) );
-			if ( function_exists( 'mb_strlen' ) && mb_strlen( $description ) > $max_pre ) {
-				$description = mb_substr( $description, 0, $max_pre - 3 ) . '…';
-			} elseif ( strlen( $description ) > $max_pre ) {
-				$description = substr( $description, 0, $max_pre - 3 ) . '…';
+			// 성공사례 상세: 유니크 description. 대응정보 상세: 유니크 description. 그 외: 요약+법인명
+			if ( function_exists( 'della_theme_is_success_case_post' ) && della_theme_is_success_case_post( $post ) && function_exists( 'della_theme_success_case_unique_description' ) ) {
+				$description = della_theme_success_case_unique_description( $post );
+			} elseif ( function_exists( 'della_theme_is_response_info_post' ) && della_theme_is_response_info_post( $post ) && function_exists( 'della_theme_response_info_unique_description' ) ) {
+				$description = della_theme_response_info_unique_description( $post );
+			} else {
+				$max_pre = defined( 'DELLA_THEME_DESC_MAX' ) ? DELLA_THEME_DESC_MAX - 20 : 300;
+				$description = has_excerpt( $post ) ? get_the_excerpt( $post ) : wp_trim_words( get_the_content( null, false, $post ), 50 );
+				$description = wp_strip_all_tags( $description );
+				$description = preg_replace( '/\s+/', ' ', trim( $description ) );
+				if ( function_exists( 'mb_strlen' ) && mb_strlen( $description ) > $max_pre ) {
+					$description = mb_substr( $description, 0, $max_pre - 3 ) . '…';
+				} elseif ( strlen( $description ) > $max_pre ) {
+					$description = substr( $description, 0, $max_pre - 3 ) . '…';
+				}
+				$description = $description . ' | ' . $law_firm_name;
+				$description = della_theme_trim_meta_description( $description );
 			}
-			$description = $description . ' | ' . $law_firm_name;
-			$description = della_theme_trim_meta_description( $description );
 			if ( has_post_thumbnail( $post ) ) {
 				$image = get_the_post_thumbnail_url( $post, 'large' );
 			}

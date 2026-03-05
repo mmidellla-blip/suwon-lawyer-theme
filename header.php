@@ -30,6 +30,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 			}
 		}
 	}
+	// 성공사례 페이지: wp_head 앞에 출력해 플러그인 빈 title/description보다 먼저 노출 (직접 경로 판별)
+	$della_req_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+	$della_path    = trim( (string) parse_url( $della_req_uri, PHP_URL_PATH ), '/' );
+	$della_path    = preg_replace( '#/+#', '/', $della_path );
+	$della_is_sc   = ( $della_path === 'success-cases' || strpos( $della_path, 'success-cases/' ) === 0 || strpos( $della_path, '/success-cases' ) !== false || in_array( $della_path, array( 'case', 'success', '성범죄-성공사례', '성공사례' ), true ) );
+	if ( $della_is_sc ) {
+		$della_sc_title = '수원 성범죄 성공사례 | 강제추행·카메라촬영 무혐의·기소유예 사례 | 법무법인 동주';
+		$della_sc_desc  = '수원 성범죄 사건 성공사례를 확인하세요. 강제추행·카메라촬영·아청법 사건에서 무혐의·기소유예·집행유예 등 실제 결과를 공개합니다. 경찰조사부터 재판까지 법무법인 동주가 직접 대응합니다.';
+		echo '<!-- Della: 성공사례 전용 meta (path=' . esc_attr( $della_path ) . ") -->\n";
+		echo '<title>' . esc_html( $della_sc_title ) . "</title>\n";
+		echo '<meta name="description" content="' . esc_attr( $della_sc_desc ) . '" />' . "\n";
+	}
 	?>
 	<?php wp_head(); ?>
 </head>

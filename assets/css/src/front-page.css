@@ -237,28 +237,50 @@ section.response-info .response-info-desc-line1 {
   white-space: nowrap;
 }
 
+/* 대응정보 섹션 하단 링크 (성공사례 보기 · 대응정보) — case-links와 동일 톤 */
 .info-links {
-  margin-top: 1rem;
+  margin-top: var(--space-3);
   padding: 0 var(--della-gap);
-  font-size: 14px;
-  color: #444;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--della-color-muted, #555);
 }
 
 .info-links a {
-  color: #b79a5b;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  color: var(--della-point-color, #88783c);
+  font-weight: 500;
   text-decoration: none;
+  border: 1px solid rgba(139, 128, 95, 0.28);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
 
 .info-links a:hover {
-  text-decoration: underline;
+  background: rgba(139, 128, 95, 0.08);
+  border-color: var(--della-point-color, #88783c);
+  color: #6d6335;
+  text-decoration: none;
 }
 
 .info-links a:visited {
-  color: #b79a5b;
+  color: var(--della-point-color, #88783c);
 }
 
 .info-links .dot {
-  margin: 0 6px;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.2);
+  font-weight: 400;
+  font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
 section.response-info .response-info-cta {
@@ -341,7 +363,14 @@ section.response-info .response-info-list::-webkit-scrollbar-thumb:hover {
   }
 
   .info-links {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
+    gap: 0.4rem 0.6rem;
+  }
+
+  .info-links a {
+    min-height: var(--touch-target-min, 44px);
+    padding: 0.5rem 0.85rem;
+    -webkit-tap-highlight-color: transparent;
   }
 
   section.response-info .response-info-cta {
@@ -1233,18 +1262,21 @@ section.response-info .response-info-empty {
   overflow-wrap: break-word;
 }
 
-/* 서브카피 문단 안 텍스트 링크 (성공사례 · 대응정보) */
+/* 서브카피 문단 안 텍스트 링크 (성공사례 · 대응정보) — 가독성·전문 톤 */
 .hero-seo-intro .hero-intro-link {
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
   text-decoration: underline;
-  text-underline-offset: 0.15em;
+  text-underline-offset: 0.2em;
 }
 .hero-seo-intro .hero-intro-link:hover {
   color: #fff;
 }
 .hero-intro-link-sep {
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0.2em;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0.25em;
+  font-weight: 400;
 }
 
 .hero-lawyers {
@@ -1548,27 +1580,48 @@ body.front-page .success-stories {
   color: var(--della-color-muted);
 }
 
+/* 성공사례 섹션 내부 링크: 가독성·전문 톤 (성공사례 · 대응정보 · 강제추행/불법촬영 보기) */
 .case-links {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #444;
+  margin-top: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--della-color-muted, #555);
 }
 
 .case-links a {
-  color: #b79a5b;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  color: var(--della-point-color, #88783c);
+  font-weight: 500;
   text-decoration: none;
+  border: 1px solid rgba(139, 128, 95, 0.28);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
 
 .case-links a:hover {
-  text-decoration: underline;
+  background: rgba(139, 128, 95, 0.08);
+  border-color: var(--della-point-color, #88783c);
+  color: #6d6335;
+  text-decoration: none;
 }
 
 .case-links a:visited {
-  color: #b79a5b;
+  color: var(--della-point-color, #88783c);
 }
 
 .case-links .dot {
-  margin: 0 6px;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.2);
+  font-weight: 400;
+  font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
 .success-stories-header-left .case-btn {
@@ -1787,7 +1840,14 @@ body.front-page .success-stories {
   }
 
   .case-links {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
+    gap: 0.4rem 0.6rem;
+  }
+
+  .case-links a {
+    min-height: var(--touch-target-min, 44px);
+    padding: 0.5rem 0.85rem;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .success-stories-cta {
@@ -1911,28 +1971,50 @@ body.front-page .success-stories {
   border-color: #6d6335;
 }
 
+/* 사건 진행 절차 섹션 하단 링크 (성공사례 보기 · 대응정보) — case-links와 동일 톤 */
 .process-links {
-  margin-top: 1rem;
-  font-size: 14px;
-  color: #444;
+  margin-top: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--della-color-muted, #555);
   text-align: center;
 }
 
 .process-links a {
-  color: #b79a5b;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  color: var(--della-point-color, #88783c);
+  font-weight: 500;
   text-decoration: none;
+  border: 1px solid rgba(139, 128, 95, 0.28);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
 
 .process-links a:hover {
-  text-decoration: underline;
+  background: rgba(139, 128, 95, 0.08);
+  border-color: var(--della-point-color, #88783c);
+  color: #6d6335;
+  text-decoration: none;
 }
 
 .process-links a:visited {
-  color: #b79a5b;
+  color: var(--della-point-color, #88783c);
 }
 
 .process-links .dot {
-  margin: 0 6px;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.2);
+  font-weight: 400;
+  font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
 .process-cards-slider-wrap {
@@ -2088,6 +2170,17 @@ body.front-page .success-stories {
 
 /* 모바일: 진행절차 세로 배치 (한 열로 스크롤), 터치·가독성 유지 */
 @media (max-width: 767px) {
+  .process-links {
+    font-size: 0.875rem;
+    gap: 0.4rem 0.6rem;
+  }
+
+  .process-links a {
+    min-height: var(--touch-target-min, 44px);
+    padding: 0.5rem 0.85rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   .process-cards {
     overflow-x: hidden;
   }

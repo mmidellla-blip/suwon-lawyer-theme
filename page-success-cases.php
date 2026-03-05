@@ -10,6 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! defined( 'DELLA_IS_SUCCESS_CASES_TEMPLATE' ) ) {
+	define( 'DELLA_IS_SUCCESS_CASES_TEMPLATE', true );
+}
+
 $paged    = max( 1, get_query_var( 'paged' ) ? (int) get_query_var( 'paged' ) : ( isset( $_GET['paged'] ) ? (int) $_GET['paged'] : 1 ) );
 $search_raw = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ( isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '' );
 $search   = trim( $search_raw );
@@ -115,9 +119,6 @@ $base_url    = get_permalink();
 // 잘못된 페이지 번호(paged) 시 404 처리
 if ( $paged > 1 && $board_query->max_num_pages > 0 && $paged > $board_query->max_num_pages ) {
 	della_theme_trigger_404();
-}
-if ( function_exists( 'della_theme_render_success_cases_meta' ) ) {
-	add_action( 'wp_head', 'della_theme_render_success_cases_meta', 0 );
 }
 get_header();
 ?>
