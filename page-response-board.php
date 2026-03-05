@@ -65,11 +65,11 @@ $sidebar_sub_defs = array(
 	array( 'slug' => 'faq', 'label' => __( 'FAQ', 'della-theme' ) ),
 	array( 'slug' => '최신판례-이슈', 'label' => __( '최신이슈', 'della-theme' ) ),
 );
-/* 테마 소카테고리 slug → WP 실제 slug 접미사 (강간-faq, 강간-법조문, 강간-최신동향 등) */
+/* 테마 소카테고리 slug → WP 실제 slug 접미사 (강간-faq, 강간-관련-판례, 강간-구성요건 등) */
 $sub_slug_to_wp_suffix = array(
 	'법조문'                   => '법조문',
 	'구성요건-핵심-쟁점-강간' => '구성요건',
-	'판례'                     => '구성요건',
+	'판례'                     => '관련-판례',
 	'유형별-사건'             => '유형별사례',
 	'수사-재판-단계별-대응'   => '대응가이드',
 	'faq'                      => 'faq',
@@ -112,7 +112,7 @@ if ( $search ) {
 if ( $filter_cat ) {
 	$filter_category = null;
 	$use_include_children = true;
-	$filter_transient_key = 'della_resp_filter_' . preg_replace( '/[^a-z0-9_\-]/i', '_', $filter_cat );
+	$filter_transient_key = 'della_resp_filter_v2_' . preg_replace( '/[^a-z0-9_\-]/i', '_', $filter_cat );
 	$cached_filter = get_transient( $filter_transient_key );
 	if ( false !== $cached_filter && is_array( $cached_filter ) && ! empty( $cached_filter['term_id'] ) ) {
 		$term = get_term( (int) $cached_filter['term_id'], 'category' );
