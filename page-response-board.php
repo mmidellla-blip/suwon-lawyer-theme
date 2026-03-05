@@ -88,12 +88,14 @@ if ( $search ) {
 	$query_args['s'] = $search;
 }
 if ( $filter_cat ) {
-	$sub_cat = get_category_by_slug( $filter_cat );
-	if ( ! $sub_cat && strpos( $filter_cat, '-' ) !== false ) {
-		$sub_cat = get_category_by_slug( preg_replace( '/^[^-]+-/', '', $filter_cat ) );
+	// 소카테고리(대-소 복합 slug)여도 대 카테고리로 쿼리 — 대응정보는 대 안에 소가 같은 내용이므로 대 카테고리로 검색
+	$slug_for_query = $filter_cat;
+	if ( strpos( $filter_cat, '-' ) !== false ) {
+		$slug_for_query = strtok( $filter_cat, '-' );
 	}
-	if ( $sub_cat ) {
-		$query_args['cat'] = $sub_cat->term_id;
+	$filter_category = get_category_by_slug( $slug_for_query );
+	if ( $filter_category ) {
+		$query_args['cat'] = $filter_category->term_id;
 	}
 }
 
