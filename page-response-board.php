@@ -59,17 +59,17 @@ $main_cat_wp_slug_alternatives = array(
 $sidebar_sub_defs = array(
 	array( 'slug' => '법조문', 'label' => __( '법조문, 처벌·양형 기준', 'della-theme' ) ),
 	array( 'slug' => '구성요건-핵심-쟁점-강간', 'label' => __( '구성요건, 핵심쟁점', 'della-theme' ) ),
-	array( 'slug' => '판례', 'label' => __( '관련 판례', 'della-theme' ) ),
+	array( 'slug' => '관련판례', 'label' => __( '관련 판례', 'della-theme' ) ),
 	array( 'slug' => '유형별-사건', 'label' => __( '유형별 사례', 'della-theme' ) ),
 	array( 'slug' => '수사-재판-단계별-대응', 'label' => __( '대응가이드', 'della-theme' ) ),
 	array( 'slug' => 'faq', 'label' => __( 'FAQ', 'della-theme' ) ),
 	array( 'slug' => '최신판례-이슈', 'label' => __( '최신이슈', 'della-theme' ) ),
 );
-/* 테마 소카테고리 slug → WP 실제 slug 접미사 (강간-faq, 강간-관련-판례, 강간-구성요건 등) */
+/* 테마 소카테고리 slug → WP 실제 slug 접미사 (sidebar_sub_defs[].slug 키와 일치, 값은 WP 카테고리 slug 접미사) */
 $sub_slug_to_wp_suffix = array(
 	'법조문'                   => '법조문',
 	'구성요건-핵심-쟁점-강간' => '구성요건',
-	'판례'                     => '관련-판례',
+	'관련판례'                => '관련-판례',
 	'유형별-사건'             => '유형별사례',
 	'수사-재판-단계별-대응'   => '대응가이드',
 	'faq'                      => 'faq',
@@ -112,7 +112,7 @@ if ( $search ) {
 if ( $filter_cat ) {
 	$filter_category = null;
 	$use_include_children = true;
-	$filter_transient_key = 'della_resp_filter_v2_' . preg_replace( '/[^a-z0-9_\-]/i', '_', $filter_cat );
+	$filter_transient_key = 'della_resp_filter_v3_' . preg_replace( '/[^a-z0-9_\-]/i', '_', $filter_cat );
 	$cached_filter = get_transient( $filter_transient_key );
 	if ( false !== $cached_filter && is_array( $cached_filter ) && ! empty( $cached_filter['term_id'] ) ) {
 		$term = get_term( (int) $cached_filter['term_id'], 'category' );
