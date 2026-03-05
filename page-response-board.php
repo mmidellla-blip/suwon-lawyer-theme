@@ -112,7 +112,7 @@ if ( $search ) {
 if ( $filter_cat ) {
 	$filter_category = null;
 	$use_include_children = true;
-	$filter_transient_key = 'della_resp_filter_v4_' . preg_replace( '/[^a-z0-9_\-]/i', '_', $filter_cat );
+	$filter_transient_key = 'della_resp_filter_v5_' . preg_replace( '/[^a-z0-9_\-]/i', '_', $filter_cat );
 	$cached_filter = get_transient( $filter_transient_key );
 	if ( false !== $cached_filter && is_array( $cached_filter ) && ! empty( $cached_filter['term_id'] ) ) {
 		$term = get_term( (int) $cached_filter['term_id'], 'category' );
@@ -141,6 +141,12 @@ if ( $filter_cat ) {
 				$wp_suffix = isset( $sub_slug_to_wp_suffix[ $sub_slug ] ) ? $sub_slug_to_wp_suffix[ $sub_slug ] : $sub_slug;
 				$wp_sub_slug = $main_label . '-' . $wp_suffix;
 				$filter_category = get_category_by_slug( $wp_sub_slug );
+				if ( ! $filter_category ) {
+					$by_slug = get_terms( array( 'taxonomy' => 'category', 'slug' => $wp_sub_slug, 'hide_empty' => false, 'number' => 1 ) );
+					if ( ! is_wp_error( $by_slug ) && ! empty( $by_slug ) ) {
+						$filter_category = $by_slug[0];
+					}
+				}
 				if ( $filter_category ) {
 					$use_include_children = false;
 				}
