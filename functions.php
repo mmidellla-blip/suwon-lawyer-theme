@@ -14,7 +14,7 @@ define( 'DELLA_THEME_VERSION', '1.0.1' );
 
 /**
  * CSS/JS 캐시 무효화용 공통 버전 (한 번에 전체 갱신)
- * dist/common.min.css, dist/critical.min.css, main.js(또는 main.min.js) 중
+ * dist/common.min.css, dist/critical.min.css 중
  * 가장 최근 수정 시각을 사용. 배포·빌드 시 쿼리스트링이 바뀌어 캐시 미사용.
  * 필터로 오버라이드 가능 (예: 배포 파이프라인에서 고정 버전 주입).
  *
@@ -30,8 +30,6 @@ function della_theme_asset_version() {
 		$theme_dir . '/assets/css/dist/common.min.css',
 		$theme_dir . '/assets/css/dist/common.css',
 		$theme_dir . '/assets/css/dist/critical.min.css',
-		$theme_dir . '/assets/js/main.min.js',
-		$theme_dir . '/assets/js/main.js',
 	);
 	$max = 0;
 	foreach ( $files as $path ) {
@@ -873,39 +871,20 @@ function della_theme_document_title_parts( $parts ) {
 add_filter( 'document_title_parts', 'della_theme_document_title_parts', 10, 1 );
 
 /**
- * SEO: 메인(홈) 전용 100점 메타 세트 — title/description/og/canonical/robots 중복 없이 1회만 출력
- * SEO 플러그인(AIOSEO/Yoast 등) 사용 시: 플러그인 설정에서 "홈/메인 페이지"용 title, description, OG, canonical, robots
- * 출력을 끄거나 "테마/수동"으로 두어 이 세트만 나가도록 하면 중복으로 인한 SEO 점수 하락을 막을 수 있습니다.
+ * SEO: 프론트 페이지 전용 LegalService JSON-LD만 출력 (description/og/twitter/canonical/robots는 AIOSEO에서 관리).
  */
 function della_theme_front_page_meta_100() {
 	if ( ! is_front_page() ) {
 		return;
 	}
-	$road    = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
-	$road2   = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
-	$street  = trim( $road . ' ' . $road2 );
-	$phone   = get_theme_mod( 'della_phone', '031-216-1155' );
+	$road     = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
+	$road2    = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
+	$street   = trim( $road . ' ' . $road2 );
+	$phone    = get_theme_mod( 'della_phone', '031-216-1155' );
 	$base_url = home_url( '/' );
-	// OG 이미지: /img/og-sexcrime-dongju.jpg 또는 업로드 경로. 없으면 미디어에 업로드 후 경로 수정.
 	$og_image = home_url( '/img/og-sexcrime-dongju.jpg' );
 	$logo_url = home_url( '/img/logo.png' );
-	?>
-	<meta name="description" content="수원 성범죄 전문변호사 법무법인 동주. 중앙지검 부장검사·국정원·경찰청 경력 변호사가 고소 전 합의부터 경찰조사, 검찰송치, 재판까지 직접 대응합니다. 수원 광교." />
-	<meta property="og:type" content="website" />
-	<meta property="og:locale" content="ko_KR" />
-	<meta property="og:site_name" content="법무법인 동주" />
-	<meta property="og:title" content="수원 성범죄 전문변호사 | 강제추행·카메라촬영 대응 | 법무법인 동주" />
-	<meta property="og:description" content="중앙지검 부장검사·국정원·경찰청 경력 변호사가 고소 전 합의부터 경찰조사, 검찰송치, 재판까지 직접 대응합니다. 수원 광교." />
-	<meta property="og:url" content="<?php echo esc_url( $base_url ); ?>" />
-	<meta property="og:image" content="<?php echo esc_url( $og_image ); ?>" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="수원 성범죄 전문변호사 | 법무법인 동주" />
-	<meta name="twitter:description" content="경찰조사·검찰송치·재판까지 대표·파트너 변호사가 직접 대응합니다. 수원 광교." />
-	<meta name="twitter:image" content="<?php echo esc_url( $og_image ); ?>" />
-	<link rel="canonical" href="<?php echo esc_url( $base_url ); ?>" />
-	<meta name="robots" content="index,follow,max-image-preview:large" />
-	<script type="application/ld+json">
-	<?php
+	echo '<script type="application/ld+json">' . "\n";
 	echo wp_json_encode(
 		array(
 			'@context'    => 'https://schema.org',
@@ -928,9 +907,7 @@ function della_theme_front_page_meta_100() {
 		),
 		JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 	);
-	?>
-	</script>
-	<?php
+	echo "\n" . '</script>' . "\n";
 }
 add_action( 'wp_head', 'della_theme_front_page_meta_100', 0 );
 
@@ -1179,39 +1156,16 @@ function della_theme_scripts() {
 		}
 	}
 
-	// JS — 공통 버전으로 캐시 무효화
-	$min_js = $theme_dir . '/assets/js/main.min.js';
-	$full_js = $theme_dir . '/assets/js/main.js';
-	if ( file_exists( $min_js ) ) {
-		wp_enqueue_script(
-			'della-main',
-			$theme_uri . '/assets/js/main.min.js',
-			array(),
-			$asset_ver,
-			true
-		);
-	} elseif ( file_exists( $full_js ) ) {
-		wp_enqueue_script(
-			'della-main',
-			$theme_uri . '/assets/js/main.js',
-			array(),
-			$asset_ver,
-			true
-		);
-	}
+	// JS — 테마 전용 외부 스크립트 없음 (메뉴/헤더/슬라이더 등은 인라인 스크립트로만 동작).
 }
 add_action( 'wp_enqueue_scripts', 'della_theme_scripts' );
 
 /**
- * JS defer 추가 — 페이지 블로킹 방지
+ * JS defer — 테마 외부 JS 제거로 미사용. 필요 시 스크립트 핸들 추가.
  */
 function della_theme_script_defer( $tag, $handle, $src ) {
-	if ( $handle === 'della-main' ) {
-		return str_replace( ' src', ' defer src', $tag );
-	}
 	return $tag;
 }
-add_filter( 'script_loader_tag', 'della_theme_script_defer', 10, 3 );
 
 /**
  * 불필요한 WordPress 기본 스크립트/스타일 제거 (프론트 전용, 로딩 경량화)
@@ -2124,34 +2078,35 @@ function della_theme_trigger_404() {
 }
 
 /**
- * SEO: Canonical URL — 현재 URL 기준 정규 URL 1개만 출력 (중복 방지)
- * singular, 홈, 아카이브, 검색, 페이지네이션 등 전 타입 대응
- * 메인 페이지는 100점 메타 세트에서 출력하므로 여기서는 스킵.
+ * SEO: 현재 요청의 canonical URL 반환 (AIOSEO 사용 시 테마는 head에서 1회만 출력).
+ * 404는 빈 문자열 반환.
  */
-function della_theme_canonical() {
+function della_theme_get_canonical_url() {
 	if ( is_404() ) {
-		return;
+		return '';
 	}
-	if ( is_front_page() ) {
-		return;
-	}
-	// 메인(홈)은 100점 메타에서 출력. 그 외 홈은 사이트 루트
-	if ( is_home() && get_option( 'show_on_front' ) === 'posts' ) {
+	if ( is_front_page() || ( is_home() && get_option( 'show_on_front' ) === 'posts' ) ) {
 		$canonical = home_url( '/' );
 	} elseif ( function_exists( 'della_theme_is_lawyers_page' ) && della_theme_is_lawyers_page() ) {
 		if ( get_query_var( 'lawyer_slug' ) ) {
-			// 성범죄 전문 변호사 상세: /lawyers/{slug}/ 정규 URL
 			$canonical = function_exists( 'della_theme_lawyer_profile_url' ) ? della_theme_lawyer_profile_url( get_query_var( 'lawyer_slug' ) ) : '';
 		} else {
-			// 목록 페이지는 della_theme_lawyers_page_meta()에서 canonical 출력
-			return;
+			$canonical = function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : get_permalink();
 		}
 	} elseif ( function_exists( 'della_theme_is_success_cases_page' ) && della_theme_is_success_cases_page() ) {
-		// 성공사례 허브는 della_theme_success_cases_page_meta()에서 canonical 출력 (?tag=/?cat= 반영)
-		return;
+		$canonical = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink();
+		$tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
+		$cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
+		if ( $tag || $cat ) {
+			$canonical = add_query_arg( array_filter( array( 'tag' => $tag ? $tag : null, 'cat' => $cat ? $cat : null ) ), $canonical );
+		}
 	} elseif ( function_exists( 'della_theme_is_response_board_page' ) && della_theme_is_response_board_page() ) {
-		// 대응정보 허브는 전용 메타에서 canonical 처리
-		return;
+		$canonical = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : get_permalink();
+		$tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
+		$cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
+		if ( $tag || $cat ) {
+			$canonical = add_query_arg( array_filter( array( 'tag' => $tag ? $tag : null, 'cat' => $cat ? $cat : null ) ), $canonical );
+		}
 	} else {
 		$canonical = function_exists( 'wp_get_canonical_url' ) ? wp_get_canonical_url() : null;
 		if ( empty( $canonical ) ) {
@@ -2162,130 +2117,25 @@ function della_theme_canonical() {
 			}
 		}
 	}
-	if ( ! empty( $canonical ) ) {
-		$canonical = remove_query_arg( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content' ), $canonical );
-		echo '<link rel="canonical" href="' . esc_url( $canonical ) . '" />' . "\n";
+	if ( empty( $canonical ) ) {
+		return '';
 	}
+	return remove_query_arg( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content' ), $canonical );
 }
-add_action( 'wp_head', 'della_theme_canonical', 1 );
 
 /**
- * SEO: 성범죄 전문 변호사(목록) 페이지 전용 메타 — title은 document_title_parts에서 설정
- * description, canonical, robots, og, twitter 일괄 출력 (소개 페이지 의도·중복 방지)
+ * SEO: 성범죄 전문 변호사(목록) 페이지 메타 — AIOSEO에서 관리하므로 테마에서는 출력하지 않음.
  */
 function della_theme_lawyers_page_meta() {
-	if ( ! function_exists( 'della_theme_is_lawyers_page' ) || ! della_theme_is_lawyers_page() ) {
-		return;
-	}
-	if ( get_query_var( 'lawyer_slug' ) ) {
-		return; // 상세 페이지는 제외, 목록 페이지만
-	}
-	$url = function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : get_permalink();
-	$og_image = home_url( '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg' );
-	?>
-	<meta name="description" content="법무법인 동주 성범죄 전문변호사 팀을 소개합니다. 형사법 전문 변호사들이 성범죄 사건에서 경찰조사·검찰송치·재판까지 단계별 대응 전략을 체계적으로 설계합니다. 상담 전 변호사 경력과 전문분야를 확인하세요." />
-	<link rel="canonical" href="<?php echo esc_url( $url ); ?>" />
-	<meta name="robots" content="index,follow" />
-	<meta property="og:type" content="website" />
-	<meta property="og:site_name" content="법무법인 동주" />
-	<meta property="og:title" content="성범죄 전문변호사 소개 | 형사법 전문 변호사 팀 | 법무법인 동주" />
-	<meta property="og:description" content="법무법인 동주 성범죄 전문변호사 팀 소개. 형사법 전문 변호사들이 경찰조사·검찰송치·재판까지 단계별 대응 전략을 설계합니다." />
-	<meta property="og:url" content="<?php echo esc_url( $url ); ?>" />
-	<meta property="og:image" content="<?php echo esc_url( $og_image ); ?>" />
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="630" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="성범죄 전문변호사 소개 | 법무법인 동주" />
-	<meta name="twitter:description" content="형사법 전문 변호사 팀 소개. 성범죄 사건 대응 경험과 전략을 확인하세요." />
-	<meta name="twitter:image" content="<?php echo esc_url( $og_image ); ?>" />
-	<?php
+	// No output: description, canonical, robots, og, twitter are handled by AIOSEO.
 }
-add_action( 'wp_head', 'della_theme_lawyers_page_meta', 1 );
 
 /**
- * SEO: 변호사 상세(/lawyers/{slug}/) 전용 메타 — title, description, canonical, og, twitter (변호사마다 유니크)
+ * SEO: 변호사 상세(/lawyers/{slug}/) 메타 — AIOSEO에서 관리하므로 테마에서는 출력하지 않음.
  */
 function della_theme_lawyer_profile_page_meta() {
-	if ( ! function_exists( 'della_theme_is_lawyers_page' ) || ! della_theme_is_lawyers_page() ) {
-		return;
-	}
-	$lawyer_slug = get_query_var( 'lawyer_slug' );
-	if ( ! $lawyer_slug || ! function_exists( 'della_theme_get_lawyer_by_slug' ) ) {
-		return;
-	}
-	$lawyer = della_theme_get_lawyer_by_slug( $lawyer_slug );
-	if ( ! $lawyer || empty( $lawyer['name'] ) ) {
-		return;
-	}
-
-	$law = __( '법무법인 동주', 'della-theme' );
-	$name = $lawyer['name'];
-	$specs = isset( $lawyer['specialties'] ) && is_array( $lawyer['specialties'] ) ? $lawyer['specialties'] : array();
-	$spec_str = ! empty( $specs ) ? implode( '·', array_slice( $specs, 0, 3 ) ) : '강제추행·카촬·디지털성범죄';
-	// 카메라촬영/불법촬영 → 카촬로 줄여 120~155자 권장에 맞춤
-	$spec_str = str_replace( array( '불법촬영', '카메라촬영' ), '카촬', $spec_str );
-
-	$page_title = $name . ' 변호사 프로필 | 수원 성범죄 전문변호사 | ' . $law;
-	$page_title = function_exists( 'della_theme_trim_document_title' ) ? della_theme_trim_document_title( $page_title ) : $page_title;
-
-	// 추천 120~155자: "이세환 변호사 프로필. 수원 성범죄 전문변호사로 강제추행·카촬·디지털성범죄 등 형사사건을 초기 상담부터 조사·재판까지 직접 대응합니다. 경력·전문분야 안내."
-	$description = $name . ' 변호사 프로필. 수원 성범죄 전문변호사로 ' . $spec_str . ' 등 형사사건을 초기 상담부터 조사·재판까지 직접 대응합니다. 경력·전문분야 안내.';
-	$max_desc = 155;
-	if ( function_exists( 'mb_strlen' ) && mb_strlen( $description ) > $max_desc ) {
-		$description = function_exists( 'mb_substr' ) ? mb_substr( $description, 0, $max_desc - 3 ) . '…' : substr( $description, 0, $max_desc - 3 ) . '…';
-	} elseif ( strlen( $description ) > $max_desc ) {
-		$description = substr( $description, 0, $max_desc - 3 ) . '…';
-	}
-	$description = function_exists( 'della_theme_trim_meta_description' ) ? della_theme_trim_meta_description( $description ) : $description;
-
-	$url = function_exists( 'della_theme_lawyer_profile_url' ) ? della_theme_lawyer_profile_url( $lawyer_slug ) : '';
-	if ( ! $url ) {
-		$url = function_exists( 'della_theme_lawyers_page_url' ) ? trailingslashit( della_theme_lawyers_page_url() ) . $lawyer_slug . '/' : get_permalink();
-	}
-	$og_image = home_url( '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg' );
-	$upload_dir = wp_upload_dir();
-	$img_base = isset( $upload_dir['baseurl'] ) ? $upload_dir['baseurl'] . '/2026/02' : '';
-	$img_dir  = isset( $upload_dir['basedir'] ) ? $upload_dir['basedir'] . '/2026/02' : '';
-	if ( $img_base && $img_dir && ! empty( $lawyer['image'] ) && function_exists( 'della_theme_lawyer_image_url' ) ) {
-		$profile_img = della_theme_lawyer_image_url( isset( $lawyer['image_profile'] ) ? $lawyer['image_profile'] : $lawyer['image'], $img_base, $img_dir );
-		if ( $profile_img ) {
-			$og_image = $profile_img;
-		}
-	}
-
-	?>
-	<title><?php echo esc_html( $page_title ); ?></title>
-	<meta name="description" content="<?php echo esc_attr( $description ); ?>" />
-	<link rel="canonical" href="<?php echo esc_url( $url ); ?>" />
-	<meta name="robots" content="index,follow" />
-	<meta property="og:type" content="profile" />
-	<meta property="og:site_name" content="<?php echo esc_attr( $law ); ?>" />
-	<meta property="og:title" content="<?php echo esc_attr( $page_title ); ?>" />
-	<meta property="og:description" content="<?php echo esc_attr( $description ); ?>" />
-	<meta property="og:url" content="<?php echo esc_url( $url ); ?>" />
-	<meta property="og:image" content="<?php echo esc_url( $og_image ); ?>" />
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="630" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="<?php echo esc_attr( $page_title ); ?>" />
-	<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>" />
-	<meta name="twitter:image" content="<?php echo esc_url( $og_image ); ?>" />
-	<?php
+	// No output: title, description, canonical, og, twitter are handled by AIOSEO.
 }
-/**
- * 변호사 상세일 때 core title 제거 (della_theme_lawyer_profile_page_meta에서 title 출력).
- */
-function della_theme_lawyer_profile_remove_core_title() {
-	if ( ! function_exists( 'della_theme_is_lawyers_page' ) || ! della_theme_is_lawyers_page() ) {
-		return;
-	}
-	if ( get_query_var( 'lawyer_slug' ) ) {
-		remove_action( 'wp_head', '_wp_render_title_tag', 1 );
-	}
-}
-add_action( 'wp_head', 'della_theme_lawyer_profile_remove_core_title', 0 );
-
-add_action( 'wp_head', 'della_theme_lawyer_profile_page_meta', 1 );
 
 /**
  * 현재 요청에 맞는 meta description 한 줄 반환 (플러그인·캐시와 무관하게 최종 폴백용).
@@ -2404,105 +2254,17 @@ function della_theme_get_fallback_description() {
 }
 
 /**
- * SEO: 성범죄 대응정보 허브 페이지 전용 메타 — description, robots, og, twitter (중복 방지)
- * ?tag= / ?cat= URL은 index,follow 유지
+ * SEO: 성범죄 대응정보 허브 페이지 메타 — AIOSEO에서 관리하므로 테마에서는 출력하지 않음.
  */
 function della_theme_response_board_page_meta() {
-	if ( ! function_exists( 'della_theme_is_response_board_page' ) || ! della_theme_is_response_board_page() ) {
-		return;
-	}
-	$url = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : get_permalink();
-	$tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
-	$cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
-	if ( $tag || $cat ) {
-		$url = add_query_arg( array_filter( array( 'tag' => $tag ? $tag : null, 'cat' => $cat ? $cat : null ) ), $url );
-	}
-	$title = '성범죄 대응정보 가이드 | 강제추행·불법촬영·아청법·판례·FAQ | 법무법인 동주';
-	$description = '성범죄 대응정보를 유형별로 정리했습니다. 강제추행·불법촬영·아청법·군성범죄 등 법조문, 판례, FAQ와 수사·재판 단계별 대응 포인트를 한곳에서 확인하세요.';
-	?>
-	<meta name="description" content="<?php echo esc_attr( $description ); ?>" />
-	<meta name="robots" content="index,follow" />
-	<meta property="og:type" content="website" />
-	<meta property="og:site_name" content="법무법인 동주" />
-	<meta property="og:title" content="<?php echo esc_attr( $title ); ?>" />
-	<meta property="og:description" content="<?php echo esc_attr( $description ); ?>" />
-	<meta property="og:url" content="<?php echo esc_url( $url ); ?>" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>" />
-	<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>" />
-	<?php
+	// No output: description, robots, og, twitter are handled by AIOSEO.
 }
-add_action( 'wp_head', 'della_theme_response_board_page_meta', 1 );
 
 /**
- * SEO: 성범죄 성공사례 허브 페이지 전용 메타 출력 (page-success-cases.php에서 wp_head에 등록)
- * Title 60자 이하, Description 150자 이하. canonical·OG·keywords 포함.
- * AIOSEO 등 플러그인 사용 시: add_filter( 'della_theme_success_cases_page_meta_disabled', '__return_true' );
+ * SEO: 성공사례 허브 페이지 메타 — AIOSEO에서 관리하므로 테마에서는 출력하지 않음.
  */
 function della_theme_render_success_cases_meta() {
-	static $done = false;
-	if ( $done ) {
-		return;
-	}
-	if ( apply_filters( 'della_theme_success_cases_page_meta_disabled', false ) ) {
-		return;
-	}
-	$done = true;
-	$url = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink();
-	if ( ! $url || ! is_string( $url ) ) {
-		$url = home_url( '/' );
-	}
-	$tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
-	$cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
-	if ( $tag || $cat ) {
-		$url = add_query_arg( array_filter( array( 'tag' => $tag ? $tag : null, 'cat' => $cat ? $cat : null ) ), $url );
-	}
-
-	$title = '수원 성범죄 성공사례 | 강제추행·카메라촬영 무혐의·기소유예 사례 | 법무법인 동주';
-	if ( function_exists( 'mb_strlen' ) && mb_strlen( $title ) > 60 ) {
-		$title = function_exists( 'mb_substr' ) ? mb_substr( $title, 0, 57 ) . '...' : substr( $title, 0, 57 ) . '...';
-	} elseif ( strlen( $title ) > 60 ) {
-		$title = substr( $title, 0, 57 ) . '...';
-	}
-	$title = trim( (string) $title ) !== '' ? $title : '수원 성범죄 성공사례 | 법무법인 동주';
-
-	$description = '수원 성범죄 사건 성공사례를 확인하세요. 강제추행·카메라촬영·아청법 사건에서 무혐의·기소유예·집행유예 등 실제 결과를 공개합니다. 경찰조사부터 재판까지 법무법인 동주가 직접 대응합니다.';
-	if ( function_exists( 'mb_strlen' ) && mb_strlen( $description ) > 150 ) {
-		$description = function_exists( 'mb_substr' ) ? mb_substr( $description, 0, 147 ) . '...' : substr( $description, 0, 147 ) . '...';
-	} elseif ( strlen( $description ) > 150 ) {
-		$description = substr( $description, 0, 147 ) . '...';
-	}
-	$description = trim( (string) $description ) !== '' ? $description : '수원 성범죄 성공사례. 강제추행·카메라촬영·아청법 사건 무혐의·기소유예 대응 사례. 법무법인 동주.';
-
-	$keywords = '수원 성범죄 성공사례, 강제추행 기소유예 사례, 카메라촬영 기소유예, 몰카 무혐의 사례, 성범죄 변호사 성공사례, 성범죄 합의 성공사례';
-	$og_title = '수원 성범죄 성공사례 | 강제추행·카메라촬영 무혐의 사례 | 법무법인 동주';
-	$og_description = '수원 성범죄 사건 실제 성공사례. 강제추행·카메라촬영·아청법 사건 무혐의·기소유예 결과를 확인하세요.';
-	$og_site_name = '법무법인 동주 - 수원 성범죄 전문변호사';
-	$twitter_title = '수원 성범죄 성공사례 | 법무법인 동주';
-	$twitter_description = '강제추행·카메라촬영·아청법 사건 실제 성공사례. 무혐의·기소유예 대응 사례 확인.';
-	$og_image = home_url( '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg' );
-	if ( ! $og_image || $og_image === home_url( '/' ) ) {
-		$og_image = home_url( '/img/og-sexcrime-dongju.jpg' );
-	}
-	?>
-	<title><?php echo esc_html( $title ); ?></title>
-	<meta name="description" content="<?php echo esc_attr( $description ); ?>" />
-	<meta name="keywords" content="<?php echo esc_attr( $keywords ); ?>" />
-	<link rel="canonical" href="<?php echo esc_url( $url ); ?>" />
-	<meta name="robots" content="index,follow,max-image-preview:large" />
-	<meta property="og:type" content="website" />
-	<meta property="og:title" content="<?php echo esc_attr( $og_title ); ?>" />
-	<meta property="og:description" content="<?php echo esc_attr( $og_description ); ?>" />
-	<meta property="og:url" content="<?php echo esc_url( $url ); ?>" />
-	<meta property="og:site_name" content="<?php echo esc_attr( $og_site_name ); ?>" />
-	<meta property="og:locale" content="ko_KR" />
-	<meta property="og:image" content="<?php echo esc_url( $og_image ); ?>" />
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="630" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="<?php echo esc_attr( $twitter_title ); ?>" />
-	<meta name="twitter:description" content="<?php echo esc_attr( $twitter_description ); ?>" />
-	<?php
+	// No output: title, description, canonical, og, twitter are handled by AIOSEO.
 }
 
 /**
@@ -2523,60 +2285,32 @@ function della_theme_is_on_success_cases_request() {
 }
 
 /**
- * wp_head 맨 앞: 성공사례 페이지면 core title 제거 (나중에 우리가 출력).
+ * 성공사례 페이지 core title 제거 — AIOSEO가 title 관리하므로 테마에서는 제거하지 않음.
  */
 function della_theme_success_cases_remove_core_title() {
-	if ( della_theme_is_on_success_cases_request() ) {
-		remove_action( 'wp_head', '_wp_render_title_tag', 1 );
-	}
+	// No action: title is managed by AIOSEO.
 }
-add_action( 'wp_head', 'della_theme_success_cases_remove_core_title', 0 );
 
 /**
- * 성공사례 페이지일 때 wp_head에서 메타 출력.
- * priority 999로 맨 마지막에 출력해 플러그인이 빈 title/description 넣어도 덮어씀.
+ * 성공사례 페이지 메타 — AIOSEO에서 출력.
  */
 function della_theme_success_cases_page_meta() {
-	if ( ! della_theme_is_on_success_cases_request() ) {
-		return;
-	}
-	della_theme_render_success_cases_meta();
+	// No output: handled by AIOSEO.
 }
-add_action( 'wp_head', 'della_theme_success_cases_page_meta', 999 );
 
 /**
- * SEO: Robots meta — 404·검색결과·내용 없는 아카이브 noindex로 불용 문서/중복 색인 방지
+ * SEO: Robots meta — header.php에서 index,follow,max-image-preview:large 1회만 출력. AIOSEO가 404/검색 등 특수 케이스 처리.
  */
 function della_theme_seo_robots_meta() {
-	global $wp_query;
-	if ( is_404() ) {
-		echo '<meta name="robots" content="noindex,nofollow" />' . "\n";
-		return;
-	}
-	if ( is_search() ) {
-		echo '<meta name="robots" content="noindex,follow" />' . "\n";
-		return;
-	}
-	// 아카이브인데 글이 0건인 경우(내용 없음) — thin content 색인 방지
-	if ( is_archive() && isset( $wp_query->found_posts ) && (int) $wp_query->found_posts === 0 ) {
-		echo '<meta name="robots" content="noindex,follow" />' . "\n";
-	}
+	// No output: single robots tag is output in header.php; AIOSEO handles noindex for 404/search etc.
 }
-add_action( 'wp_head', 'della_theme_seo_robots_meta', 0 );
 
 /**
- * SEO: 404 전용 meta description — 로봇이 페이지 성격 파악용 (noindex여도 설명 제공)
+ * SEO: 404 meta description — AIOSEO에서 관리.
  */
 function della_theme_404_meta_description() {
-	if ( ! is_404() ) {
-		return;
-	}
-	$desc = __( '페이지를 찾을 수 없습니다. 요청하신 주소가 잘못되었거나 변경되었을 수 있습니다. ', 'della-theme' )
-		. __( '법무법인 동주', 'della-theme' )
-		. __( ' 수원 성범죄 전문 변호사 사이트 홈 또는 사이트맵으로 이동해 주세요.', 'della-theme' );
-	echo '<meta name="description" content="' . esc_attr( wp_strip_all_tags( $desc ) ) . '" />' . "\n";
+	// No output: description is handled by AIOSEO.
 }
-add_action( 'wp_head', 'della_theme_404_meta_description', 1 );
 
 /**
  * 글 상세(단일 포스트) 페이지에 meta description 항상 출력.
@@ -2613,11 +2347,8 @@ function della_theme_single_post_meta_description() {
 		$description = get_the_title( $post ) . ' - ' . $law . ' ' . __( '수원 성범죄 전문 변호사.', 'della-theme' );
 		$description = della_theme_trim_meta_description( $description );
 	}
-	if ( $description ) {
-		echo '<meta name="description" content="' . esc_attr( $description ) . '" />' . "\n";
-	}
+	// No output: description is handled by AIOSEO.
 }
-add_action( 'wp_head', 'della_theme_single_post_meta_description', 1 );
 
 /**
  * 대응정보 상세 글 전용 meta keywords (글별 유니크·보조 SEO).
@@ -2673,11 +2404,8 @@ function della_theme_response_info_post_meta_keywords() {
 	$all = array_merge( $base, array_slice( $post_keywords, 0, 6 ) );
 	$all = array_unique( array_filter( $all ) );
 	$keywords = implode( ', ', array_slice( $all, 0, 15 ) );
-	if ( $keywords !== '' ) {
-		echo '<meta name="keywords" content="' . esc_attr( $keywords ) . '" />' . "\n";
-	}
+	// No output: meta keywords/description are handled by AIOSEO.
 }
-add_action( 'wp_head', 'della_theme_response_info_post_meta_keywords', 1 );
 
 /**
  * LCP 히어로 이미지 preload는 header.php에서 head 최상단으로 출력 (요청 탐색 지연 방지).
@@ -2816,8 +2544,8 @@ function della_theme_og_twitter_meta() {
 	<?php if ( $image ) : ?>
 	<meta name="twitter:image" content="<?php echo esc_url( $image ); ?>" />
 	<?php endif;
+	// AIOSEO 사용 시 테마에서는 OG/Twitter 미출력 (add_action 제거됨).
 }
-add_action( 'wp_head', 'della_theme_og_twitter_meta', 2 );
 
 /**
  * Schema.org JSON-LD structured data
