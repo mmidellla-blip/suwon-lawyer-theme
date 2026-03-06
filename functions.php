@@ -1328,7 +1328,7 @@ function della_theme_front_page_meta_100() {
 			'@type'         => 'WebSite',
 			'@id'           => $website_id,
 			'url'           => $base_url,
-			'name'          => get_bloginfo( 'name' ),
+			'name'          => '법무법인 동주',
 			'alternateName' => '동주 수원 성범죄센터',
 			'inLanguage'    => 'ko-KR',
 			'publisher'     => array( '@id' => $organization_id ),
@@ -1336,7 +1336,7 @@ function della_theme_front_page_meta_100() {
 		array(
 			'@type'      => 'Organization',
 			'@id'        => $organization_id,
-			'name'       => get_bloginfo( 'name' ),
+			'name'       => '법무법인 동주',
 			'url'        => $base_url,
 			'logo'       => array( '@type' => 'ImageObject', 'url' => $logo_url ),
 			'email'      => is_email( $email ) ? $email : '',
