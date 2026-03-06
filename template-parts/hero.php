@@ -22,7 +22,7 @@ $hero_legal_script = array(
 	'description' => get_bloginfo( 'description' ) ?: '형사사건 전문 변호사 팀. 같은 사건에 자신 있는 다른 변호사들이 모여 만드는 시너지.',
 	'url'         => home_url( '/' ),
 	'image'       => array( array( '@type' => 'ImageObject', 'url' => $bg_url ) ),
-	'telephone'   => get_theme_mod( 'della_phone', '1522-3394' ),
+	'telephone'   => function_exists( 'della_theme_format_telephone_for_schema' ) ? della_theme_format_telephone_for_schema( get_theme_mod( 'della_phone', '1522-3394' ) ) : get_theme_mod( 'della_phone', '1522-3394' ),
 	'areaServed'  => array( '@id' => 'https://www.wikidata.org/wiki/Q884' ),
 	'priceRange'  => '상담 후 안내',
 	'employee'    => array(),

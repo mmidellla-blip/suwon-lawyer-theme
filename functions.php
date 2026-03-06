@@ -1146,6 +1146,16 @@ function della_theme_remove_title_tag_on_front_page() {
 add_action( 'wp', 'della_theme_remove_title_tag_on_front_page', 1 );
 
 /**
+ * SEO: 홈페이지에서 rel="next"/rel="prev" 링크 제거 (블로그 아카이브로 오인 방지).
+ */
+function della_theme_remove_adjacent_posts_rel_links_on_front_page() {
+	if ( is_front_page() ) {
+		remove_action( 'wp_head', 'adjacent_posts_rel_link_wp_head', 10, 0 );
+	}
+}
+add_action( 'wp', 'della_theme_remove_adjacent_posts_rel_links_on_front_page', 1 );
+
+/**
  * SEO: 홈/스키마용 OG 이미지 URL (업로드 → 테마 → 필터, 404 방지).
  */
 function della_theme_get_home_og_image_url() {
@@ -1175,13 +1185,21 @@ function della_theme_get_home_og_image_url() {
 }
 
 /**
- * SEO: 사이트 로고 URL (테마 → 업로드 → 필터, 스키마/OG용).
+ * SEO: 사이트 로고 URL (업로드 2026/03/logo_on.png 우선 → 테마 → 필터, 스키마/OG용).
  */
 function della_theme_get_site_logo_url() {
 	$logo_url = '';
-	if ( function_exists( 'get_template_directory' ) && function_exists( 'get_template_directory_uri' ) ) {
-		$theme_logo = get_template_directory() . '/assets/img/logo.png';
-		if ( file_exists( $theme_logo ) ) {
+	$ud       = wp_upload_dir();
+	if ( ! empty( $ud['baseurl'] ) && ! empty( $ud['basedir'] ) ) {
+		if ( file_exists( $ud['basedir'] . '/2026/03/logo_on.png' ) ) {
+			$logo_url = $ud['baseurl'] . '/2026/03/logo_on.png';
+		}
+		if ( ! $logo_url && file_exists( $ud['basedir'] . '/logo.png' ) ) {
+			$logo_url = $ud['baseurl'] . '/logo.png';
+		}
+	}
+	if ( ! $logo_url && function_exists( 'get_template_directory' ) && function_exists( 'get_template_directory_uri' ) ) {
+		if ( file_exists( get_template_directory() . '/assets/img/logo.png' ) ) {
 			$logo_url = get_template_directory_uri() . '/assets/img/logo.png';
 		}
 		if ( ! $logo_url && file_exists( get_template_directory() . '/img/logo.png' ) ) {
@@ -1189,18 +1207,30 @@ function della_theme_get_site_logo_url() {
 		}
 	}
 	if ( ! $logo_url ) {
-		$ud = wp_upload_dir();
-		if ( ! empty( $ud['baseurl'] ) && file_exists( $ud['basedir'] . '/logo.png' ) ) {
-			$logo_url = $ud['baseurl'] . '/logo.png';
-		}
-	}
-	if ( ! $logo_url ) {
 		$logo_url = apply_filters( 'della_theme_site_logo_url', '' );
 	}
 	if ( ! is_string( $logo_url ) || trim( $logo_url ) === '' ) {
-		$logo_url = home_url( '/img/logo.png' );
+		$logo_url = ! empty( $ud['baseurl'] ) ? $ud['baseurl'] . '/2026/03/logo_on.png' : home_url( '/img/logo.png' );
 	}
 	return $logo_url;
+}
+
+/**
+ * SEO: JSON-LD 스키마용 전화번호 국제 형식 (+82-1522-3394).
+ */
+function della_theme_format_telephone_for_schema( $phone ) {
+	if ( ! is_string( $phone ) || trim( $phone ) === '' ) {
+		return '';
+	}
+	$phone = trim( $phone );
+	if ( strpos( $phone, '+' ) === 0 ) {
+		return $phone;
+	}
+	$cleaned = ltrim( preg_replace( '/[^0-9\-]/', '', $phone ), '0' );
+	if ( substr( $cleaned, 0, 2 ) === '82' ) {
+		$cleaned = substr( $cleaned, 2 );
+	}
+	return '+82-' . $cleaned;
 }
 
 /**
@@ -1260,45 +1290,91 @@ function della_theme_homepage_seo_meta() {
 add_action( 'wp_head', 'della_theme_homepage_seo_meta', 0 );
 
 /**
- * SEO: 프론트 페이지 전용 LegalService JSON-LD만 출력 (description/og/twitter/canonical/robots는 홈에서 테마 메타로 출력).
- * image/logo는 실제 경로 헬퍼 사용 (404 방지).
+ * SEO: 프론트 페이지 전용 @graph 스키마 (WebSite + Organization + LegalService).
+ * 주소·좌표·운영시간·지도 URL은 커스터마이저/필터로 적용.
  */
 function della_theme_front_page_meta_100() {
 	if ( ! is_front_page() ) {
 		return;
 	}
-	$road      = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
-	$road2     = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
-	$street    = trim( $road . ' ' . $road2 );
-	$phone     = get_theme_mod( 'della_phone', '1522-3394' );
-	$fax       = get_theme_mod( 'della_fax', '031-216-1160' );
 	$base_url  = home_url( '/' );
-	$og_image  = function_exists( 'della_theme_get_home_og_image_url' ) ? della_theme_get_home_og_image_url() : home_url( '/img/og-sexcrime-dongju.jpg' );
-	$logo_url  = function_exists( 'della_theme_get_site_logo_url' ) ? della_theme_get_site_logo_url() : home_url( '/img/logo.png' );
-	$fp_schema = array(
-		'@context'    => 'https://schema.org',
-		'@type'       => 'LegalService',
-		'name'        => della_theme_firm_name(),
-		'url'         => $base_url,
-		'image'       => $og_image,
-		'logo'        => $logo_url,
-		'description' => '수원 성범죄 전문변호사 ' . della_theme_firm_name() . '. 고소 전 합의부터 경찰조사, 검찰송치, 재판까지 직접 대응.',
-		'address'     => array(
-			'@type'           => 'PostalAddress',
-			'addressCountry'  => 'KR',
-			'addressRegion'   => '경기도',
-			'addressLocality' => '수원',
-			'streetAddress'   => $street,
+	$website_id   = $base_url . '#website';
+	$organization_id = $base_url . '#organization';
+	$legalservice_id = $base_url . '#legalservice';
+
+	$road   = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
+	$road2  = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
+	$street = trim( $road . ' ' . $road2 );
+	$phone  = get_theme_mod( 'della_phone', '1522-3394' );
+	$tel_schema = function_exists( 'della_theme_format_telephone_for_schema' ) ? della_theme_format_telephone_for_schema( $phone ) : $phone;
+	$email  = get_theme_mod( 'della_contact_email', 'dongjucriminal@gmail.com' );
+	$logo_url = function_exists( 'della_theme_get_site_logo_url' ) ? della_theme_get_site_logo_url() : '';
+	$og_image = function_exists( 'della_theme_get_home_og_image_url' ) ? della_theme_get_home_og_image_url() : $logo_url;
+
+	$lat  = apply_filters( 'della_theme_schema_geo_latitude', 37.2914787038032 );
+	$lng  = apply_filters( 'della_theme_schema_geo_longitude', 127.06464575446904 );
+	$has_map = get_theme_mod( 'della_has_map_url', '' );
+	if ( ( ! is_string( $has_map ) || trim( $has_map ) === '' ) && is_numeric( $lat ) && is_numeric( $lng ) ) {
+		$has_map = 'https://www.google.com/maps?q=' . $lat . ',' . $lng;
+	}
+	$area_served = apply_filters( 'della_theme_schema_area_served', array( '수원', '용인', '성남', '화성', '동탄', '오산', '평택', '안양', '의왕', '안산', '이천', '안성' ) );
+	$opening_hours = apply_filters( 'della_theme_schema_opening_hours', array(
+		array( '@type' => 'OpeningHoursSpecification', 'dayOfWeek' => array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ), 'opens' => '09:00', 'closes' => '19:00' ),
+		array( '@type' => 'OpeningHoursSpecification', 'dayOfWeek' => array( 'Saturday', 'Sunday' ), 'opens' => '09:00', 'closes' => '18:00' ),
+	) );
+
+	$graph = array(
+		array(
+			'@type'         => 'WebSite',
+			'@id'           => $website_id,
+			'url'           => $base_url,
+			'name'          => get_bloginfo( 'name' ),
+			'alternateName' => '동주 수원 성범죄센터',
+			'inLanguage'    => 'ko-KR',
+			'publisher'     => array( '@id' => $organization_id ),
 		),
-		'areaServed'  => array( '수원', '용인', '성남', '화성', '동탄', '안양', '의왕', '안산', '오산', '평택', '안성', '이천' ),
-		'telephone'   => $phone,
-		'priceRange'  => '$$',
+		array(
+			'@type'      => 'Organization',
+			'@id'        => $organization_id,
+			'name'       => get_bloginfo( 'name' ),
+			'url'        => $base_url,
+			'logo'       => array( '@type' => 'ImageObject', 'url' => $logo_url ),
+			'email'      => is_email( $email ) ? $email : '',
+			'telephone'  => $tel_schema,
+		),
+		array(
+			'@type'        => 'LegalService',
+			'@id'          => $legalservice_id,
+			'name'         => della_theme_firm_name() . ' 성범죄센터',
+			'url'          => $base_url,
+			'image'        => $og_image ?: $logo_url,
+			'logo'         => $logo_url,
+			'description'  => '수원 성범죄 전문변호사 ' . della_theme_firm_name() . '. 강제추행·카메라촬영·디지털 성범죄 사건 대응. 고소 전 합의부터 경찰조사, 검찰송치, 재판까지 직접 대응합니다.',
+			'telephone'    => $tel_schema,
+			'email'        => is_email( $email ) ? $email : '',
+			'address'      => array(
+				'@type'          => 'PostalAddress',
+				'addressCountry' => 'KR',
+				'addressRegion'  => '경기도',
+				'addressLocality'=> '수원시',
+				'streetAddress'  => $street,
+			),
+			'geo'          => array(
+				'@type'     => 'GeoCoordinates',
+				'latitude'  => $lat,
+				'longitude' => $lng,
+			),
+			'areaServed'   => $area_served,
+			'priceRange'   => '$$',
+			'openingHoursSpecification' => $opening_hours,
+			'provider'    => array( '@id' => $organization_id ),
+		),
 	);
-	if ( is_string( $fax ) && trim( $fax ) !== '' ) {
-		$fp_schema['faxNumber'] = trim( $fax );
+	if ( is_string( $has_map ) && trim( $has_map ) !== '' ) {
+		$graph[2]['hasMap'] = $has_map;
 	}
 	echo '<script type="application/ld+json">' . "\n";
-	echo wp_json_encode( $fp_schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+	echo wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 	echo "\n" . '</script>' . "\n";
 }
 add_action( 'wp_head', 'della_theme_front_page_meta_100', 0 );
@@ -1465,6 +1541,25 @@ function della_theme_customize_register( $wp_customize ) {
 		'description' => __( '성공사례 등 JSON-LD 주소에 사용. 비우면 출력하지 않습니다.', 'della-theme' ),
 		'section'     => 'della_directions_section',
 		'type'        => 'text',
+	) );
+	$wp_customize->add_setting( 'della_contact_email', array(
+		'default'           => 'dongjucriminal@gmail.com',
+		'sanitize_callback' => 'sanitize_email',
+	) );
+	$wp_customize->add_control( 'della_contact_email', array(
+		'label'   => __( '대표 이메일 (스키마용)', 'della-theme' ),
+		'section' => 'della_directions_section',
+		'type'    => 'email',
+	) );
+	$wp_customize->add_setting( 'della_has_map_url', array(
+		'default'           => '',
+		'sanitize_callback' => 'esc_url_raw',
+	) );
+	$wp_customize->add_control( 'della_has_map_url', array(
+		'label'       => __( '지도 공유 URL (스키마 hasMap)', 'della-theme' ),
+		'description' => __( '구글지도/네이버지도 공유 URL. 비우면 위도·경도로 자동 생성.', 'della-theme' ),
+		'section'     => 'della_directions_section',
+		'type'        => 'url',
 	) );
 	$wp_customize->add_setting( 'della_naver_place_url', array(
 		'default'           => '',
@@ -2979,16 +3074,10 @@ function della_theme_schema_json_ld() {
 	$schema           = array();
 	$schema_breadcrumb = array();
 
-	// WebSite (front page: LegalService는 100점에서 출력, 여기서는 WebSite만 — 내부 검색 없음으로 SearchAction 미사용).
+	// Front page: @graph(WebSite+Organization+LegalService)는 della_theme_front_page_meta_100에서 출력 → 여기서는 스킵.
 	$schema['@context'] = 'https://schema.org';
 	if ( is_front_page() ) {
-		$schema['@type'] = 'WebSite';
-		$schema['name']  = get_bloginfo( 'name' );
-		$schema['url']   = home_url( '/' );
-		$schema['inLanguage'] = 'ko-KR';
-		if ( get_bloginfo( 'description' ) ) {
-			$schema['description'] = get_bloginfo( 'description' );
-		}
+		// No output; full @graph is in front_page_meta_100.
 	} elseif ( is_home() && get_option( 'show_on_front' ) === 'posts' ) {
 		$schema['@type'] = 'WebSite';
 		$schema['name'] = get_bloginfo( 'name' );
@@ -3159,11 +3248,20 @@ function della_theme_schema_json_ld() {
 		$phone       = get_theme_mod( 'della_phone', '1522-3394' );
 		$postal_code = get_theme_mod( 'della_postal_code', '' );
 		$logo_id     = get_theme_mod( 'custom_logo', 0 );
-		$logo_url    = $logo_id ? wp_get_attachment_image_url( (int) $logo_id, 'full' ) : '';
-		if ( ! $logo_url ) {
-			$logo_url = home_url( '/img/logo.png' );
+		$logo_url = function_exists( 'della_theme_get_site_logo_url' ) ? della_theme_get_site_logo_url() : '';
+		if ( ! $logo_url && $logo_id ) {
+			$logo_url = wp_get_attachment_image_url( (int) $logo_id, 'full' );
 		}
-		$og_image = apply_filters( 'della_theme_schema_og_image', home_url( '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg' ) );
+		if ( ! $logo_url ) {
+			$ud = wp_upload_dir();
+			$logo_url = ( ! empty( $ud['baseurl'] ) && file_exists( ( $ud['basedir'] ?? '' ) . '/2026/03/logo_on.png' ) )
+				? $ud['baseurl'] . '/2026/03/logo_on.png'
+				: home_url( '/img/logo.png' );
+		}
+		$og_image = function_exists( 'della_theme_get_home_og_image_url' ) ? della_theme_get_home_og_image_url() : '';
+		if ( ! $og_image ) {
+			$og_image = apply_filters( 'della_theme_schema_og_image', home_url( '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg' ) );
+		}
 		if ( ! $og_image ) {
 			$og_image = home_url( '/img/og-sexcrime-dongju.jpg' );
 		}
@@ -3226,7 +3324,6 @@ function della_theme_schema_json_ld() {
 			'url'          => $base_url,
 			'logo'         => $logo_url,
 			'image'        => array( $og_image ),
-			'telephone'    => $phone,
 			'priceRange'   => '상담 문의',
 			'areaServed'   => array(
 				array( '@type' => 'AdministrativeArea', 'name' => '수원' ),
@@ -3235,6 +3332,7 @@ function della_theme_schema_json_ld() {
 			'serviceType'  => array( '성범죄 변호', '강제추행 변호', '카메라등이용촬영죄 변호', '아청법 변호' ),
 			'address'      => $address,
 		);
+		$legal_service['telephone'] = function_exists( 'della_theme_format_telephone_for_schema' ) ? della_theme_format_telephone_for_schema( $phone ) : $phone;
 		if ( is_string( $fax ) && trim( $fax ) !== '' ) {
 			$legal_service['faxNumber'] = trim( $fax );
 		}

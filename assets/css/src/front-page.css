@@ -42,7 +42,7 @@ body.front-page .content-sidebar-wrap {
 
 body.home .content-sidebar-wrap .site-main,
 body.front-page .content-sidebar-wrap .site-main {
-  display: none;
+  display: block;
 }
 
 .content-sidebar-wrap > .hub-guide,
