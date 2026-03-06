@@ -1317,7 +1317,11 @@ function della_theme_front_page_meta_100() {
 	if ( ( ! is_string( $has_map ) || trim( $has_map ) === '' ) && is_numeric( $lat ) && is_numeric( $lng ) ) {
 		$has_map = 'https://www.google.com/maps?q=' . $lat . ',' . $lng;
 	}
-	$area_served = apply_filters( 'della_theme_schema_area_served', array( '수원', '용인', '성남', '화성', '동탄', '오산', '평택', '안양', '의왕', '안산', '이천', '안성' ) );
+	$area_served_names = apply_filters( 'della_theme_schema_area_served', array( '수원', '용인', '성남', '화성', '동탄', '오산', '평택', '안양', '의왕', '안산', '이천', '안성' ) );
+	$area_served = array();
+	foreach ( (array) $area_served_names as $city_name ) {
+		$area_served[] = array( '@type' => 'City', 'name' => $city_name );
+	}
 	$opening_hours = apply_filters( 'della_theme_schema_opening_hours', array(
 		array( '@type' => 'OpeningHoursSpecification', 'dayOfWeek' => array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ), 'opens' => '09:00', 'closes' => '19:00' ),
 		array( '@type' => 'OpeningHoursSpecification', 'dayOfWeek' => array( 'Saturday', 'Sunday' ), 'opens' => '09:00', 'closes' => '18:00' ),
@@ -1377,7 +1381,69 @@ function della_theme_front_page_meta_100() {
 	echo wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 	echo "\n" . '</script>' . "\n";
 }
-add_action( 'wp_head', 'della_theme_front_page_meta_100', 0 );
+	add_action( 'wp_head', 'della_theme_front_page_meta_100', 0 );
+
+/**
+ * 홈 FAQ 항목 (hub-faq 템플릿 + FAQPage JSON-LD 공용)
+ *
+ * @return array[] { question, answer }
+ */
+function della_theme_get_hub_faq_items() {
+	$items = array(
+		array(
+			'question' => '성범죄 혐의를 받으면 가장 먼저 무엇을 해야 하나요?',
+			'answer'   => '혐의 내용을 확인한 뒤, 출석·조사 일정 전에 변호인과 상담하는 것이 좋습니다. 진술 방향, 증거 보관 여부, 압수수색 가능성 등을 미리 정리해 두면 경찰조사·검찰 송치·재판 단계에서 유리하게 대응할 수 있습니다. 수원 성범죄 변호사는 사건 단계별 전략을 안내합니다.',
+		),
+		array(
+			'question' => '경찰조사 전에 합의를 시도해야 하나요?',
+			'answer'   => '합의 시점은 사건마다 다릅니다. 고소 전 합의가 유리한 경우도 있고, 수사가 진행된 뒤 피해자 측과 협의하는 것이 적절한 경우도 있습니다. 합의는 기소 여부·양형에 참고되지만, 합의만으로 수사가 종결되는 것은 아니므로, 변호인과 상담해 시기와 방식을 결정하는 것이 좋습니다.',
+		),
+		array(
+			'question' => '휴대전화를 제출하라고 하면 어떻게 해야 하나요?',
+			'answer'   => '압수수색은 법원 영장에 따라 진행됩니다. 수색 대상·범위·절차적 하자 여부를 변호인이 함께 검토할 수 있습니다. 불법촬영·디지털 성범죄 사건에서는 촬영물 보관 위치와 삭제 여부가 쟁점이 될 수 있으므로, 영장 접수 후 변호인과 상담하는 것을 권합니다.',
+		),
+		array(
+			'question' => '초범이면 기소유예 가능성이 높아지나요?',
+			'answer'   => '초범은 기소유예 판단에서 참고 요소 중 하나이지만, 혐의의 경중, 증거 상황, 피해자와의 합의, 반성 여부 등이 함께 고려됩니다. 유형별 법조문·양형 기준이 다르므로, 강제추행·카메라촬영·아청법 등 해당 유형의 대응정보와 성공사례를 참고하고 변호인과 기소유예 가능성을 검토하는 것이 좋습니다.',
+		),
+		array(
+			'question' => '디지털 성범죄는 일반 성범죄와 무엇이 다른가요?',
+			'answer'   => '불법촬영·카메라등이용촬영죄·아청법·성적 영상물 유포 등 디지털 성범죄는 촬영·보관·유통 경로에 대한 디지털 증거가 핵심입니다. 수사기관의 압수수색 대상과 절차, 촬영물 삭제·복구 여부, 연령 인식 가능성(아청법) 등 유형별 쟁점이 있어, 수원 디지털 성범죄 변호사 상담을 통해 법조문·판례·대응 가이드를 확인할 수 있습니다.',
+		),
+	);
+	return apply_filters( 'della_theme_hub_faq_items', $items );
+}
+
+/**
+ * FAQPage JSON-LD — 홈에서만 head에 출력
+ */
+function della_theme_output_faqpage_schema() {
+	if ( ! is_front_page() ) {
+		return;
+	}
+	$faq_items = della_theme_get_hub_faq_items();
+	if ( empty( $faq_items ) ) {
+		return;
+	}
+	$main_entity = array();
+	foreach ( $faq_items as $item ) {
+		$main_entity[] = array(
+			'@type'          => 'Question',
+			'name'            => $item['question'],
+			'acceptedAnswer'  => array(
+				'@type' => 'Answer',
+				'text'  => $item['answer'],
+			),
+		);
+	}
+	$schema = array(
+		'@context'   => 'https://schema.org',
+		'@type'      => 'FAQPage',
+		'mainEntity' => $main_entity,
+	);
+	echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>' . "\n";
+}
+add_action( 'wp_head', 'della_theme_output_faqpage_schema', 2 );
 
 /**
  * Google Analytics 4 (GA4) — head에 gtag 스크립트 출력 (복수 측정 ID 지원)
@@ -3163,20 +3229,25 @@ function della_theme_schema_json_ld() {
 		echo '<script type="application/ld+json">' . "\n" . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n" . '</script>' . "\n";
 	}
 
-	// 성범죄 전문 변호사 페이지: ItemList + Person (SEO)
+	// 성범죄 전문 변호사 페이지: ItemList + Person (SEO, Lawyer schema)
+	$legalservice_id_schema = home_url( '/' ) . '#legalservice';
 	if ( della_theme_is_lawyers_page() ) {
 		$lawyers   = della_theme_get_lawyers();
 		$upload_dir = wp_upload_dir();
 		$img_base   = $upload_dir['baseurl'] . '/2026/02';
 		$img_dir    = $upload_dir['basedir'] . '/2026/02';
+		$lawyers_page_url = function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : home_url( '/' );
 		$persons    = array();
 		foreach ( $lawyers as $lawyer ) {
 			$img_url = della_theme_lawyer_image_url( $lawyer['image'], $img_base, $img_dir );
+			$person_url = ! empty( $lawyer['slug'] ) ? $lawyers_page_url . '#' . $lawyer['slug'] : $lawyers_page_url;
 			$persons[] = array(
 				'@type'     => 'Person',
 				'name'      => $lawyer['name'],
 				'jobTitle'  => $lawyer['title'],
 				'image'     => $img_url,
+				'url'       => $person_url,
+				'worksFor'  => array( '@id' => $legalservice_id_schema ),
 			);
 		}
 		$lawyers_schema = array(
@@ -3298,8 +3369,12 @@ function della_theme_schema_json_ld() {
 				$sc_list_items[] = array(
 					'@type'    => 'ListItem',
 					'position' => $pos,
-					'url'      => get_permalink( $post ),
 					'name'     => $item_name,
+					'item'     => array(
+						'@type' => 'WebPage',
+						'name'  => $item_name,
+						'url'   => get_permalink( $post ),
+					),
 				);
 			}
 		}
@@ -3326,8 +3401,11 @@ function della_theme_schema_json_ld() {
 			'image'        => array( $og_image ),
 			'priceRange'   => '상담 문의',
 			'areaServed'   => array(
-				array( '@type' => 'AdministrativeArea', 'name' => '수원' ),
-				array( '@type' => 'AdministrativeArea', 'name' => '경기도' ),
+				array( '@type' => 'City', 'name' => '수원' ),
+				array( '@type' => 'City', 'name' => '용인' ),
+				array( '@type' => 'City', 'name' => '성남' ),
+				array( '@type' => 'City', 'name' => '화성' ),
+				array( '@type' => 'City', 'name' => '동탄' ),
 			),
 			'serviceType'  => array( '성범죄 변호', '강제추행 변호', '카메라등이용촬영죄 변호', '아청법 변호' ),
 			'address'      => $address,
@@ -3411,9 +3489,40 @@ function della_theme_schema_json_ld() {
 			);
 		}
 		echo '<script type="application/ld+json">' . "\n" . wp_json_encode( $sitemap_schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n" . '</script>' . "\n";
+
+		// Hub 구조 내부링크 ItemList (수원 성범죄 허브 메인 내 섹션·하위 허브)
+		$info_url_hub  = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/성범죄-대응정보/' );
+		$cases_url_hub = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/성범죄-성공사례/' );
+		$base_hub      = home_url( '/' );
+		$hub_nav_items = array(
+			array( 'name' => __( '수원 성범죄 변호사 허브 소개', 'della-theme' ), 'url' => $base_hub . '#hub-guide' ),
+			array( 'name' => __( '사건유형별 대응 안내', 'della-theme' ), 'url' => $base_hub . '#response-type-hub' ),
+			array( 'name' => __( '대응상황별 안내', 'della-theme' ), 'url' => $base_hub . '#response-situation-hub' ),
+			array( 'name' => __( '성범죄 FAQ', 'della-theme' ), 'url' => $base_hub . '#hub-faq' ),
+			array( 'name' => __( '성공사례', 'della-theme' ), 'url' => $base_hub . '#success-stories-heading' ),
+			array( 'name' => __( '성범죄 대응정보', 'della-theme' ), 'url' => $info_url_hub ),
+			array( 'name' => __( '성범죄 성공사례 목록', 'della-theme' ), 'url' => $cases_url_hub ),
+		);
+		$hub_schema = array(
+			'@context'        => 'https://schema.org',
+			'@type'           => 'ItemList',
+			'name'            => __( '성범죄 전문 허브 내부 링크', 'della-theme' ),
+			'description'     => __( '수원 성범죄 변호사 허브 메인 내 섹션 및 대응정보·성공사례 링크', 'della-theme' ),
+			'itemListElement' => array(),
+		);
+		foreach ( $hub_nav_items as $pos => $item ) {
+			$hub_schema['itemListElement'][] = array(
+				'@type'    => 'ListItem',
+				'position' => $pos + 1,
+				'name'     => $item['name'],
+				'url'      => $item['url'],
+			);
+		}
+		echo '<script type="application/ld+json">' . "\n" . wp_json_encode( $hub_schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n" . '</script>' . "\n";
 	}
 
-	if ( ! empty( $schema_breadcrumb['itemListElement'] ) && ! della_theme_is_success_cases_page() ) {
+	// BreadcrumbList: 홈페이지에는 출력하지 않음. 하위 페이지에서만 사용.
+	if ( ! empty( $schema_breadcrumb['itemListElement'] ) && ! is_front_page() && ! della_theme_is_success_cases_page() ) {
 		echo '<script type="application/ld+json">' . "\n" . wp_json_encode( $schema_breadcrumb, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n" . '</script>' . "\n";
 	}
 }

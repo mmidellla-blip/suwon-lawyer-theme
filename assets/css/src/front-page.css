@@ -47,6 +47,8 @@ body.front-page .content-sidebar-wrap .site-main {
 
 .content-sidebar-wrap > .hub-guide,
 .content-sidebar-wrap > .response-type-hub,
+.content-sidebar-wrap > .response-situation-hub,
+.content-sidebar-wrap > .hub-faq,
 .content-sidebar-wrap > .success-stories,
 .content-sidebar-wrap > .process-cards,
 .content-sidebar-wrap > .major-services,
@@ -63,18 +65,110 @@ body.front-page .content-sidebar-wrap .site-main {
 }
 
 section.hub-guide {
-  padding: var(--space-6) var(--della-gap) var(--space-4);
-  background-color: #faf7f2;
+  padding: var(--space-6) var(--della-gap) var(--space-5);
+  background-color: #f5f3ef;
   background-repeat: repeat;
   background-position: center;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 section.response-type-hub {
-  padding: 0 var(--della-gap) var(--section-y, 2.5rem);
-  background-color: #faf7f2;
+  padding: var(--space-5) var(--della-gap) var(--section-y, 2.5rem);
+  background-color: #f5f3ef;
   background-repeat: repeat;
   background-position: center;
+}
+
+/* 대응상황 허브 – response-type-hub 톤 통일, 3열→2열→1열 */
+section.response-situation-hub {
+  padding: var(--space-5) var(--della-gap) var(--section-y, 2.5rem);
+  background-color: #faf9f7;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.response-situation-hub-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--della-gap);
+}
+
+.response-situation-hub-title {
+  margin: 0 0 var(--space-2);
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  font-weight: 700;
+  color: #1a1a1a;
+  font-family: var(--della-font-serif-kr);
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+
+.response-situation-hub-desc {
+  margin: 0 0 var(--space-4);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--della-color-muted, #555);
+  max-width: 52em;
+}
+
+.response-situation-hub-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 899px) {
+  .response-situation-hub-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 479px) {
+  .response-situation-hub-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.response-situation-hub-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.25rem 1.35rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  text-decoration: none;
+  text-align: left;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.response-situation-hub-link:hover {
+  border-color: rgba(139, 128, 95, 0.35);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 14px rgba(139, 128, 95, 0.08);
+  color: #1a1a1a;
+}
+
+.response-situation-hub-link-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  color: #2c2c2c;
+  font-size: 1rem;
+}
+
+.response-situation-hub-link-desc {
+  display: block;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--della-color-muted, #555);
+  font-weight: 400;
 }
 
 .hub-guide-inner,
@@ -94,23 +188,79 @@ section.response-type-hub {
   text-align: left;
 }
 
+/* 허브 가이드 카드: 전문적인 읽기 영역 */
+.hub-guide-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
 .hub-guide-body {
   font-size: 0.9375rem;
-  line-height: 1.65;
-  color: var(--della-color-muted, #555);
-  max-width: 52em;
+  line-height: 1.8;
+  color: #444;
+  max-width: 48em;
+  letter-spacing: 0.01em;
 }
 
 .hub-guide-body p {
-  margin: 0 0 1rem;
+  margin: 0 0 1.25rem;
 }
 
 .hub-guide-body p:last-child {
   margin-bottom: 0;
 }
 
+.hub-guide-lead {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #333;
+  margin-bottom: 1.5rem !important;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.hub-guide-h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c2c2c;
+  font-family: var(--della-font-serif-kr);
+  letter-spacing: -0.01em;
+}
+
+.hub-guide-body a {
+  color: var(--della-point-color, #8a7c52);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  font-weight: 500;
+}
+
+.hub-guide-body a:hover {
+  color: #6d6335;
+  text-decoration: underline;
+}
+
+@media (min-width: 768px) {
+  .hub-guide-card {
+    padding: 2rem 2.25rem;
+  }
+
+  .hub-guide-body {
+    font-size: 1rem;
+    line-height: 1.85;
+  }
+
+  .hub-guide-h3 {
+    font-size: 1.0625rem;
+    margin-top: 0.25rem;
+  }
+}
+
 .response-type-hub-title {
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-2);
   font-size: clamp(1.25rem, 3vw, 1.5rem);
   font-weight: 700;
   color: #1a1a1a;
@@ -119,9 +269,17 @@ section.response-type-hub {
   text-align: left;
 }
 
+.response-type-hub-desc {
+  margin: 0 0 var(--space-4);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--della-color-muted, #555);
+  max-width: 52em;
+}
+
 .response-type-hub-list {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-3);
   list-style: none;
   margin: 0;
@@ -141,24 +299,143 @@ section.response-type-hub {
 }
 
 .response-type-hub-link {
-  display: block;
-  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.25rem 1.35rem;
   font-size: 0.9375rem;
   font-weight: 500;
   color: #1a1a1a;
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 6px;
+  border-radius: 10px;
   text-decoration: none;
-  text-align: center;
-  transition: border-color 0.2s, background 0.2s, color 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  text-align: left;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.03);
+  min-height: 0;
 }
 
 .response-type-hub-link:hover {
-  border-color: var(--della-point-color, #8B805F);
-  background: rgba(139, 128, 95, 0.06);
+  border-color: rgba(139, 128, 95, 0.35);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 14px rgba(139, 128, 95, 0.08);
   color: #1a1a1a;
+}
+
+.response-type-hub-link-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  color: #2c2c2c;
+  font-size: 1rem;
+}
+
+.response-type-hub-link-desc {
+  display: block;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--della-color-muted, #555);
+  font-weight: 400;
+}
+
+/* Hub FAQ – 가독성·전문 톤 */
+section.hub-faq {
+  padding: var(--section-y, 2.5rem) var(--della-gap);
+  background-color: #faf9f7;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.hub-faq-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--della-gap);
+}
+
+.hub-faq-title {
+  margin: 0 0 var(--space-2);
+  font-size: clamp(1.375rem, 3.5vw, 1.875rem);
+  font-weight: 700;
+  color: #1a1a1a;
+  font-family: var(--della-font-serif-kr);
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+
+.hub-faq-desc {
+  margin: 0 0 var(--space-5);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--della-color-muted, #555);
+  max-width: 52em;
+}
+
+.hub-faq-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.hub-faq-item {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.hub-faq-item:last-child {
+  margin-bottom: 0;
+}
+
+.hub-faq-q {
+  margin: 0;
+  padding: 1.1rem 1.25rem 0.6rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #2c2c2c;
+  line-height: 1.5;
+}
+
+.hub-faq-q-text {
+  display: block;
+}
+
+.hub-faq-a {
+  margin: 0;
+  padding: 0 1.25rem 1.1rem;
+  font-size: 0.875rem;
+  line-height: 1.8;
+  color: #444;
+  letter-spacing: 0.01em;
+}
+
+.hub-faq-a p {
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .hub-faq-item {
+    padding: 0;
+    margin-bottom: 0.85rem;
+  }
+
+  .hub-faq-q {
+    padding: 1.25rem 1.5rem 0.5rem;
+    font-size: 1rem;
+  }
+
+  .hub-faq-a {
+    padding: 0 1.5rem 1.35rem;
+    font-size: 0.9375rem;
+    line-height: 1.85;
+  }
 }
 
 /* ==========================================================================

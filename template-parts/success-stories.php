@@ -30,7 +30,7 @@ if ( $cat ) {
 		<header class="success-stories-header">
 			<div class="success-stories-header-left">
 				<h2 id="success-stories-heading" class="success-stories-title section-title">성범죄 성공사례</h2>
-				<p class="section-desc">강제추행, 불법촬영, 아청법 사건에서 무혐의·기소유예 등 결과를 이끈 실제 사건 사례입니다.</p>
+				<p class="success-stories-intro section-desc">어떤 사건들이 실제로 어떻게 정리되었는지 확인하는 것이 대응 전략을 세우는 데 도움이 됩니다. 강제추행·카메라촬영·아청법 등 유형별로 무혐의, 기소유예, 집행유예, 선처 등 결과를 이끈 사례를 정리해 두었습니다.</p>
 				<div class="case-links">
 					<a href="<?php echo esc_url( $archive_url ); ?>">성범죄 성공사례</a>
 					<span class="dot" aria-hidden="true">·</span>

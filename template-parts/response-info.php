@@ -47,17 +47,23 @@ $response_info_bg  = content_url( 'uploads/2026/02/response-info-bg.webp' );
 $info_url          = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/성범죄-대응정보/' );
 $case_url          = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/' );
 
-// 카테고리 slug → 표시용 태그 (강제추행, 카메라촬영, 아청법, 성범죄 대응)
+// 카테고리 slug → 표시용 태그 (성공사례, 대응정보, 처벌기준 통일)
 $response_info_tag_map = array(
-	'강제추행'     => '강제추행',
-	'sexual_assult' => '강제추행',
-	'rape'          => '강제추행',
-	'카메라촬영'   => '카메라촬영',
-	'spycam'        => '카메라촬영',
-	'불법촬영'     => '카메라촬영',
-	'아청법'       => '아청법',
-	'대응정보'     => '성범죄 대응',
-	'response-info' => '성범죄 대응',
+	'성공사례'     => '성공사례',
+	'success'      => '성공사례',
+	'성공'         => '성공사례',
+	'처벌기준'     => '처벌기준',
+	'penalty'      => '처벌기준',
+	'양형'         => '처벌기준',
+	'강제추행'     => '대응정보',
+	'sexual_assult' => '대응정보',
+	'rape'         => '대응정보',
+	'카메라촬영'   => '대응정보',
+	'spycam'       => '대응정보',
+	'불법촬영'     => '대응정보',
+	'아청법'       => '대응정보',
+	'대응정보'     => '대응정보',
+	'response-info' => '대응정보',
 );
 
 $list_items_schema = array();
@@ -80,10 +86,10 @@ if ( $query && $query->have_posts() ) {
 	<div class="response-info-inner">
 		<header class="response-info-header">
 			<div class="response-info-header-text">
-				<h2 id="response-info-heading" class="response-info-title section-title">성범죄 대응 정보</h2>
-				<p class="response-info-desc section-desc">성범죄 사건 대응을 위해 알아야 할 처벌 기준과 수사 절차, 대응 전략을 정리했습니다.</p>
+				<h2 id="response-info-heading" class="response-info-title section-title">성범죄 대응 정보와 성공사례</h2>
+				<p class="response-info-desc section-desc">사건 유형별 대응 방법, 실제 진행 흐름, 처분 결과에 관한 정보를 함께 확인할 수 있도록 정리했습니다.</p>
 			</div>
-			<a href="<?php echo esc_url( $info_url ); ?>" class="response-info-cta" aria-label="<?php esc_attr_e( '대응 정보 전체 목록 보기', 'della-theme' ); ?>"><?php esc_html_e( '더 보러 가기', 'della-theme' ); ?> &gt;</a>
+			<a href="<?php echo esc_url( $info_url ); ?>" class="response-info-cta" aria-label="<?php esc_attr_e( '대응정보·성공사례 전체 보기', 'della-theme' ); ?>"><?php esc_html_e( '대응정보 전체 보기', 'della-theme' ); ?> &gt;</a>
 		</header>
 
 		<?php if ( $query && $query->have_posts() ) : ?>
@@ -92,8 +98,8 @@ if ( $query && $query->have_posts() ) {
 			$itemlist_schema = array(
 				'@context'        => 'https://schema.org',
 				'@type'           => 'ItemList',
-				'name'            => '성범죄 대응 정보',
-				'description'     => '강제추행·카메라촬영·아청법 법률 가이드 및 수원 성범죄 전문변호사 대응 정보',
+				'name'            => '성범죄 대응 정보와 성공사례',
+				'description'     => '사건 유형별 대응 방법, 진행 흐름, 처분 결과. 수원 성범죄 전문변호사 대응정보·성공사례 허브 확장 영역.',
 				'numberOfItems'   => count( $list_items_schema ),
 				'itemListElement' => $list_items_schema,
 			);
@@ -108,7 +114,7 @@ if ( $query && $query->have_posts() ) {
 					$post_id     = get_the_ID();
 					$card_title  = get_post_meta( $post_id, 'della_info_seo_title', true ) ? get_post_meta( $post_id, 'della_info_seo_title', true ) : get_the_title();
 					$post_cats   = get_the_category();
-					$tag_label   = '성범죄 대응';
+					$tag_label   = '대응정보';
 					if ( ! empty( $post_cats[0]->slug ) && isset( $response_info_tag_map[ $post_cats[0]->slug ] ) ) {
 						$tag_label = $response_info_tag_map[ $post_cats[0]->slug ];
 					} else {

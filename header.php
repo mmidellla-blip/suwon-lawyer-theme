@@ -27,12 +27,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 			}
 		}
 	}
-	// LCP: 히어로 이미지 preload + preconnect (프론트만)
+	// LCP: 히어로 이미지 preload (상대경로로 출력 — 도메인 변경 시에도 동작)
 	if ( is_front_page() ) {
 		$della_ud = wp_upload_dir();
 		if ( ! empty( $della_ud['baseurl'] ) ) {
-			$hero_url = $della_ud['baseurl'] . '/2026/02/dongju-law-hero-banner.webp';
-			echo '<link rel="preload" href="' . esc_url( $hero_url ) . '" as="image" fetchpriority="high">' . "\n";
+			$upload_path = wp_parse_url( $della_ud['baseurl'], PHP_URL_PATH );
+			$hero_url    = ( $upload_path ? rtrim( $upload_path, '/' ) : '' ) . '/2026/02/dongju-law-hero-banner.webp';
+			echo '<link rel="preload" href="' . esc_attr( $hero_url ) . '" as="image" fetchpriority="high">' . "\n";
 			$parsed = parse_url( $della_ud['baseurl'] );
 			if ( ! empty( $parsed['scheme'] ) && ! empty( $parsed['host'] ) ) {
 				echo '<link rel="preconnect" href="' . esc_attr( $parsed['scheme'] . '://' . $parsed['host'] ) . '">' . "\n";
