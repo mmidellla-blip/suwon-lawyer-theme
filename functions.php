@@ -1266,7 +1266,7 @@ function della_theme_homepage_seo_meta() {
 <!-- Open Graph -->
 <meta property="og:locale" content="ko_KR">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="법무법인 동주">
+<meta property="og:site_name" content="<?php echo esc_attr( della_theme_firm_name() ); ?>">
 <meta property="og:title" content="<?php echo esc_attr( $title ); ?>">
 <meta property="og:description" content="<?php echo esc_attr( $description ); ?>">
 <meta property="og:url" content="<?php echo esc_url( $base_url ); ?>">
@@ -1288,6 +1288,96 @@ function della_theme_homepage_seo_meta() {
 	<?php
 }
 add_action( 'wp_head', 'della_theme_homepage_seo_meta', 0 );
+
+/**
+ * 홈 아닌 페이지에서 OG / Twitter 메타 출력 (og:site_name = 법인명, 홈과 동일 톤).
+ * SEO 플러그인 사용 시 중복되면 add_filter( 'della_theme_output_non_home_og_twitter', '__return_false' ); 로 비활성화.
+ */
+function della_theme_output_non_home_og_twitter_meta() {
+	if ( is_front_page() ) {
+		return;
+	}
+	if ( ! apply_filters( 'della_theme_output_non_home_og_twitter', true ) ) {
+		return;
+	}
+
+	$firm_name = della_theme_firm_name();
+	$title     = wp_get_document_title();
+	$title     = function_exists( 'della_theme_trim_document_title' ) ? della_theme_trim_document_title( $title ) : $title;
+	if ( empty( $title ) ) {
+		$title = $firm_name . ( get_bloginfo( 'description' ) ? ' - ' . get_bloginfo( 'description' ) : '' );
+	}
+
+	$description = function_exists( 'della_theme_get_fallback_description' ) ? della_theme_get_fallback_description() : get_bloginfo( 'description' );
+	$description = is_string( $description ) ? wp_strip_all_tags( preg_replace( '/\s+/', ' ', trim( $description ) ) ) : '';
+	if ( function_exists( 'della_theme_trim_meta_description' ) ) {
+		$description = della_theme_trim_meta_description( $description );
+	}
+	if ( function_exists( 'della_theme_ensure_description_length' ) && $description ) {
+		$description = della_theme_ensure_description_length( $description, $firm_name );
+	}
+	if ( empty( $description ) ) {
+		$description = $firm_name . ' ' . __( '수원 성범죄 전문 변호사.', 'della-theme' );
+	}
+
+	$url = function_exists( 'della_theme_get_canonical_url' ) ? della_theme_get_canonical_url() : '';
+	if ( empty( $url ) ) {
+		if ( is_singular() ) {
+			$url = get_permalink();
+		} elseif ( is_category() ) {
+			$term = get_queried_object();
+			$url  = $term && ( $term instanceof WP_Term ) ? get_category_link( $term ) : home_url( '/' );
+		} elseif ( is_tag() ) {
+			$term = get_queried_object();
+			$url  = $term && ( $term instanceof WP_Term ) ? get_tag_link( $term ) : home_url( '/' );
+		} elseif ( is_author() ) {
+			$url = get_author_posts_url( get_queried_object_id() );
+		} elseif ( is_search() ) {
+			$url = get_search_link();
+		} else {
+			$url = home_url( add_query_arg( array() ) );
+		}
+	}
+	$url = is_string( $url ) && $url !== '' ? $url : home_url( '/' );
+
+	$image = '';
+	if ( is_singular() ) {
+		$post = get_queried_object();
+		if ( $post instanceof WP_Post && has_post_thumbnail( $post ) ) {
+			$image = get_the_post_thumbnail_url( $post, 'large' );
+		}
+	}
+	if ( empty( $image ) ) {
+		$image = get_site_icon_url( 512 );
+	}
+	if ( empty( $image ) && function_exists( 'della_theme_get_home_og_image_url' ) ) {
+		$image = della_theme_get_home_og_image_url();
+	}
+
+	$type = is_singular() ? 'article' : 'website';
+	$lang = get_bloginfo( 'language' );
+	$lang = $lang ? $lang : 'ko_KR';
+	?>
+<!-- Open Graph (non-home) -->
+<meta property="og:type" content="<?php echo esc_attr( $type ); ?>">
+<meta property="og:site_name" content="<?php echo esc_attr( $firm_name ); ?>">
+<meta property="og:title" content="<?php echo esc_attr( $title ); ?>">
+<meta property="og:description" content="<?php echo esc_attr( $description ); ?>">
+<meta property="og:url" content="<?php echo esc_url( $url ); ?>">
+<?php if ( $image ) : ?>
+<meta property="og:image" content="<?php echo esc_url( $image ); ?>">
+<?php endif; ?>
+<meta property="og:locale" content="<?php echo esc_attr( str_replace( '-', '_', $lang ) ); ?>">
+<!-- Twitter Card (non-home) -->
+<meta name="twitter:card" content="<?php echo $image ? 'summary_large_image' : 'summary'; ?>">
+<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>">
+<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>">
+<?php if ( $image ) : ?>
+<meta name="twitter:image" content="<?php echo esc_url( $image ); ?>">
+<?php endif; ?>
+	<?php
+}
+add_action( 'wp_head', 'della_theme_output_non_home_og_twitter_meta', 1 );
 
 /**
  * 스키마용 sameAs URL 목록 (Organization / LegalService 공통)
