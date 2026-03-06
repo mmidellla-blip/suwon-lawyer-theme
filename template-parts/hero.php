@@ -22,7 +22,7 @@ $hero_legal_script = array(
 	'description' => get_bloginfo( 'description' ) ?: '형사사건 전문 변호사 팀. 같은 사건에 자신 있는 다른 변호사들이 모여 만드는 시너지.',
 	'url'         => home_url( '/' ),
 	'image'       => array( array( '@type' => 'ImageObject', 'url' => $bg_url ) ),
-	'telephone'   => '+82-1688-3971',
+	'telephone'   => get_theme_mod( 'della_phone', '1522-3394' ),
 	'areaServed'  => array( '@id' => 'https://www.wikidata.org/wiki/Q884' ),
 	'priceRange'  => '상담 후 안내',
 	'employee'    => array(),
@@ -39,6 +39,8 @@ foreach ( $lawyers as $lawyer ) {
 $hero_home_url   = apply_filters( 'della_hero_home_url', get_theme_mod( 'della_hero_home_url', home_url( '/' ) ) );
 $hero_url_cases  = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/성범죄-성공사례/' );
 $hero_url_info   = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/성범죄-대응정보/' );
+$hero_phone      = get_theme_mod( 'della_phone', '1522-3394' );
+$hero_phone_tel  = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_phone );
 ?>
 <section id="hero" class="hero" aria-labelledby="hero-title" style="background-image: url(<?php echo esc_url( $bg_url ); ?>);" itemscope itemtype="https://schema.org/LegalService">
 	<div class="hero-overlay" aria-hidden="true"></div>
@@ -79,11 +81,11 @@ $hero_url_info   = function_exists( 'della_theme_response_board_page_url' ) ? de
 
 		<div class="hero-cta hero-cta-in-hero" role="group" aria-label="상담 연락">
 			<p class="hero-cta-text"><span class="hero-cta-text-bold">지금 바로 상담 가능</span> 성범죄 사건 상담전화</p>
-			<a href="tel:+82-1688-3971" class="hero-cta-phone hero-cta-action" aria-label="상담 전화 걸기 1688-3971" title="1688-3971">
+			<a href="<?php echo esc_url( $hero_phone_tel ); ?>" class="hero-cta-phone hero-cta-action" aria-label="<?php echo esc_attr( sprintf( __( '상담 전화 걸기 %s', 'della-theme' ), $hero_phone ) ); ?>" title="<?php echo esc_attr( $hero_phone ); ?>">
 				<span class="hero-cta-action-icon" aria-hidden="true">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
 				</span>
-				<span class="hero-cta-tel">1688-3971</span>
+				<span class="hero-cta-tel"><?php echo esc_html( $hero_phone ); ?></span>
 			</a>
 			<a href="<?php echo esc_url( $hero_home_url ); ?>" class="hero-cta-button hero-cta-action" aria-label="홈페이지 바로가기">
 				<span class="hero-cta-action-icon" aria-hidden="true">

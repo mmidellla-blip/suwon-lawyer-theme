@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $road_address   = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
 $road_address2  = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
 $lot_address    = get_theme_mod( 'della_lot_address', '경기 수원시 영통구 하동 989' );
-$phone          = get_theme_mod( 'della_phone', '031-216-1155' );
+$phone          = get_theme_mod( 'della_phone', '1522-3394' );
 $naver_reserve_url = get_theme_mod( 'della_naver_reserve_url', 'https://naver.me/FQVkj6Eh' );
 if ( ! $naver_reserve_url ) {
 	$naver_reserve_url = 'https://naver.me/FQVkj6Eh';

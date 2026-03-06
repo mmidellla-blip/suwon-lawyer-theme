@@ -54,8 +54,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<span class="footer-contact-item"><strong><?php esc_html_e( '대표변호사', 'della-theme' ); ?></strong> <?php esc_html_e( '이세환 대표변호사', 'della-theme' ); ?></span>
 					<span class="footer-contact-item"><strong><?php esc_html_e( '광고책임변호사', 'della-theme' ); ?></strong> <?php esc_html_e( '이세진 변호사', 'della-theme' ); ?></span>
 					<span class="footer-contact-row">
-						<span class="footer-contact-item"><strong><?php esc_html_e( '전화번호', 'della-theme' ); ?></strong> <a href="tel:15223394">1522-3394</a></span>
-						<span class="footer-contact-item"><strong><?php esc_html_e( '팩스', 'della-theme' ); ?></strong> 02-523-7260</span>
+						<?php
+						$footer_phone     = get_theme_mod( 'della_phone', '1522-3394' );
+						$footer_phone_tel = 'tel:' . preg_replace( '/[^0-9+]/', '', $footer_phone );
+						?>
+						<span class="footer-contact-item"><strong><?php esc_html_e( '전화번호', 'della-theme' ); ?></strong> <a href="<?php echo esc_url( $footer_phone_tel ); ?>"><?php echo esc_html( $footer_phone ); ?></a></span>
+						<span class="footer-contact-item"><strong><?php esc_html_e( '팩스', 'della-theme' ); ?></strong> <?php echo esc_html( get_theme_mod( 'della_fax', '031-216-1160' ) ); ?></span>
 						<span class="footer-contact-item"><strong><?php esc_html_e( '사업자등록번호', 'della-theme' ); ?></strong> 128-88-01756</span>
 					</span>
 				</p>

@@ -1129,33 +1129,35 @@ function della_theme_front_page_meta_100() {
 	$road     = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
 	$road2    = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
 	$street   = trim( $road . ' ' . $road2 );
-	$phone    = get_theme_mod( 'della_phone', '031-216-1155' );
+	$phone    = get_theme_mod( 'della_phone', '1522-3394' );
+	$fax      = get_theme_mod( 'della_fax', '031-216-1160' );
 	$base_url = home_url( '/' );
 	$og_image = home_url( '/img/og-sexcrime-dongju.jpg' );
 	$logo_url = home_url( '/img/logo.png' );
-	echo '<script type="application/ld+json">' . "\n";
-	echo wp_json_encode(
-		array(
-			'@context'    => 'https://schema.org',
-			'@type'       => 'LegalService',
-			'name'        => '법무법인 동주',
-			'url'         => $base_url,
-			'image'       => $og_image,
-			'logo'        => $logo_url,
-			'description' => '수원 성범죄 전문변호사 법무법인 동주. 고소 전 합의부터 경찰조사, 검찰송치, 재판까지 직접 대응.',
-			'address'     => array(
-				'@type'           => 'PostalAddress',
-				'addressCountry'  => 'KR',
-				'addressRegion'   => '경기도',
-				'addressLocality' => '수원',
-				'streetAddress'   => $street,
-			),
-			'areaServed'  => array( '수원', '용인', '성남', '화성', '동탄', '안양', '의왕', '안산', '오산', '평택', '안성', '이천' ),
-			'telephone'   => $phone,
-			'priceRange'  => '$$',
+	$fp_schema = array(
+		'@context'    => 'https://schema.org',
+		'@type'       => 'LegalService',
+		'name'        => '법무법인 동주',
+		'url'         => $base_url,
+		'image'       => $og_image,
+		'logo'        => $logo_url,
+		'description' => '수원 성범죄 전문변호사 법무법인 동주. 고소 전 합의부터 경찰조사, 검찰송치, 재판까지 직접 대응.',
+		'address'     => array(
+			'@type'           => 'PostalAddress',
+			'addressCountry'  => 'KR',
+			'addressRegion'   => '경기도',
+			'addressLocality' => '수원',
+			'streetAddress'   => $street,
 		),
-		JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+		'areaServed'  => array( '수원', '용인', '성남', '화성', '동탄', '안양', '의왕', '안산', '오산', '평택', '안성', '이천' ),
+		'telephone'   => $phone,
+		'priceRange'  => '$$',
 	);
+	if ( is_string( $fax ) && trim( $fax ) !== '' ) {
+		$fp_schema['faxNumber'] = trim( $fax );
+	}
+	echo '<script type="application/ld+json">' . "\n";
+	echo wp_json_encode( $fp_schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 	echo "\n" . '</script>' . "\n";
 }
 add_action( 'wp_head', 'della_theme_front_page_meta_100', 0 );
@@ -1276,11 +1278,20 @@ function della_theme_customize_register( $wp_customize ) {
 		'type'    => 'text',
 	) );
 	$wp_customize->add_setting( 'della_phone', array(
-		'default'           => '031-216-1155',
+		'default'           => '1522-3394',
 		'sanitize_callback' => 'sanitize_text_field',
 	) );
 	$wp_customize->add_control( 'della_phone', array(
 		'label'   => __( '전화번호', 'della-theme' ),
+		'section' => 'della_directions_section',
+		'type'    => 'text',
+	) );
+	$wp_customize->add_setting( 'della_fax', array(
+		'default'           => '031-216-1160',
+		'sanitize_callback' => 'sanitize_text_field',
+	) );
+	$wp_customize->add_control( 'della_fax', array(
+		'label'   => __( '팩스', 'della-theme' ),
 		'section' => 'della_directions_section',
 		'type'    => 'text',
 	) );
@@ -2977,7 +2988,7 @@ function della_theme_schema_json_ld() {
 		$road        = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
 		$road2       = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
 		$street      = trim( $road . ' ' . $road2 );
-		$phone       = get_theme_mod( 'della_phone', '031-216-1155' );
+		$phone       = get_theme_mod( 'della_phone', '1522-3394' );
 		$postal_code = get_theme_mod( 'della_postal_code', '' );
 		$logo_id     = get_theme_mod( 'custom_logo', 0 );
 		$logo_url    = $logo_id ? wp_get_attachment_image_url( (int) $logo_id, 'full' ) : '';
@@ -3039,6 +3050,7 @@ function della_theme_schema_json_ld() {
 			$address['postalCode'] = $postal_code;
 		}
 
+		$fax = get_theme_mod( 'della_fax', '031-216-1160' );
 		$legal_service = array(
 			'@type'        => 'LegalService',
 			'@id'          => $base_url . '#legalservice',
@@ -3055,6 +3067,9 @@ function della_theme_schema_json_ld() {
 			'serviceType'  => array( '성범죄 변호', '강제추행 변호', '카메라등이용촬영죄 변호', '아청법 변호' ),
 			'address'      => $address,
 		);
+		if ( is_string( $fax ) && trim( $fax ) !== '' ) {
+			$legal_service['faxNumber'] = trim( $fax );
+		}
 		if ( ! empty( $same_as ) ) {
 			$legal_service['sameAs'] = $same_as;
 		}

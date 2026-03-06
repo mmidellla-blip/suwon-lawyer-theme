@@ -8,15 +8,17 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+$hero_cta_phone = get_theme_mod( 'della_phone', '1522-3394' );
+$hero_cta_tel   = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_cta_phone );
 ?>
 <div class="hero-cta-fixed-wrap">
 	<div class="hero-cta" role="group" aria-label="<?php esc_attr_e( '상담 연락', 'della-theme' ); ?>">
 		<p class="hero-cta-text"><span class="hero-cta-text-bold"><?php esc_html_e( '지금 바로 상담 가능', 'della-theme' ); ?></span> <?php esc_html_e( '성범죄 사건 상담전화', 'della-theme' ); ?></p>
-		<a href="tel:+82-1688-3971" class="hero-cta-phone hero-cta-action" aria-label="<?php esc_attr_e( '상담 전화 걸기 1688-3971', 'della-theme' ); ?>" title="1688-3971">
+		<a href="<?php echo esc_url( $hero_cta_tel ); ?>" class="hero-cta-phone hero-cta-action" aria-label="<?php echo esc_attr( sprintf( __( '상담 전화 걸기 %s', 'della-theme' ), $hero_cta_phone ) ); ?>" title="<?php echo esc_attr( $hero_cta_phone ); ?>">
 			<span class="hero-cta-action-icon" aria-hidden="true">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
 			</span>
-			<span class="hero-cta-tel">1688-3971</span>
+			<span class="hero-cta-tel"><?php echo esc_html( $hero_cta_phone ); ?></span>
 		</a>
 		<?php
 		$hero_home_url = get_theme_mod( 'della_hero_home_url', 'https://sexcrimecenter-dongju.com/' );
