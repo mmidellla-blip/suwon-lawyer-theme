@@ -45,7 +45,7 @@ $hero_phone_tel  = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_phone );
 <section id="hero" class="hero" aria-labelledby="hero-title" style="background-image: url(<?php echo esc_url( $bg_url ); ?>);" itemscope itemtype="https://schema.org/LegalService">
 	<div class="hero-overlay" aria-hidden="true"></div>
 	<div class="hero-inner">
-		<h1 class="sr-only">수원 성범죄 전문변호사 | 법무법인 동주</h1>
+		<h1 class="sr-only">수원 성범죄 전문변호사 | <?php echo esc_html( della_theme_firm_name() ); ?></h1>
 		<p class="hero-subtitle">하나보다 여섯이 우월하기에, 우리는 함께 대응합니다.</p>
 		<h2 id="hero-title" class="hero-title">'같은' 사건에 자신있는 <br class="hero-br-pc"><span class="hero-title-line2">'다른' <br class="hero-br-mo">변호사들이 모여 만드는 시너지</span></h2>
 		<p id="hero-intro" class="hero-seo-intro">강제추행 · 카메라촬영 · 아청법 사건 대응<br>경찰조사부터 재판까지 형사전문변호사가 직접 함께합니다.<br><a href="<?php echo esc_url( $hero_url_cases ); ?>" class="hero-intro-link">성범죄 성공사례</a><span class="hero-intro-link-sep" aria-hidden="true"> · </span><a href="<?php echo esc_url( $hero_url_info ); ?>" class="hero-intro-link">성범죄 대응정보</a></p>

@@ -17,12 +17,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<meta name="theme-color" content="#ffffff">
 	<meta name="format-detection" content="telephone=yes">
 	<link rel="profile" href="https://gmpg.org/xfn/11">
-	<meta name="robots" content="index,follow,max-image-preview:large" />
 	<?php
-	if ( function_exists( 'della_theme_get_canonical_url' ) ) {
-		$della_canonical = della_theme_get_canonical_url();
-		if ( ! empty( $della_canonical ) ) {
-			echo '<link rel="canonical" href="' . esc_url( $della_canonical ) . '" />' . "\n";
+	if ( ! is_front_page() ) {
+		echo '<meta name="robots" content="' . esc_attr( function_exists( 'della_theme_robots_content' ) ? della_theme_robots_content() : 'index,follow,max-image-preview:large' ) . '" />' . "\n";
+		if ( function_exists( 'della_theme_get_canonical_url' ) ) {
+			$della_canonical = della_theme_get_canonical_url();
+			if ( ! empty( $della_canonical ) ) {
+				echo '<link rel="canonical" href="' . esc_url( $della_canonical ) . '" />' . "\n";
+			}
 		}
 	}
 	// LCP: 히어로 이미지 preload + preconnect (프론트만)
@@ -40,8 +42,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	?>
 	<?php wp_head(); ?>
 	<?php
-	// AIOSEO에 description이 없을 때를 대비해 테마에서 1회 출력 (기존 description 유지)
-	if ( function_exists( 'della_theme_get_fallback_description' ) ) {
+	// AIOSEO/테마 메타에 description이 없을 때를 대비해 테마에서 1회 출력 (홈은 홈 전용 메타에서 처리하므로 제외)
+	if ( ! is_front_page() && function_exists( 'della_theme_get_fallback_description' ) ) {
 		$della_desc = della_theme_get_fallback_description();
 		if ( is_string( $della_desc ) && trim( $della_desc ) !== '' ) {
 			echo '<meta name="description" content="' . esc_attr( trim( $della_desc ) ) . '" />' . "\n";
