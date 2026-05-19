@@ -1700,9 +1700,6 @@ function della_theme_get_home_og_image_url() {
 		if ( file_exists( $ud['basedir'] . '/2026/03/og-home.jpg' ) ) {
 			$og_url = $ud['baseurl'] . '/2026/03/og-home.jpg';
 		}
-		if ( ! $og_url && file_exists( $ud['basedir'] . '/2026/02/dongju-law-hero-banner.webp' ) ) {
-			$og_url = $ud['baseurl'] . '/2026/02/dongju-law-hero-banner.webp';
-		}
 	}
 	if ( ! $og_url && function_exists( 'get_template_directory' ) && function_exists( 'get_template_directory_uri' ) ) {
 		$theme_og = get_template_directory() . '/assets/og/dongju-sexcrime-lawyer-1200x630.jpg';
@@ -1712,9 +1709,6 @@ function della_theme_get_home_og_image_url() {
 	}
 	if ( ! $og_url ) {
 		$og_url = apply_filters( 'della_theme_home_og_image', '' );
-	}
-	if ( ! is_string( $og_url ) || trim( $og_url ) === '' ) {
-		$og_url = ! empty( $ud['baseurl'] ) ? $ud['baseurl'] . '/2026/02/dongju-law-hero-banner.webp' : '';
 	}
 	return $og_url;
 }
