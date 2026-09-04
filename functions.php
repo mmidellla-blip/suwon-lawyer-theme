@@ -1745,7 +1745,7 @@ function della_theme_get_site_logo_url() {
 }
 
 /**
- * SEO: JSON-LD 스키마용 전화번호 국제 형식 (+82-1522-3394).
+ * SEO: JSON-LD 스키마용 전화번호 국제 형식 (+82-1844-1087).
  */
 function della_theme_format_telephone_for_schema( $phone ) {
 	if ( ! is_string( $phone ) || trim( $phone ) === '' ) {
@@ -1923,7 +1923,7 @@ function della_theme_front_page_meta_100() {
 	$road2  = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
 	$street = trim( $road . ' ' . $road2 );
 	$postal_code = get_theme_mod( 'della_postal_code', '' );
-	$phone  = get_theme_mod( 'della_phone', '1522-3394' );
+	$phone  = get_theme_mod( 'della_phone', '1844-1087' );
 	$tel_schema = function_exists( 'della_theme_format_telephone_for_schema' ) ? della_theme_format_telephone_for_schema( $phone ) : $phone;
 	$email  = get_theme_mod( 'della_contact_email', 'dongjucriminal@gmail.com' );
 	$logo_url = function_exists( 'della_theme_get_site_logo_url' ) ? della_theme_get_site_logo_url() : '';
@@ -2209,7 +2209,7 @@ function della_theme_customize_register( $wp_customize ) {
 		'type'    => 'text',
 	) );
 	$wp_customize->add_setting( 'della_phone', array(
-		'default'           => '1522-3394',
+		'default'           => '1844-1087',
 		'sanitize_callback' => 'sanitize_text_field',
 	) );
 	$wp_customize->add_control( 'della_phone', array(
@@ -3953,7 +3953,7 @@ function della_theme_schema_json_ld() {
 		$road        = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
 		$road2       = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
 		$street      = trim( $road . ' ' . $road2 );
-		$phone       = get_theme_mod( 'della_phone', '1522-3394' );
+		$phone       = get_theme_mod( 'della_phone', '1844-1087' );
 		$postal_code = get_theme_mod( 'della_postal_code', '' );
 		$logo_id     = get_theme_mod( 'custom_logo', 0 );
 		$logo_url = function_exists( 'della_theme_get_site_logo_url' ) ? della_theme_get_site_logo_url() : '';

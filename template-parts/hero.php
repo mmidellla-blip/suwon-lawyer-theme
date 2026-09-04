@@ -22,7 +22,7 @@ $hero_legal_script = array(
 	'description' => get_bloginfo( 'description' ) ?: '형사사건 전문 변호사 팀. 같은 사건에 자신 있는 다른 변호사들이 모여 만드는 시너지.',
 	'url'         => home_url( '/' ),
 	'image'       => array( array( '@type' => 'ImageObject', 'url' => $bg_url ) ),
-	'telephone'   => function_exists( 'della_theme_format_telephone_for_schema' ) ? della_theme_format_telephone_for_schema( get_theme_mod( 'della_phone', '1522-3394' ) ) : get_theme_mod( 'della_phone', '1522-3394' ),
+	'telephone'   => function_exists( 'della_theme_format_telephone_for_schema' ) ? della_theme_format_telephone_for_schema( get_theme_mod( 'della_phone', '1844-1087' ) ) : get_theme_mod( 'della_phone', '1844-1087' ),
 	'areaServed'  => array( '@id' => 'https://www.wikidata.org/wiki/Q884' ),
 	'priceRange'  => '상담 후 안내',
 	'employee'    => array(),
@@ -42,7 +42,7 @@ if ( function_exists( 'della_theme_internal_url' ) ) {
 }
 $hero_url_cases  = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/성범죄-성공사례/' );
 $hero_url_info   = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/성범죄-대응정보/' );
-$hero_phone      = get_theme_mod( 'della_phone', '1522-3394' );
+$hero_phone      = get_theme_mod( 'della_phone', '1844-1087' );
 $hero_phone_tel  = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_phone );
 ?>
 <section id="hero" class="hero" aria-labelledby="hero-title" style="background-image: url(<?php echo esc_url( $bg_url ); ?>);" itemscope itemtype="https://schema.org/LegalService">

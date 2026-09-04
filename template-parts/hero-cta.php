@@ -8,7 +8,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-$hero_cta_phone = get_theme_mod( 'della_phone', '1522-3394' );
+$hero_cta_phone = get_theme_mod( 'della_phone', '1844-1087' );
 $hero_cta_tel   = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_cta_phone );
 ?>
 <div class="hero-cta-fixed-wrap">
