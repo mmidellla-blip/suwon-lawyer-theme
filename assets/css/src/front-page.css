@@ -1548,6 +1548,11 @@ section.response-info .response-info-empty {
     align-items: center;
   }
 
+  body.home .content-sidebar-wrap > .hero,
+  body.front-page .content-sidebar-wrap > .hero {
+    padding-top: calc(var(--header-height) + 120px + env(safe-area-inset-top, 0)) !important;
+  }
+
   body.home .hero-inner,
   body.front-page .hero-inner {
     padding-left: max(var(--space-5), 1.5rem);
