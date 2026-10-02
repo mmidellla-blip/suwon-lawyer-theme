@@ -1754,7 +1754,8 @@ section.response-info .response-info-empty {
   margin: 0 auto 0.2rem;
   border-radius: 0 20px 0 0;
   overflow: hidden;
-  background: #7d8b6f;
+  /* Figma PC 카드 배경(#766E4F → #332A28)의 사진 영역(위 276/382) 구간 — 누끼 사진 뒤 배경 */
+  background: linear-gradient(174.1deg, #766e4f 14.4%, #453c32 100%);
 }
 
 /* 프로필 사진: 선명도 (고해상도 원본 또는 @2x 업로드 시 더 선명) */
@@ -1766,7 +1767,7 @@ section.response-info .response-info-empty {
   display: block;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  image-rendering: -webkit-optimize-contrast;
+  /* image-rendering: -webkit-optimize-contrast 제거 — 크롬에서 축소 시 최근접 보간으로 사진이 거칠게 보임 */
 }
 
 .hero-lawyer-name {
