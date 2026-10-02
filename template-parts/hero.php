@@ -60,11 +60,20 @@ $hero_phone_tel  = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_phone );
 				$img_src     = della_theme_lawyer_image_url( $lawyer['image'], $hero_base, $hero_dir );
 				$img_srcset  = della_theme_lawyer_image_srcset( $lawyer['image'], $hero_base, $hero_dir );
 				$img_alt     = $lawyer['name'] . ' ' . $lawyer['title'] . ' 프로필 사진';
+				// 모바일 카드: Figma 372:3762 누끼 사진 (카드 177×334 프레이밍 그대로, 테마 내 assets/images/hero-lawyers)
+				$mo_slug     = preg_replace( '/^dongju-|-lawyer$/', '', pathinfo( $lawyer['image'], PATHINFO_FILENAME ) );
+				$mo_img_rel  = '/assets/images/hero-lawyers/' . $mo_slug;
+				$mo_srcset   = file_exists( get_template_directory() . $mo_img_rel . '.webp' )
+					? esc_url( get_template_directory_uri() . $mo_img_rel . '.webp' ) . ' 1x, ' . esc_url( get_template_directory_uri() . $mo_img_rel . '@2x.webp' ) . ' 2x, ' . esc_url( get_template_directory_uri() . $mo_img_rel . '@3x.webp' ) . ' 3x'
+					: '';
 				?>
 				<article class="hero-lawyer-card" itemscope itemtype="https://schema.org/Person">
 					<?php if ( $profile_url ) : ?><a href="<?php echo esc_url( $profile_url ); ?>" class="hero-lawyer-card-link" aria-label="<?php echo esc_attr( $lawyer['name'] . ' ' . $lawyer['title'] . ' 변호사 정보 보기' ); ?>"><?php endif; ?>
 					<div class="hero-lawyer-image-wrap">
-						<img src="<?php echo esc_url( $img_src ); ?>" <?php if ( $img_srcset ) : ?>srcset="<?php echo esc_attr( $img_srcset ); ?>" sizes="200px"<?php endif; ?> alt="<?php echo esc_attr( $img_alt ); ?>" width="400" height="533" loading="<?php echo $lawyer_idx < 2 ? 'eager' : 'lazy'; ?>" decoding="async" class="hero-lawyer-image"<?php echo ( $lawyer_idx === 0 ) ? ' fetchpriority="high"' : ''; ?> />
+						<picture>
+							<?php if ( $mo_srcset ) : ?><source media="(max-width: 767px)" srcset="<?php echo esc_attr( $mo_srcset ); ?>" width="177" height="334" type="image/webp" /><?php endif; ?>
+							<img src="<?php echo esc_url( $img_src ); ?>" <?php if ( $img_srcset ) : ?>srcset="<?php echo esc_attr( $img_srcset ); ?>" sizes="200px"<?php endif; ?> alt="<?php echo esc_attr( $img_alt ); ?>" width="400" height="533" loading="<?php echo $lawyer_idx < 2 ? 'eager' : 'lazy'; ?>" decoding="async" class="hero-lawyer-image"<?php echo ( $lawyer_idx === 0 ) ? ' fetchpriority="high"' : ''; ?> />
+						</picture>
 					</div>
 					<h2 class="hero-lawyer-name">
 						<span itemprop="name"><?php echo esc_html( $lawyer['name'] ); ?></span>
