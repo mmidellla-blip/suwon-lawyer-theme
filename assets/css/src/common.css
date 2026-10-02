@@ -915,11 +915,11 @@ body:not(.della-is-front) .menu-toggle {
   }
 
   .hero-cta-button-text {
-    font-family: "Noto Sans KR", sans-serif;
+    font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif;
     font-size: 17px;
     font-weight: 800;
     line-height: 28px;
-    letter-spacing: 0;
+    letter-spacing: 0.002em;
     color: #cec5a3;
     white-space: nowrap;
   }
@@ -941,7 +941,7 @@ body:not(.della-is-front) .menu-toggle {
     font-size: 17px;
     font-weight: 800;
     line-height: 27px;
-    letter-spacing: 0;
+    letter-spacing: 0.02px;
     color: #cec5a3;
   }
 }

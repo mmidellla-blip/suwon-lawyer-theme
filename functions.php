@@ -2338,9 +2338,17 @@ function della_theme_scripts() {
 	}
 
 	if ( is_front_page() ) {
+		// Figma 모바일 폰트: Noto Sans KR(성공사례 버튼·카드), Poppins(전화번호·번호)
 		wp_enqueue_style(
 			'della-hero-cta-fonts',
-			'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@800&family=Poppins:wght@800&display=swap',
+			'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;800&family=Poppins:wght@700;800&display=swap',
+			array(),
+			null
+		);
+		// Figma 모바일 폰트: Pretendard (가변 폰트, 화면에 쓰인 글자 조각만 다운로드)
+		wp_enqueue_style(
+			'della-pretendard',
+			'https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css',
 			array(),
 			null
 		);

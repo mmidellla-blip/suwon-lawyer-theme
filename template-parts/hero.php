@@ -49,9 +49,9 @@ $hero_phone_tel  = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_phone );
 	<div class="hero-overlay" aria-hidden="true"></div>
 	<div class="hero-inner">
 		<h1 class="sr-only">수원 성범죄 전문변호사 | <?php echo esc_html( della_theme_firm_name() ); ?></h1>
-		<p class="hero-subtitle">하나보다 여섯이 우월하기에, 우리는 함께 대응합니다.</p>
+		<p class="hero-subtitle">하나보다 여섯이 우월하기에, <br class="hero-br-mo">우리는 함께 대응합니다.</p>
 		<h2 id="hero-title" class="hero-title">‘같은’ 사건에 자신있는 <br class="hero-br-pc"><span class="hero-title-line2">‘다른’ <br class="hero-br-mo">변호사들이 모여 만드는 시너지</span></h2>
-		<p id="hero-intro" class="hero-seo-intro">강제추행 · 카메라촬영 · 아청법 사건 대응<br>경찰조사부터 재판까지 형사전문변호사가 직접 함께합니다.<br><a href="<?php echo esc_url( $hero_url_cases ); ?>" class="hero-intro-link">성범죄 성공사례</a><span class="hero-intro-link-sep" aria-hidden="true"> · </span><a href="<?php echo esc_url( $hero_url_info ); ?>" class="hero-intro-link">성범죄 대응정보</a></p>
+		<p id="hero-intro" class="hero-seo-intro">강제추행 · 카메라촬영 · 아청법 사건 대응<br>경찰조사부터 재판까지 형사전문변호사가 <br class="hero-br-mo">직접 함께합니다.<br class="hero-intro-links-br"><a href="<?php echo esc_url( $hero_url_cases ); ?>" class="hero-intro-link">성범죄 성공사례</a><span class="hero-intro-link-sep" aria-hidden="true"> · </span><a href="<?php echo esc_url( $hero_url_info ); ?>" class="hero-intro-link">성범죄 대응정보</a></p>
 
 		<div class="hero-lawyers" role="region" aria-label="변호사 프로필 (<?php echo count( $lawyers ); ?>명)" tabindex="0">
 			<?php foreach ( $lawyers as $lawyer_idx => $lawyer ) : ?>
@@ -90,6 +90,26 @@ $hero_phone_tel  = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_phone );
 				</article>
 			<?php endforeach; ?>
 		</div>
+		<?php /* 모바일: Figma 340:5818 카드 가로 스크롤 진행 막대 */ ?>
+		<div class="hero-lawyers-progress" aria-hidden="true"><span class="hero-lawyers-progress-thumb"></span></div>
+		<script>
+		(function () {
+			var list = document.querySelector('.hero-lawyers');
+			var bar = document.querySelector('.hero-lawyers-progress');
+			if (!list || !bar) return;
+			var thumb = bar.firstElementChild;
+			function update() {
+				var ratio = list.scrollWidth ? Math.min(1, list.clientWidth / list.scrollWidth) : 1;
+				var max = list.scrollWidth - list.clientWidth;
+				var pos = max > 0 ? list.scrollLeft / max : 0;
+				thumb.style.width = ( ratio * 100 ) + '%';
+				thumb.style.transform = 'translateX(' + ( pos * ( 1 / ratio - 1 ) * 100 ) + '%)';
+			}
+			list.addEventListener('scroll', update, { passive: true });
+			window.addEventListener('resize', update);
+			update();
+		})();
+		</script>
 
 		<div class="hero-cta hero-cta-in-hero" role="group" aria-label="상담 연락">
 			<p class="hero-cta-text"><span class="hero-cta-text-bold">지금 바로 상담 가능</span> 성범죄 사건 상담전화</p>

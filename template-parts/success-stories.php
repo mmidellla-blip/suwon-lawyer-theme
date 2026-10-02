@@ -29,7 +29,7 @@ if ( $cat ) {
 	<div class="success-stories-inner">
 		<header class="success-stories-header">
 			<div class="success-stories-header-left">
-				<h2 id="success-stories-heading" class="success-stories-title section-title">성범죄 성공사례</h2>
+				<h2 id="success-stories-heading" class="success-stories-title section-title"><span class="success-stories-title-prefix">성범죄 </span><span class="success-stories-title-accent">성공사례</span><span class="success-stories-title-suffix" aria-hidden="true"> 모음</span></h2>
 				<p class="success-stories-intro section-desc">어떤 사건들이 실제로 어떻게 정리되었는지 확인하는 것이 대응 전략을 세우는 데 도움이 됩니다. 강제추행·카메라촬영·아청법 등 유형별로 무혐의, 기소유예, 집행유예, 선처 등 결과를 이끈 사례를 정리해 두었습니다.</p>
 				<div class="case-links">
 					<a href="<?php echo esc_url( $archive_url ); ?>">성범죄 성공사례</a>
@@ -40,7 +40,7 @@ if ( $cat ) {
 					<span class="dot" aria-hidden="true">·</span>
 					<a href="<?php echo esc_url( add_query_arg( array( 'tag' => '불법촬영', 'paged' => 1 ), $info_url ) ); ?>">불법촬영 처벌 기준 보기</a>
 				</div>
-				<a href="<?php echo esc_url( $archive_url ); ?>" class="success-stories-cta case-btn" title="<?php esc_attr_e( '성공사례 전체 목록 보기', 'della-theme' ); ?>" aria-label="<?php esc_attr_e( '성공사례 전체 목록 보기', 'della-theme' ); ?>">성공사례 전체보기 →</a>
+				<a href="<?php echo esc_url( $archive_url ); ?>" class="success-stories-cta case-btn" title="<?php esc_attr_e( '성공사례 전체 목록 보기', 'della-theme' ); ?>" aria-label="<?php esc_attr_e( '성공사례 전체 목록 보기', 'della-theme' ); ?>">성공사례 전체보기<span class="success-stories-cta-arrow" aria-hidden="true"> →</span></a>
 			</div>
 			<?php if ( $query && $query->have_posts() ) : ?>
 			<div class="success-stories-nav-wrap" aria-hidden="true">
