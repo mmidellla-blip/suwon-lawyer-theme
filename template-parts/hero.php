@@ -36,11 +36,8 @@ foreach ( $lawyers as $lawyer ) {
 	);
 }
 
-$hero_home_url   = apply_filters( 'della_hero_home_url', get_theme_mod( 'della_hero_home_url', home_url( '/' ) ) );
-if ( function_exists( 'della_theme_internal_url' ) ) {
-	$hero_home_url = della_theme_internal_url( $hero_home_url );
-}
-$hero_url_cases  = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/성범죄-성공사례/' );
+$hero_consult_url = 'https://sexcrimecenter-dongju.com/consultation';
+$hero_url_cases   = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/성범죄-성공사례/' );
 $hero_url_info   = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/성범죄-대응정보/' );
 $hero_phone      = get_theme_mod( 'della_phone', '1844-1087' );
 $hero_phone_tel  = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_phone );
@@ -125,11 +122,11 @@ $hero_phone_tel  = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_phone );
 				</span>
 				<span class="hero-cta-tel"><?php echo esc_html( $hero_phone ); ?></span>
 			</a>
-			<a href="<?php echo esc_url( $hero_home_url ); ?>" class="hero-cta-button hero-cta-action" aria-label="홈페이지 바로가기">
+			<a href="<?php echo esc_url( $hero_consult_url ); ?>" class="hero-cta-button hero-cta-action" aria-label="<?php esc_attr_e( '신속상담 바로가기', 'della-theme' ); ?>">
 				<span class="hero-cta-action-icon" aria-hidden="true">
 					<svg width="24" height="24" viewBox="-2 -2 24 24" fill="currentColor" focusable="false"><path d="M16.75 11.9H14.9038C14.7057 11.9 14.5121 11.9588 14.3476 12.069L12.09 13.58C11.73 13.82 11.31 13.93 10.9 13.93C10.55 13.93 10.2 13.85 9.88 13.67C9.39821 13.4153 9.04432 12.9475 8.87051 12.423C8.7313 12.0029 8.45372 11.6136 8.05367 11.4244C7.59444 11.2073 7.18043 10.9204 6.83 10.57C5.97 9.71 5.5 8.5 5.5 7.15V3.25V3C5.5 2.44772 5.05228 2 4.5 2C1.8 2 0 3.35 0 6.5V11.9C0 15.05 1.8 16.4 4.5 16.4H8.25V19.25H5.4C4.99 19.25 4.65 19.59 4.65 20C4.65 20.41 4.99 20.75 5.4 20.75H12.6C13.01 20.75 13.35 20.41 13.35 20C13.35 19.59 13.01 19.25 12.6 19.25H9.75V16.4H13.5C15.8954 16.4 17.5824 15.3374 17.9326 12.898C18.011 12.3513 17.5523 11.9 17 11.9H16.75Z"/><path d="M16.75 0H10.25C8.76 0 7.64 0.76 7.2 2C7.07 2.38 7 2.8 7 3.25V7.15C7 8.12 7.32 8.94 7.89 9.51C8.46 10.08 9.28 10.4 10.25 10.4V11.79C10.25 12.3 10.83 12.61 11.26 12.33L14.15 10.4H16.75C17.2 10.4 17.62 10.33 18 10.2C19.24 9.76 20 8.64 20 7.15V3.25C20 1.3 18.7 0 16.75 0Z"/></svg>
 				</span>
-				<span class="hero-cta-button-text">홈페이지 바로가기 &gt;</span>
+				<span class="hero-cta-button-text"><?php esc_html_e( '신속상담 바로가기 >', 'della-theme' ); ?></span>
 			</a>
 		</div>
 	</div>
