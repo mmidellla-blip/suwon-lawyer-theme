@@ -109,7 +109,7 @@ endif;
 				<div class="mobile-menu-panel">
 					<div class="mobile-menu-content">
 						<button type="button" class="mobile-menu-close" id="mobile-menu-close" aria-label="<?php esc_attr_e( 'Close menu', 'della-theme' ); ?>">
-							<span aria-hidden="true">&times;</span>
+							<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M1 1l18 18M19 1L1 19"/></svg>
 						</button>
 						<?php
 						wp_nav_menu( array(

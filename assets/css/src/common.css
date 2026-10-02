@@ -1,6 +1,15 @@
 /* Della Theme – common styles */
 
 /*! purgecss start ignore */
+/* Figma 모바일 제목 폰트: 학교안심 바른바탕 Bold (모바일 메뉴·히어로·섹션 제목, 사용 시에만 다운로드) */
+@font-face {
+  font-family: "HakgyoansimBareonbatang";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareonbatangB.woff2") format("woff2");
+}
+
 :root {
   /* 8px-base spacing scale (8, 16, 24, 32, 40, 48, 64, 80–120 for sections) */
   --space-1: 8px;
@@ -382,6 +391,12 @@ body:not(.della-is-front) .menu-toggle {
   .menu-toggle {
     display: flex !important;
   }
+
+  /* 메뉴 열림: 패널의 닫기(X) 버튼만 사용 → 햄버거(X 변형) 숨김 */
+  .menu-toggle[aria-expanded="true"] {
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 @media (min-width: 768px) {
@@ -506,8 +521,15 @@ body:not(.della-is-front) .menu-toggle {
   }
 }
 
-/* Mobile: 오버레이 우측 슬라이드, 좌측 다크 바 + 오프화이트 메뉴 영역 */
+/* Mobile: Figma 1133:9106 mo_카테고리 on — 덮개 검정 50%, 오른쪽 패널 330px #F7F6F0
+   닫기 X 20×20(위·오른쪽 30px), 메뉴 학교안심 바른바탕 700 20px/28px #333, 왼쪽 30·위 80, 항목 간격 50, 화살표 24px */
 @media (max-width: 767px) {
+  /* 열림: 헤더(z 1000) 안의 메뉴가 하단 고정 바(z 9999) 위로 오도록 헤더를 올림 */
+  body.mobile-menu-open #masthead,
+  body.mobile-menu-open .site-header {
+    z-index: 10000;
+  }
+
   .main-navigation {
     position: fixed;
     top: 0;
@@ -532,7 +554,7 @@ body:not(.della-is-front) .menu-toggle {
   .mobile-menu-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.25);
+    background: rgba(0, 0, 0, 0.5);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
@@ -543,16 +565,15 @@ body:not(.della-is-front) .menu-toggle {
     pointer-events: auto;
   }
 
-  /* 모바일 메뉴 열었을 때: 바탕 하얀색, 글씨(엑스·햄버거·링크) 검정 */
   .mobile-menu-panel {
     position: relative;
     z-index: 1;
-    width: 85%;
-    max-width: 320px;
+    display: flex;
+    width: min(330px, calc(100% - 48px));
     height: 100%;
     margin-left: auto;
-    background: #fff;
-    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+    background: #f7f6f0;
+    box-shadow: none;
     transform: translateX(100%);
     transition: transform 0.3s ease;
   }
@@ -566,30 +587,25 @@ body:not(.della-is-front) .menu-toggle {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    padding: 3.5rem var(--della-gap) var(--space-4);
-    padding-left: var(--space-4);
+    padding: calc(80px + env(safe-area-inset-top, 0px)) 30px 30px;
     position: relative;
-    background: #fff;
+    background: #f7f6f0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* X 버튼: 스크롤과 관계없이 항상 보이도록 뷰포트 기준 고정 */
+  /* 닫기 X: 48px 터치 영역, 아이콘 20px이 위·오른쪽 30px에 오도록 */
   .mobile-menu-close {
     position: fixed;
-    top: max(var(--space-2), env(safe-area-inset-top, 0px));
-    right: max(var(--della-gap), env(safe-area-inset-right, 0px));
-    width: var(--touch-target-min);
-    height: var(--touch-target-min);
-    min-width: var(--touch-target-min);
-    min-height: var(--touch-target-min);
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    right: 16px;
+    width: 48px;
+    height: 48px;
     padding: 0;
     margin: 0;
     border: none;
     background: transparent;
-    color: #000;
-    font-size: 1.75rem;
-    line-height: 1;
+    color: #333;
     cursor: pointer;
     display: none;
     align-items: center;
@@ -598,39 +614,61 @@ body:not(.della-is-front) .menu-toggle {
     z-index: 10002;
   }
 
-  .main-navigation.toggled .mobile-menu-close {
-    display: flex;
+  .mobile-menu-close svg {
+    display: block;
+    width: 20px;
+    height: 20px;
   }
 
-  .mobile-menu-close:hover,
+  .main-navigation.toggled .mobile-menu-close {
+    display: flex !important;
+  }
+
+  .mobile-menu-close:hover {
+    opacity: 0.7;
+  }
+
   .mobile-menu-close:focus {
-    color: #000;
-    outline: 2px solid #000;
+    outline: none;
+  }
+
+  .mobile-menu-close:focus-visible {
+    outline: 2px solid #333;
     outline-offset: 2px;
   }
 
   .main-navigation ul,
   #primary-menu {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
     justify-content: flex-start;
-    gap: 0;
+    gap: 50px;
     padding: 0;
-    padding-top: 0;
     list-style: none;
     margin: 0;
   }
 
   .main-navigation li {
+    display: flex;
     border-bottom: none;
   }
 
-  .main-navigation a {
-    display: block;
-    padding: var(--space-3) 0;
-    min-height: var(--touch-target-min);
-    font-size: 1rem;
-    color: #000 !important;
+  .main-navigation a,
+  .main-navigation.toggled a,
+  body.della-is-front .main-navigation.toggled a,
+  body.home .main-navigation.toggled a,
+  body.front-page .main-navigation.toggled a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    min-height: 28px;
+    font-family: "HakgyoansimBareonbatang", var(--della-font-serif-kr);
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 28px;
+    letter-spacing: 0;
+    color: #333 !important;
     text-decoration: none;
     -webkit-tap-highlight-color: transparent;
     white-space: nowrap;
@@ -638,59 +676,29 @@ body:not(.della-is-front) .menu-toggle {
 
   .main-navigation a:hover,
   .main-navigation a:focus {
-    color: #000 !important;
-    opacity: 0.85;
+    color: #333 !important;
+    opacity: 0.75;
   }
 
-  /* 화살표: 텍스트 바로 옆 한 줄로 (inline) */
-  .main-navigation a::after {
-    content: ' \203A';
-    display: inline;
-    font-size: 1rem;
-    color: #000 !important;
-    margin-left: 0.25em;
-  }
-
-  .main-navigation a:hover::after,
-  .main-navigation a:focus::after {
-    color: #000 !important;
-  }
-
-  /* 모바일 메뉴 열렸을 때: 최상단(프론트·흰글씨)에서도 메뉴·X 버튼 검정으로 가독성 확보 */
-  .main-navigation.toggled a,
-  .main-navigation.toggled a:hover,
-  .main-navigation.toggled a:focus,
-  .main-navigation.toggled a::after {
-    color: #000 !important;
-  }
-  body.della-is-front .main-navigation.toggled a,
-  body.della-is-front .main-navigation.toggled a:hover,
-  body.della-is-front .main-navigation.toggled a:focus,
-  body.home .main-navigation.toggled a,
-  body.home .main-navigation.toggled a:hover,
-  body.home .main-navigation.toggled a:focus,
-  body.front-page .main-navigation.toggled a,
-  body.front-page .main-navigation.toggled a:hover,
-  body.front-page .main-navigation.toggled a:focus {
-    color: #000 !important;
-  }
+  /* 화살표: Figma BackArrow_Icon_UIA 24px, 1.5px #333 */
+  .main-navigation a::after,
+  .main-navigation.toggled a::after,
   body.della-is-front .main-navigation.toggled a::after,
   body.home .main-navigation.toggled a::after,
-  body.front-page .main-navigation.toggled a::after {
-    color: #000 !important;
-  }
-  .main-navigation.toggled .mobile-menu-close {
-    color: #000 !important;
-    display: flex !important;
-  }
-  .main-navigation.toggled .mobile-menu-close:hover,
-  .main-navigation.toggled .mobile-menu-close:focus {
-    color: #000 !important;
-  }
-  body.della-is-front .main-navigation.toggled .mobile-menu-close,
-  body.home .main-navigation.toggled .mobile-menu-close,
-  body.front-page .main-navigation.toggled .mobile-menu-close {
-    color: #000 !important;
+  body.front-page .main-navigation.toggled a::after,
+  .main-navigation a:hover::after,
+  .main-navigation a:focus::after,
+  .main-navigation .current-menu-item a::after {
+    content: "";
+    position: static;
+    display: block;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    transform: none;
+    transition: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 4l7.5 7.5L9 19'/%3E%3C/svg%3E") center / 24px 24px no-repeat;
   }
 
   .header-inner {

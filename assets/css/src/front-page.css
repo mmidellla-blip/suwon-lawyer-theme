@@ -1427,15 +1427,6 @@ section.response-info .response-info-empty {
   box-sizing: border-box;
 }
 
-/* Figma 모바일 제목 폰트: 학교안심 바른바탕 Bold (모바일에서만 사용 → PC는 다운로드 안 됨). Pretendard는 functions.php에서 로드 */
-@font-face {
-  font-family: "HakgyoansimBareonbatang";
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareonbatangB.woff2") format("woff2");
-}
-
 /* 서브타이틀: 제목(같은 사건에 자신있는…)과 동일 글씨체 */
 .hero-subtitle {
   margin: 0;
@@ -1907,16 +1898,16 @@ section.response-info .response-info-empty {
   }
 
   .hero-lawyer-name {
-    /* Figma 5101:37682: 이름 Pretendard 600 26px / 직함 600 15px 세로 배치 */
+    /* 이름 22px / 직함 15px 세로 배치 */
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 0;
     margin: 0;
     font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif;
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 600;
-    line-height: 36.4px;
+    line-height: 1.4;
     text-align: left;
     color: #fff;
   }

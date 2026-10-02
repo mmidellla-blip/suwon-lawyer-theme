@@ -2928,12 +2928,14 @@ function della_theme_menu_toggle_script() {
 		if (!btn || !nav) return;
 		function closeMenu() {
 			nav.classList.remove('toggled');
+			document.body.classList.remove('mobile-menu-open');
 			if (btn) {
 				btn.setAttribute('aria-expanded', 'false');
 				btn.setAttribute('aria-label', '<?php echo esc_js( __( 'Open menu', 'della-theme' ) ); ?>');
 			}
 		}
 		function openMenu() {
+			document.body.classList.add('mobile-menu-open');
 			if (btn) {
 				btn.setAttribute('aria-expanded', 'true');
 				btn.setAttribute('aria-label', '<?php echo esc_js( __( 'Close menu', 'della-theme' ) ); ?>');
