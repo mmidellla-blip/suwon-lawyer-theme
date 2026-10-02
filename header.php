@@ -97,11 +97,11 @@ endif;
 			</div>
 
 			<button type="button" class="menu-toggle" id="menu-toggle" aria-controls="primary-menu" aria-expanded="false" aria-label="<?php esc_attr_e( 'Open menu', 'della-theme' ); ?>">
-				<span class="menu-toggle-inner">
-					<span class="menu-toggle-bar"></span>
-					<span class="menu-toggle-bar"></span>
-					<span class="menu-toggle-bar"></span>
-				</span>
+				<svg class="menu-toggle-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+					<path class="menu-toggle-bar" d="M1.5 3H22.5"/>
+					<path class="menu-toggle-bar" d="M1.5 12H22.5"/>
+					<path class="menu-toggle-bar" d="M1.5 21H22.5"/>
+				</svg>
 			</button>
 
 			<nav id="site-navigation" class="main-navigation" role="navigation" aria-label="<?php esc_attr_e( 'Primary menu', 'della-theme' ); ?>">

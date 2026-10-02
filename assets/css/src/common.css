@@ -299,101 +299,75 @@ body.header-scrolled .main-navigation a:hover {
   transition: color 0.2s ease;
 }
 
-/* Hamburger - 기본: 검정 / 프론트·홈 상단: 흰색 / 스크롤 시: 검정 */
+/* Hamburger - Figma [Header] MO_gnb Menu_Icons_UIA: 24×24, 1.5px 라운드 3선, #121212
+   기본: #121212 / 프론트 상단(투명 헤더): 흰색 / 스크롤·메뉴 열림: #121212 */
 .menu-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
   min-width: var(--touch-target-min);
   min-height: var(--touch-target-min);
   padding: 0;
-  margin: 0;
-  border: 1px solid #ddd;
-  border-radius: 0.25rem;
-  background: #fff;
-  color: #333;
+  margin: 0 calc((24px - var(--touch-target-min)) / 2) 0 0; /* 아이콘 끝선을 헤더 여백에 맞춤 */
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #121212;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition: color 0.2s, opacity 0.2s;
   position: relative;
   z-index: 10001;
   -webkit-tap-highlight-color: transparent;
 }
 
-.menu-toggle:hover,
+.menu-toggle:hover {
+  opacity: 0.7;
+}
+
 .menu-toggle:focus {
-  background: #f5f5f5;
-  border-color: #ccc;
-  outline: 2px solid #333;
+  outline: none;
+}
+
+.menu-toggle:focus-visible {
+  outline: 2px solid currentColor;
   outline-offset: 2px;
 }
 
-/* 맨 위(프론트, 스크롤 안 내림): 햄버거 흰색 */
+/* 맨 위(프론트, 스크롤 안 내림): 투명 헤더 위 흰색 */
 body.della-is-front .menu-toggle {
-  border-color: rgba(255, 255, 255, 0.4);
-  background: transparent;
   color: #fff;
 }
 
-body.della-is-front .menu-toggle:hover,
-body.della-is-front .menu-toggle:focus {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.6);
-  color: #fff;
-  outline-color: rgba(255, 255, 255, 0.6);
+/* 스크롤 내림 / 내부 페이지: #121212 */
+body.header-scrolled .menu-toggle,
+body:not(.della-is-front) .menu-toggle {
+  color: #121212;
 }
 
-/* 스크롤 내림: 햄버거 검정 */
-body.header-scrolled .menu-toggle {
-  border-color: #ddd;
-  background: #fff;
-  color: #333;
+/* 모바일 메뉴 열렸을 때: X 아이콘 #121212 */
+.main-navigation.toggled .menu-toggle,
+.menu-toggle[aria-expanded="true"] {
+  color: #121212 !important;
 }
 
-body.header-scrolled .menu-toggle:hover,
-body.header-scrolled .menu-toggle:focus {
-  background: #f5f5f5;
-  border-color: #ccc;
-  outline-color: #333;
-}
-
-/* 모바일 메뉴 열렸을 때: 햄버거(엑스)·X 버튼 검정 */
-.main-navigation.toggled .menu-toggle {
-  border-color: #ddd !important;
-  background: #fff !important;
-  color: #333 !important;
-}
-
-.main-navigation.toggled .menu-toggle:hover,
-.main-navigation.toggled .menu-toggle:focus {
-  background: #f5f5f5 !important;
-  color: #333 !important;
-  outline-color: #333 !important;
-}
-
-.menu-toggle-inner {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  width: 20px;
-  height: 18px;
+.menu-toggle-icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  overflow: visible;
 }
 
 .menu-toggle-bar {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: currentColor;
-  border-radius: 1px;
+  transform-box: fill-box;
+  transform-origin: center;
   transition: transform 0.25s, opacity 0.25s;
 }
 
 .menu-toggle[aria-expanded="true"] .menu-toggle-bar:nth-child(1) {
-  transform: translateY(7px) rotate(45deg);
+  transform: translateY(9px) rotate(45deg);
 }
 
 .menu-toggle[aria-expanded="true"] .menu-toggle-bar:nth-child(2) {
@@ -401,56 +375,12 @@ body.header-scrolled .menu-toggle:focus {
 }
 
 .menu-toggle[aria-expanded="true"] .menu-toggle-bar:nth-child(3) {
-  transform: translateY(-7px) rotate(-45deg);
+  transform: translateY(-9px) rotate(-45deg);
 }
 
-/* 모바일: 맨 위는 투명+흰색 햄버거, 흰 배경일 때는 토글바 검정으로 보이게 */
 @media (max-width: 767px) {
   .menu-toggle {
     display: flex !important;
-    border-radius: 8px;
-  }
-
-  /* 흰 배경 헤더(내부 페이지 또는 스크롤 후): 토글 바 검정으로 가독성 확보 */
-  body:not(.della-is-front) .menu-toggle,
-  body.header-scrolled .menu-toggle {
-    background: #fff;
-    color: #333;
-    border-color: #ddd;
-  }
-  body:not(.della-is-front) .menu-toggle .menu-toggle-bar,
-  body.header-scrolled .menu-toggle .menu-toggle-bar {
-    background: #333;
-  }
-  body:not(.della-is-front) .menu-toggle:hover,
-  body:not(.della-is-front) .menu-toggle:focus,
-  body.header-scrolled .menu-toggle:hover,
-  body.header-scrolled .menu-toggle:focus {
-    background: #f5f5f5;
-    border-color: #ccc;
-    color: #333;
-  }
-  body:not(.della-is-front) .menu-toggle:hover .menu-toggle-bar,
-  body:not(.della-is-front) .menu-toggle:focus .menu-toggle-bar,
-  body.header-scrolled .menu-toggle:hover .menu-toggle-bar,
-  body.header-scrolled .menu-toggle:focus .menu-toggle-bar {
-    background: #333;
-  }
-
-  /* 프론트 맨 위(투명 헤더)일 때만: 흰색 햄버거 / 스크롤 후에는 위 흰배경 규칙 적용 */
-  body.della-is-front:not(.header-scrolled) .menu-toggle {
-    background: transparent;
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.4);
-  }
-  body.della-is-front:not(.header-scrolled) .menu-toggle .menu-toggle-bar {
-    background: currentColor;
-  }
-  body.della-is-front:not(.header-scrolled) .menu-toggle:hover,
-  body.della-is-front:not(.header-scrolled) .menu-toggle:focus {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.6);
   }
 }
 
@@ -901,28 +831,33 @@ body.header-scrolled .menu-toggle:focus {
 
   body.home .hero,
   body.front-page .hero {
-    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0));
   }
 
+  /* Figma Bottom Action bar 361:4679 — 396×88, #121212, #CEC5A3 ExtraBold 17 */
   .hero-cta-fixed-wrap .hero-cta,
   .hero-cta {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
+    width: 100%;
     max-width: none;
+    height: calc(88px + env(safe-area-inset-bottom, 0px));
     margin: 0;
-    padding: 0.5rem var(--space-3) 0 var(--space-4);
-    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0));
-    padding-right: var(--space-5);
+    padding: 0 clamp(16px, 8.3vw, 36px) env(safe-area-inset-bottom, 0px) clamp(16px, 8.3vw, 33px);
+    box-sizing: border-box;
     flex-wrap: nowrap;
     flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     border-radius: 0;
     border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.35);
+    background: #121212;
+    box-shadow: none;
     z-index: 9999;
-    gap: var(--space-2);
+    gap: 16px;
+    font-size: 17px;
   }
 
   .hero-cta-text {
@@ -930,41 +865,49 @@ body.header-scrolled .menu-toggle:focus {
   }
 
   .hero-cta-action {
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    min-height: var(--touch-target-min);
-    min-width: var(--touch-target-min);
-    padding: 1rem 0.75rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.95);
+    justify-content: flex-start;
+    min-height: 28px;
+    min-width: 0;
+    padding: 0;
+    font-size: 17px;
+    font-weight: 800;
+    color: #cec5a3;
     text-decoration: none;
+    background: transparent;
+    border-radius: 0;
     -webkit-tap-highlight-color: transparent;
     box-sizing: border-box;
   }
 
   .hero-cta-phone {
-    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    gap: 6px;
+    border-right: none;
     order: 1;
     width: auto;
     margin: 0;
   }
 
   .hero-cta-button.hero-cta-action {
+    gap: 10px;
     background: transparent;
-    color: rgba(255, 255, 255, 0.95);
+    color: #cec5a3;
     order: 2;
     margin: 0;
+    border: none;
     border-radius: 0;
     white-space: nowrap;
+    font-weight: 800;
   }
 
+  .hero-cta-phone:hover .hero-cta-tel,
   .hero-cta-button.hero-cta-action:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    background: transparent;
+    color: #cec5a3;
+    text-decoration: none;
+    opacity: 0.82;
   }
 
   .hero-cta-button .hero-cta-action-icon {
@@ -972,15 +915,34 @@ body.header-scrolled .menu-toggle:focus {
   }
 
   .hero-cta-button-text {
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 28px;
+    letter-spacing: 0;
+    color: #cec5a3;
     white-space: nowrap;
   }
 
   .hero-cta-action-icon {
-    color: var(--della-point-color);
+    display: inline-flex;
+    width: 24px;
+    height: 24px;
+    color: #cec5a3;
+  }
+
+  .hero-cta-action-icon svg {
+    width: 24px;
+    height: 24px;
   }
 
   .hero-cta-tel {
-    font-size: 1rem;
+    font-family: Poppins, "Noto Sans KR", sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 27px;
+    letter-spacing: 0;
+    color: #cec5a3;
   }
 }
 
@@ -1317,7 +1279,7 @@ article.page:last-child {
   /* 첫 페이지: 히어로 CTA 바로 위에 퀵메뉴 배치 (노치·홈인디케이터 고려) */
   body.home .quick-menu,
   body.front-page .quick-menu {
-    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
     padding-bottom: 0.5rem;
   }
 
@@ -1585,7 +1547,7 @@ article.page:last-child {
   body.della-is-front .site-footer,
   body.home .site-footer,
   body.front-page .site-footer {
-    padding-bottom: calc(var(--space-4) + 4.5rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--space-4) + 88px + env(safe-area-inset-bottom, 0px));
   }
 
   .footer-inner {

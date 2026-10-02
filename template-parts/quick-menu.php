@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $consultation_url = function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : home_url( '/' );
-$quick_phone     = get_theme_mod( 'della_phone', '1522-3394' );
+$quick_phone     = get_theme_mod( 'della_phone', '1844-1087' );
 $quick_phone_tel = 'tel:' . preg_replace( '/[^0-9+]/', '', $quick_phone );
 
 $quick_menu_items = array(
